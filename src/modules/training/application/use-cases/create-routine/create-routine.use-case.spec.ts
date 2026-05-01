@@ -148,6 +148,82 @@ describe('CreateRoutineUseCase', () => {
     });
   });
 
+  describe('RF-09.0.5: Restrict creation by maximum routine limit', () => {
+    it('should block creation when user has exactly 5 routines (alternate path)', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(5);
+
+      await expect(
+        useCase.execute(actor, { name: 'Routine 6', dayOfWeeks: ['monday'] }),
+      ).rejects.toThrow(RoutineDomainError);
+
+      try {
+        await useCase.execute(actor, {
+          name: 'Routine 6',
+          dayOfWeeks: ['monday'],
+        });
+      } catch (error) {
+        expect(error).toBeInstanceOf(RoutineDomainError);
+        expect((error as RoutineDomainError).code).toBe(
+          RoutineErrorCode.ROUTINE_LIMIT_EXCEEDED,
+        );
+        // RF-09.0.6: Verify enhanced error message
+        expect((error as RoutineDomainError).message).toContain(
+          'delete or modify',
+        );
+      }
+
+      // Verify save was never called — 6th routine never registered
+      expect(routineRepository.save as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('should block creation when user has more than 5 routines (failure path — 6th routine never registered)', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(6);
+
+      await expect(
+        useCase.execute(actor, { name: 'Routine 7', dayOfWeeks: ['monday'] }),
+      ).rejects.toThrow(RoutineDomainError);
+
+      try {
+        await useCase.execute(actor, {
+          name: 'Routine 7',
+          dayOfWeeks: ['monday'],
+        });
+      } catch (error) {
+        expect(error).toBeInstanceOf(RoutineDomainError);
+        expect((error as RoutineDomainError).code).toBe(
+          RoutineErrorCode.ROUTINE_LIMIT_EXCEEDED,
+        );
+      }
+
+      // Verify save was never called — 7th routine never registered
+      expect(routineRepository.save as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('should allow creation when user has exactly 4 routines (boundary: 5th is allowed)', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(4);
+      (routineRepository.save as jest.Mock).mockImplementation(
+        (routine: Routine) => Promise.resolve(routine),
+      );
+
+      const result = await useCase.execute(actor, {
+        name: 'Routine 5',
+        dayOfWeeks: ['monday'],
+      });
+
+      expect(result.name).toBe('Routine 5');
+      expect(result.isActive).toBe(false);
+    });
+  });
+
   describe('successful creation', () => {
     it('should create a routine with valid data', async () => {
       (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(

@@ -62,4 +62,23 @@ export class TypeormRoutineRepository implements RoutineRepository {
     }
     return RoutineMapper.toDomain(ormEntity);
   }
+
+  public async findByIdAndUserId(
+    id: string,
+    userId: string,
+  ): Promise<Routine | null> {
+    const ormEntity = await this.ormRepo.findOne({
+      where: { id, userId },
+      relations: ['days', 'days.exercises'],
+    });
+    if (!ormEntity) {
+      return null;
+    }
+    return RoutineMapper.toDomain(ormEntity);
+  }
+
+  public async delete(routine: Routine): Promise<void> {
+    const ormEntity = RoutineMapper.toOrm(routine);
+    await this.ormRepo.remove(ormEntity);
+  }
 }

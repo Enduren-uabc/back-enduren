@@ -67,14 +67,15 @@ export class CreateRoutineUseCase {
       );
     }
 
-    // RF-09.0.4: Validate routine count limit (max 5)
+    // RF-09.0.5: Validate routine count limit (max 5)
+    // RF-09.0.6: Enhanced error message informing user to delete/modify
     const currentCount = await this.routineRepository.countByUserId(
       actor.userId,
     );
     if (currentCount >= MAX_ROUTINES_PER_USER) {
       throw new RoutineDomainError(
         RoutineErrorCode.ROUTINE_LIMIT_EXCEEDED,
-        `User cannot exceed ${MAX_ROUTINES_PER_USER} routines`,
+        `You have reached the maximum of ${MAX_ROUTINES_PER_USER} routines. Please delete or modify an existing routine before creating a new one.`,
         { currentCount, limit: MAX_ROUTINES_PER_USER, userId: actor.userId },
       );
     }
