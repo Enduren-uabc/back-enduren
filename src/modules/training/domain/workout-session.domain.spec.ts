@@ -35,6 +35,7 @@ describe('WorkoutSession domain entity', () => {
       expect(session.exercises).toHaveLength(1);
       expect(session.startedAt).toBeInstanceOf(Date);
       expect(session.finishedAt).toBeNull();
+      expect(session.currentExerciseIndex).toBe(0);
     });
 
     it('should require a userId', () => {
@@ -190,6 +191,7 @@ describe('WorkoutSession domain entity', () => {
         validRoutineId,
         WorkoutSessionStatus.FINISHED,
         [validExercise],
+        0,
         startedAt,
         finishedAt,
       );
@@ -198,6 +200,233 @@ describe('WorkoutSession domain entity', () => {
       expect(session.status).toBe(WorkoutSessionStatus.FINISHED);
       expect(session.startedAt).toBe(startedAt);
       expect(session.finishedAt).toBe(finishedAt);
+      expect(session.currentExerciseIndex).toBe(0);
+    });
+  });
+
+  describe('registerSetRepsAndWeight', () => {
+    it('should register reps and weight for a set at valid exercise index', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+
+      const updated = session.registerSetRepsAndWeight(0, 1, 10, 50);
+
+      expect(updated.exercises[0].workoutSets[0].repsPerformed).toBe(10);
+      expect(updated.exercises[0].workoutSets[0].weightUsed).toBe(50);
+      expect(updated.exercises[0].workoutSets[0].completed).toBe(false);
+    });
+
+    it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
+      let session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+      session = session.finish();
+
+      expect(() => session.registerSetRepsAndWeight(0, 1, 10, 50)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        session.registerSetRepsAndWeight(0, 1, 10, 50);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        );
+      }
+    });
+
+    it('should throw SESSION_EXERCISE_INDEX_INVALID when exercise index is out of range', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+
+      expect(() => session.registerSetRepsAndWeight(-1, 1, 10, 50)).toThrow(
+        WorkoutSessionDomainError,
+      );
+      expect(() => session.registerSetRepsAndWeight(5, 1, 10, 50)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        session.registerSetRepsAndWeight(5, 1, 10, 50);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_EXERCISE_INDEX_INVALID,
+        );
+      }
+    });
+
+    it('should not mutate the original session', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+
+      const updated = session.registerSetRepsAndWeight(0, 1, 10, 50);
+
+      expect(session.exercises[0].workoutSets[0].repsPerformed).toBeNull();
+      expect(updated.exercises[0].workoutSets[0].repsPerformed).toBe(10);
+    });
+  });
+
+  describe('markSetAsCompleted', () => {
+    it('should mark a set as completed after registering reps and weight', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+      const withReps = session.registerSetRepsAndWeight(0, 1, 10, 50);
+      const completed = withReps.markSetAsCompleted(0, 1);
+
+      expect(completed.exercises[0].workoutSets[0].completed).toBe(true);
+      expect(completed.exercises[0].workoutSets[0].repsPerformed).toBe(10);
+      expect(completed.exercises[0].workoutSets[0].weightUsed).toBe(50);
+    });
+
+    it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
+      let session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+      session = session.finish();
+
+      expect(() => session.markSetAsCompleted(0, 1)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        session.markSetAsCompleted(0, 1);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        );
+      }
+    });
+
+    it('should throw SESSION_EXERCISE_INDEX_INVALID with invalid exercise index', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+
+      expect(() => session.markSetAsCompleted(5, 1)).toThrow(
+        WorkoutSessionDomainError,
+      );
+    });
+  });
+
+  describe('advanceToNextExercise', () => {
+    const exercise2 = WorkoutExercise.create(
+      'exercise-2',
+      'Squat',
+      2,
+      3,
+      8,
+      80,
+    );
+
+    it('should advance to next exercise when all sets are completed', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise, exercise2],
+      );
+
+      let updated = session.registerSetRepsAndWeight(0, 1, 10, 50);
+      updated = updated.markSetAsCompleted(0, 1);
+      updated = updated.registerSetRepsAndWeight(0, 2, 10, 50);
+      updated = updated.markSetAsCompleted(0, 2);
+      updated = updated.registerSetRepsAndWeight(0, 3, 10, 50);
+      updated = updated.markSetAsCompleted(0, 3);
+
+      const advanced = updated.advanceToNextExercise();
+
+      expect(advanced.currentExerciseIndex).toBe(1);
+    });
+
+    it('should throw SESSION_EXERCISE_SETS_INCOMPLETE when sets are not all completed', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise, exercise2],
+      );
+
+      const withReps = session.registerSetRepsAndWeight(0, 1, 10, 50);
+
+      expect(() => withReps.advanceToNextExercise()).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        withReps.advanceToNextExercise();
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_EXERCISE_SETS_INCOMPLETE,
+        );
+      }
+    });
+
+    it('should throw SESSION_ALREADY_AT_LAST_EXERCISE when at last exercise', () => {
+      const session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise],
+      );
+
+      expect(() => session.advanceToNextExercise()).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        session.advanceToNextExercise();
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_ALREADY_AT_LAST_EXERCISE,
+        );
+      }
+    });
+
+    it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
+      let session = WorkoutSession.create(
+        'session-1',
+        validUserId,
+        validRoutineId,
+        [validExercise, exercise2],
+      );
+      session = session.finish();
+
+      expect(() => session.advanceToNextExercise()).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        session.advanceToNextExercise();
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        );
+      }
     });
   });
 });
@@ -307,6 +536,156 @@ describe('WorkoutExercise value object', () => {
       expect(exercise.workoutSets[1].completed).toBe(false);
     });
   });
+
+  describe('registerSetRepsAndWeight', () => {
+    it('should register reps and weight for a valid set number', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      const updated = exercise.registerSetRepsAndWeight(1, 10, 50);
+
+      expect(updated.workoutSets[0].repsPerformed).toBe(10);
+      expect(updated.workoutSets[0].weightUsed).toBe(50);
+      expect(updated.workoutSets[0].completed).toBe(false);
+    });
+
+    it('should throw SESSION_SET_NOT_FOUND when set number does not exist', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      expect(() => exercise.registerSetRepsAndWeight(99, 10, 50)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        exercise.registerSetRepsAndWeight(99, 10, 50);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_SET_NOT_FOUND,
+        );
+      }
+    });
+
+    it('should not mutate the original exercise', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      const updated = exercise.registerSetRepsAndWeight(1, 10, 50);
+
+      expect(exercise.workoutSets[0].repsPerformed).toBeNull();
+      expect(updated.workoutSets[0].repsPerformed).toBe(10);
+    });
+  });
+
+  describe('markSetAsCompleted', () => {
+    it('should mark a set as completed after reps and weight are set', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      const withReps = exercise.registerSetRepsAndWeight(1, 10, 50);
+      const completed = withReps.markSetAsCompleted(1);
+
+      expect(completed.workoutSets[0].completed).toBe(true);
+      expect(completed.workoutSets[0].repsPerformed).toBe(10);
+      expect(completed.workoutSets[0].weightUsed).toBe(50);
+    });
+
+    it('should throw SESSION_SET_NOT_FOUND when set number does not exist', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      expect(() => exercise.markSetAsCompleted(99)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        exercise.markSetAsCompleted(99);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_SET_NOT_FOUND,
+        );
+      }
+    });
+  });
+
+  describe('areAllSetsCompleted', () => {
+    it('should return false when no sets are completed', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      expect(exercise.areAllSetsCompleted()).toBe(false);
+    });
+
+    it('should return false when some sets are not completed', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        3,
+        10,
+        50,
+      );
+
+      let updated = exercise.registerSetRepsAndWeight(1, 10, 50);
+      updated = updated.markSetAsCompleted(1);
+
+      expect(updated.areAllSetsCompleted()).toBe(false);
+    });
+
+    it('should return true when all sets are completed', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        2,
+        10,
+        50,
+      );
+
+      let updated = exercise.registerSetRepsAndWeight(1, 10, 50);
+      updated = updated.markSetAsCompleted(1);
+      updated = updated.registerSetRepsAndWeight(2, 8, 50);
+      updated = updated.markSetAsCompleted(2);
+
+      expect(updated.areAllSetsCompleted()).toBe(true);
+    });
+  });
 });
 
 describe('WorkoutSet value object', () => {
@@ -338,6 +717,121 @@ describe('WorkoutSet value object', () => {
       expect(set.repsPerformed).toBe(10);
       expect(set.weightUsed).toBe(50);
       expect(set.completed).toBe(true);
+    });
+  });
+
+  describe('registerRepsAndWeight', () => {
+    it('should register reps and weight for a pending set', () => {
+      const set = WorkoutSet.create(1);
+      const updated = set.registerRepsAndWeight(10, 50);
+
+      expect(updated.repsPerformed).toBe(10);
+      expect(updated.weightUsed).toBe(50);
+      expect(updated.completed).toBe(false);
+      expect(updated.setNumber).toBe(1);
+    });
+
+    it('should throw SESSION_SET_ALREADY_COMPLETED when set is already completed', () => {
+      const set = WorkoutSet.create(1);
+      const withReps = set.registerRepsAndWeight(10, 50);
+      const completed = withReps.markAsCompleted();
+
+      expect(() => completed.registerRepsAndWeight(12, 55)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        completed.registerRepsAndWeight(12, 55);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_SET_ALREADY_COMPLETED,
+        );
+      }
+    });
+
+    it('should throw SESSION_SET_MISSING_REQUIRED_DATA for non-positive repsPerformed', () => {
+      const set = WorkoutSet.create(1);
+
+      expect(() => set.registerRepsAndWeight(0, 50)).toThrow(
+        WorkoutSessionDomainError,
+      );
+      expect(() => set.registerRepsAndWeight(-1, 50)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        set.registerRepsAndWeight(0, 50);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        );
+      }
+    });
+
+    it('should throw SESSION_SET_MISSING_REQUIRED_DATA for negative weightUsed', () => {
+      const set = WorkoutSet.create(1);
+
+      expect(() => set.registerRepsAndWeight(10, -1)).toThrow(
+        WorkoutSessionDomainError,
+      );
+
+      try {
+        set.registerRepsAndWeight(10, -1);
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        );
+      }
+    });
+
+    it('should allow weightUsed of zero', () => {
+      const set = WorkoutSet.create(1);
+      const updated = set.registerRepsAndWeight(10, 0);
+
+      expect(updated.weightUsed).toBe(0);
+    });
+
+    it('should not mutate the original set', () => {
+      const set = WorkoutSet.create(1);
+      const updated = set.registerRepsAndWeight(10, 50);
+
+      expect(set.repsPerformed).toBeNull();
+      expect(updated.repsPerformed).toBe(10);
+    });
+  });
+
+  describe('markAsCompleted', () => {
+    it('should mark a set as completed when reps and weight are set', () => {
+      const set = WorkoutSet.create(1);
+      const withReps = set.registerRepsAndWeight(10, 50);
+      const completed = withReps.markAsCompleted();
+
+      expect(completed.completed).toBe(true);
+      expect(completed.repsPerformed).toBe(10);
+      expect(completed.weightUsed).toBe(50);
+    });
+
+    it('should throw SESSION_SET_MISSING_REQUIRED_DATA when reps are not set', () => {
+      const set = WorkoutSet.create(1);
+
+      expect(() => set.markAsCompleted()).toThrow(WorkoutSessionDomainError);
+
+      try {
+        set.markAsCompleted();
+      } catch (error) {
+        expect((error as WorkoutSessionDomainError).code).toBe(
+          WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        );
+      }
+    });
+
+    it('should not mutate the original set', () => {
+      const set = WorkoutSet.create(1);
+      const withReps = set.registerRepsAndWeight(10, 50);
+      const completed = withReps.markAsCompleted();
+
+      expect(withReps.completed).toBe(false);
+      expect(completed.completed).toBe(true);
     });
   });
 });

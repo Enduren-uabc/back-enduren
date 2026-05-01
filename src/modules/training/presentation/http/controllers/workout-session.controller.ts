@@ -17,11 +17,15 @@ import {
 import { FinishWorkoutSessionUseCase } from '../../../application/use-cases/finish-workout-session/finish-workout-session.use-case';
 import { ResumeWorkoutSessionUseCase } from '../../../application/use-cases/resume-workout-session/resume-workout-session.use-case';
 import { GetWorkoutSessionUseCase } from '../../../application/use-cases/get-workout-session/get-workout-session.use-case';
+import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
+import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
+import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { CURRENT_ACTOR_PORT } from '../../../application/use-cases/create-routine/create-routine.use-case';
 import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.request';
+import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
 import {
   WorkoutSessionResponseDto,
   WorkoutExerciseResponseDto,
@@ -36,6 +40,9 @@ export class WorkoutSessionController {
   private readonly finishWorkoutSessionUseCase: FinishWorkoutSessionUseCase;
   private readonly resumeWorkoutSessionUseCase: ResumeWorkoutSessionUseCase;
   private readonly getWorkoutSessionUseCase: GetWorkoutSessionUseCase;
+  private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase;
+  private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase;
+  private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase;
 
   constructor(
     @Inject(WORKOUT_SESSION_REPOSITORY_PORT)
@@ -55,6 +62,15 @@ export class WorkoutSessionController {
       workoutSessionRepository,
     );
     this.getWorkoutSessionUseCase = new GetWorkoutSessionUseCase(
+      workoutSessionRepository,
+    );
+    this.registerSetRepsAndWeightUseCase = new RegisterSetRepsAndWeightUseCase(
+      workoutSessionRepository,
+    );
+    this.markSetAsCompletedUseCase = new MarkSetAsCompletedUseCase(
+      workoutSessionRepository,
+    );
+    this.advanceToNextExerciseUseCase = new AdvanceToNextExerciseUseCase(
       workoutSessionRepository,
     );
   }
@@ -103,11 +119,56 @@ export class WorkoutSessionController {
     return this.mapToResponse(result);
   }
 
+  @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber')
+  public async registerSetRepsAndWeight(
+    @Param('sessionId') sessionId: string,
+    @Param('exerciseIndex') exerciseIndex: number,
+    @Param('setNumber') setNumber: number,
+    @Body() dto: RegisterSetRepsAndWeightRequestDto,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.registerSetRepsAndWeightUseCase.execute(
+      this.currentActor,
+      {
+        sessionId,
+        exerciseIndex,
+        setNumber,
+        repsPerformed: dto.repsPerformed,
+        weightUsed: dto.weightUsed,
+      },
+    );
+    return this.mapToResponse(result);
+  }
+
+  @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber/complete')
+  public async markSetAsCompleted(
+    @Param('sessionId') sessionId: string,
+    @Param('exerciseIndex') exerciseIndex: number,
+    @Param('setNumber') setNumber: number,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.markSetAsCompletedUseCase.execute(
+      this.currentActor,
+      { sessionId, exerciseIndex, setNumber },
+    );
+    return this.mapToResponse(result);
+  }
+
+  @Post(':sessionId/advance-exercise')
+  public async advanceToNextExercise(
+    @Param('sessionId') sessionId: string,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.advanceToNextExerciseUseCase.execute(
+      this.currentActor,
+      { sessionId },
+    );
+    return this.mapToResponse(result);
+  }
+
   private mapToResponse(result: {
     id: string;
     userId: string;
     routineId: string;
     status: string;
+    currentExerciseIndex: number;
     exercises: Array<{
       exerciseId: string;
       exerciseName: string;
@@ -130,6 +191,7 @@ export class WorkoutSessionController {
     response.userId = result.userId;
     response.routineId = result.routineId;
     response.status = result.status;
+    response.currentExerciseIndex = result.currentExerciseIndex;
     response.exercises = result.exercises.map((ex) => {
       const exDto = new WorkoutExerciseResponseDto();
       exDto.exerciseId = ex.exerciseId;

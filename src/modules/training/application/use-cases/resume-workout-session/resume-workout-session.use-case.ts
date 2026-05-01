@@ -10,6 +10,7 @@ export interface ResumeWorkoutSessionOutput {
   userId: string;
   routineId: string;
   status: string;
+  currentExerciseIndex: number;
   exercises: Array<{
     exerciseId: string;
     exerciseName: string;
@@ -58,6 +59,7 @@ export class ResumeWorkoutSessionUseCase {
       userId: session.userId,
       routineId: session.routineId,
       status: session.status,
+      currentExerciseIndex: session.currentExerciseIndex,
       exercises: session.exercises.map((ex) => ({
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,
