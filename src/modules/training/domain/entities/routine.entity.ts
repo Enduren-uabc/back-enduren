@@ -131,4 +131,45 @@ export class Routine {
       new Date(),
     );
   }
+
+  /**
+   * Configures an exercise within a specific day of the routine.
+   * Enforces: day must exist, exercise must exist in day (RF-11.0.5).
+   * Delegates configuration validation to Exercise.configure() (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
+   * Returns a new Routine with the configured exercise.
+   */
+  public configureExercise(
+    dayOfWeek: string,
+    exerciseId: string,
+    sets: number,
+    repsPerSet: number,
+    weight: number,
+  ): Routine {
+    const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
+    if (dayIndex === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
+        `Day "${dayOfWeek}" not found in routine`,
+        { dayOfWeek },
+      );
+    }
+
+    const updatedDay = this.days[dayIndex].configureExercise(
+      exerciseId,
+      sets,
+      repsPerSet,
+      weight,
+    );
+    const updatedDays = [...this.days];
+    updatedDays[dayIndex] = updatedDay;
+
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      updatedDays,
+      this.createdAt,
+      new Date(),
+    );
+  }
 }

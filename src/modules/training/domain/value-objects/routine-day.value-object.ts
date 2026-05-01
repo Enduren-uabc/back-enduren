@@ -111,4 +111,35 @@ export class RoutineDay {
   public equals(other: RoutineDay): boolean {
     return this.dayOfWeek === other.dayOfWeek;
   }
+
+  /**
+   * Configures an exercise in this day by exercise id.
+   * Enforces: exercise must exist in day (RF-11.0.5).
+   * Delegates configuration validation to Exercise.configure() (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
+   * Returns a new RoutineDay with the configured exercise.
+   */
+  public configureExercise(
+    exerciseId: string,
+    sets: number,
+    repsPerSet: number,
+    weight: number,
+  ): RoutineDay {
+    const index = this.exercises.findIndex((e) => e.id === exerciseId);
+    if (index === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.EXERCISE_NOT_FOUND,
+        `Exercise with id "${exerciseId}" not found in day ${this.dayOfWeek}`,
+        { exerciseId, dayOfWeek: this.dayOfWeek },
+      );
+    }
+
+    const configuredExercise = this.exercises[index].configure(
+      sets,
+      repsPerSet,
+      weight,
+    );
+    const updated = [...this.exercises];
+    updated[index] = configuredExercise;
+    return new RoutineDay(this.dayOfWeek, updated);
+  }
 }

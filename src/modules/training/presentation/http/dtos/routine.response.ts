@@ -2,6 +2,9 @@ export class ExerciseResponseDto {
   id!: string;
   name!: string;
   order!: number;
+  sets!: number | null;
+  repsPerSet!: number | null;
+  weight!: number | null;
 }
 
 export class RoutineDayResponseDto {

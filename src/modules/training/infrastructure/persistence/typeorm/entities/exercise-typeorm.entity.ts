@@ -12,6 +12,15 @@ export class ExerciseTypeormEntity {
   @Column('int')
   order!: number;
 
+  @Column('int', { nullable: true })
+  sets!: number | null;
+
+  @Column('int', { nullable: true })
+  repsPerSet!: number | null;
+
+  @Column('float', { nullable: true })
+  weight!: number | null;
+
   @Column('uuid')
   routineDayId!: string;
 

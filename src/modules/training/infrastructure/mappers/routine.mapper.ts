@@ -1,6 +1,7 @@
 import { Routine } from '../../domain/entities/routine.entity';
 import { RoutineDay } from '../../domain/value-objects/routine-day.value-object';
 import { Exercise } from '../../domain/entities/exercise.entity';
+import { ExerciseConfiguration } from '../../domain/value-objects/exercise-configuration.value-object';
 import { RoutineTypeormEntity } from '../persistence/typeorm/entities/routine-typeorm.entity';
 import { RoutineDayTypeormEntity } from '../persistence/typeorm/entities/routine-day-typeorm.entity';
 import { ExerciseTypeormEntity } from '../persistence/typeorm/entities/exercise-typeorm.entity';
@@ -8,9 +9,17 @@ import { ExerciseTypeormEntity } from '../persistence/typeorm/entities/exercise-
 export class RoutineMapper {
   public static toDomain(ormEntity: RoutineTypeormEntity): Routine {
     const days = (ormEntity.days ?? []).map((day) => {
-      const exercises = (day.exercises ?? []).map((ex) =>
-        Exercise.reconstitute(ex.id, ex.name, ex.order),
-      );
+      const exercises = (day.exercises ?? []).map((ex) => {
+        const configuration =
+          ex.sets !== null && ex.repsPerSet !== null && ex.weight !== null
+            ? ExerciseConfiguration.reconstitute(
+                ex.sets,
+                ex.repsPerSet,
+                ex.weight,
+              )
+            : null;
+        return Exercise.reconstitute(ex.id, ex.name, ex.order, configuration);
+      });
       return RoutineDay.reconstitute(
         day.dayOfWeek as
           | 'monday'
@@ -53,6 +62,9 @@ export class RoutineMapper {
         exOrm.id = exercise.id;
         exOrm.name = exercise.name;
         exOrm.order = exercise.order;
+        exOrm.sets = exercise.configuration?.sets ?? null;
+        exOrm.repsPerSet = exercise.configuration?.repsPerSet ?? null;
+        exOrm.weight = exercise.configuration?.weight ?? null;
         exOrm.routineDayId = dayOrm.id;
         return exOrm;
       });

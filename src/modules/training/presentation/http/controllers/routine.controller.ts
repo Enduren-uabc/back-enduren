@@ -1,4 +1,12 @@
-import { Controller, Post, Delete, Body, Param, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  Inject,
+} from '@nestjs/common';
 import {
   CreateRoutineUseCase,
   CURRENT_ACTOR_PORT,
@@ -6,10 +14,12 @@ import {
 } from '../../../application/use-cases/create-routine/create-routine.use-case';
 import { AddExerciseToRoutineDayUseCase } from '../../../application/use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
+import { ConfigureExerciseUseCase } from '../../../application/use-cases/configure-exercise/configure-exercise.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
 import { AddExerciseRequestDto } from '../dtos/add-exercise.request';
+import { ConfigureExerciseRequestDto } from '../dtos/configure-exercise.request';
 import {
   RoutineResponseDto,
   RoutineDayResponseDto,
@@ -22,6 +32,7 @@ export class RoutineController {
   private readonly createRoutineUseCase: CreateRoutineUseCase;
   private readonly addExerciseUseCase: AddExerciseToRoutineDayUseCase;
   private readonly removeExerciseUseCase: RemoveExerciseFromRoutineUseCase;
+  private readonly configureExerciseUseCase: ConfigureExerciseUseCase;
 
   constructor(
     @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
@@ -32,6 +43,9 @@ export class RoutineController {
       routineRepository,
     );
     this.removeExerciseUseCase = new RemoveExerciseFromRoutineUseCase(
+      routineRepository,
+    );
+    this.configureExerciseUseCase = new ConfigureExerciseUseCase(
       routineRepository,
     );
   }
@@ -89,13 +103,47 @@ export class RoutineController {
     return this.mapToResponse(result);
   }
 
+  @Patch(':routineId/days/:dayOfWeek/exercises/:exerciseId')
+  public async configureExercise(
+    @Param('routineId') routineId: string,
+    @Param('dayOfWeek') dayOfWeek: string,
+    @Param('exerciseId') exerciseId: string,
+    @Body() dto: ConfigureExerciseRequestDto,
+  ): Promise<RoutineResponseDto> {
+    // Validate dayOfWeek at controller boundary
+    if (!isValidDayOfWeek(dayOfWeek)) {
+      throw new Error(`Invalid day of week: ${dayOfWeek}`);
+    }
+
+    const result = await this.configureExerciseUseCase.execute(
+      this.currentActor,
+      {
+        routineId,
+        dayOfWeek,
+        exerciseId,
+        sets: dto.sets,
+        repsPerSet: dto.repsPerSet,
+        weight: dto.weight,
+      },
+    );
+
+    return this.mapToResponse(result);
+  }
+
   private mapToResponse(result: {
     id: string;
     name: string;
     userId: string;
     days: Array<{
       dayOfWeek: string;
-      exercises: Array<{ id: string; name: string; order: number }>;
+      exercises: Array<{
+        id: string;
+        name: string;
+        order: number;
+        sets?: number | null;
+        repsPerSet?: number | null;
+        weight?: number | null;
+      }>;
     }>;
     createdAt: Date;
     updatedAt: Date;
@@ -112,6 +160,9 @@ export class RoutineController {
         exDto.id = e.id;
         exDto.name = e.name;
         exDto.order = e.order;
+        exDto.sets = e.sets ?? null;
+        exDto.repsPerSet = e.repsPerSet ?? null;
+        exDto.weight = e.weight ?? null;
         return exDto;
       });
       return dayDto;
