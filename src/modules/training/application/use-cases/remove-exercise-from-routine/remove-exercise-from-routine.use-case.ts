@@ -16,6 +16,7 @@ export interface RemoveExerciseFromRoutineOutput {
   id: string;
   name: string;
   userId: string;
+  isActive: boolean;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -64,6 +65,7 @@ export class RemoveExerciseFromRoutineUseCase {
       id: routine.id,
       name: routine.name,
       userId: routine.userId,
+      isActive: routine.isActive,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

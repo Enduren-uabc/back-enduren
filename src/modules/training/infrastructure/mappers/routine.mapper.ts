@@ -38,6 +38,7 @@ export class RoutineMapper {
       ormEntity.name,
       ormEntity.userId,
       days,
+      ormEntity.isActive,
       ormEntity.createdAt,
       ormEntity.updatedAt,
     );
@@ -48,6 +49,7 @@ export class RoutineMapper {
     ormEntity.id = domain.id;
     ormEntity.name = domain.name;
     ormEntity.userId = domain.userId;
+    ormEntity.isActive = domain.isActive;
     ormEntity.createdAt = domain.createdAt;
     ormEntity.updatedAt = domain.updatedAt;
 

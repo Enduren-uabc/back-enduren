@@ -134,6 +134,7 @@ export class RoutineController {
     id: string;
     name: string;
     userId: string;
+    isActive: boolean;
     days: Array<{
       dayOfWeek: string;
       exercises: Array<{
@@ -152,6 +153,7 @@ export class RoutineController {
     response.id = result.id;
     response.name = result.name;
     response.userId = result.userId;
+    response.isActive = result.isActive;
     response.days = result.days.map((d) => {
       const dayDto = new RoutineDayResponseDto();
       dayDto.dayOfWeek = d.dayOfWeek;

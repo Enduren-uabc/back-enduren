@@ -10,6 +10,7 @@ export class Routine {
   public readonly name: string;
   public readonly userId: string;
   public readonly days: RoutineDay[];
+  public readonly isActive: boolean;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -18,6 +19,7 @@ export class Routine {
     name: string,
     userId: string,
     days: RoutineDay[],
+    isActive: boolean,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -25,6 +27,7 @@ export class Routine {
     this.name = name;
     this.userId = userId;
     this.days = days;
+    this.isActive = isActive;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -33,12 +36,14 @@ export class Routine {
    * Creates a new Routine with core invariants enforced:
    * - Name must be non-empty.
    * - At least one day is required.
+   * - isActive defaults to false unless explicitly set.
    */
   public static create(
     id: string,
     name: string,
     userId: string,
     days: RoutineDay[],
+    isActive: boolean = false,
   ): Routine {
     if (!name || name.trim().length === 0) {
       throw new RoutineDomainError(
@@ -57,7 +62,7 @@ export class Routine {
     }
 
     const now = new Date();
-    return new Routine(id, name.trim(), userId, [...days], now, now);
+    return new Routine(id, name.trim(), userId, [...days], isActive, now, now);
   }
 
   /**
@@ -68,10 +73,51 @@ export class Routine {
     name: string,
     userId: string,
     days: RoutineDay[],
+    isActive: boolean,
     createdAt: Date,
     updatedAt: Date,
   ): Routine {
-    return new Routine(id, name, userId, [...days], createdAt, updatedAt);
+    return new Routine(
+      id,
+      name,
+      userId,
+      [...days],
+      isActive,
+      createdAt,
+      updatedAt,
+    );
+  }
+
+  /**
+   * Activates this routine. Returns a new Routine with isActive: true.
+   * No domain invariants to enforce beyond the field change.
+   */
+  public activate(): Routine {
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      this.days,
+      true,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Deactivates this routine. Returns a new Routine with isActive: false.
+   * No domain invariants to enforce beyond the field change.
+   */
+  public deactivate(): Routine {
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      this.days,
+      false,
+      this.createdAt,
+      new Date(),
+    );
   }
 
   /**
@@ -98,6 +144,7 @@ export class Routine {
       this.name,
       this.userId,
       updatedDays,
+      this.isActive,
       this.createdAt,
       new Date(),
     );
@@ -127,6 +174,7 @@ export class Routine {
       this.name,
       this.userId,
       updatedDays,
+      this.isActive,
       this.createdAt,
       new Date(),
     );
@@ -168,6 +216,7 @@ export class Routine {
       this.name,
       this.userId,
       updatedDays,
+      this.isActive,
       this.createdAt,
       new Date(),
     );

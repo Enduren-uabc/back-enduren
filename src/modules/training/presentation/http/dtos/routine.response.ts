@@ -16,6 +16,7 @@ export class RoutineResponseDto {
   id!: string;
   name!: string;
   userId!: string;
+  isActive!: boolean;
   days!: RoutineDayResponseDto[];
   createdAt!: Date;
   updatedAt!: Date;

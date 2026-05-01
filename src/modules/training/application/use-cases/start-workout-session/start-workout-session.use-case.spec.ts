@@ -42,6 +42,7 @@ describe('StartWorkoutSessionUseCase', () => {
     'My Routine',
     'user-1',
     [routineDay],
+    false,
     new Date('2026-01-01'),
     new Date('2026-01-01'),
   );
@@ -58,6 +59,7 @@ describe('StartWorkoutSessionUseCase', () => {
       findByUserId: jest.fn(),
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
+      findActiveByUserId: jest.fn(),
     };
     useCase = new StartWorkoutSessionUseCase(
       workoutSessionRepository,
@@ -141,6 +143,7 @@ describe('StartWorkoutSessionUseCase', () => {
         'Other Routine',
         'user-2',
         [routineDay],
+        false,
         new Date(),
         new Date(),
       );
