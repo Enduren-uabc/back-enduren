@@ -19,6 +19,7 @@ import { ResumeWorkoutSessionUseCase } from '../../../application/use-cases/resu
 import { GetWorkoutSessionUseCase } from '../../../application/use-cases/get-workout-session/get-workout-session.use-case';
 import { GetWorkoutSessionHistoryUseCase } from '../../../application/use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from '../../../application/use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
+import { GetExerciseProgressUseCase } from '../../../application/use-cases/get-exercise-progress/get-exercise-progress.use-case';
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
 import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
@@ -35,6 +36,10 @@ import {
   WorkoutSetResponseDto,
 } from '../dtos/workout-session.response';
 import { WorkoutSessionSummaryResponseDto } from '../dtos/workout-session-summary.response';
+import {
+  ExerciseProgressResponseDto,
+  ExerciseProgressRecordDto,
+} from '../dtos/exercise-progress-response';
 import { WorkoutSessionDomainErrorFilter } from '../filters/workout-session-domain-error.filter';
 
 @Controller('workout-sessions')
@@ -46,6 +51,7 @@ export class WorkoutSessionController {
   private readonly getWorkoutSessionUseCase: GetWorkoutSessionUseCase;
   private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase;
   private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase;
+  private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase;
   private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase;
   private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase;
   private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase;
@@ -77,6 +83,9 @@ export class WorkoutSessionController {
     this.getWorkoutSessionDetailUseCase = new GetWorkoutSessionDetailUseCase(
       workoutSessionRepository,
       routineRepository,
+    );
+    this.getExerciseProgressUseCase = new GetExerciseProgressUseCase(
+      workoutSessionRepository,
     );
     this.registerSetRepsAndWeightUseCase = new RegisterSetRepsAndWeightUseCase(
       workoutSessionRepository,
@@ -139,6 +148,32 @@ export class WorkoutSessionController {
       dto.status = r.status;
       return dto;
     });
+  }
+
+  @Get('exercises/:exerciseId/progress')
+  public async exerciseProgress(
+    @Param('exerciseId') exerciseId: string,
+  ): Promise<ExerciseProgressResponseDto> {
+    const result = await this.getExerciseProgressUseCase.execute(
+      this.currentActor,
+      { exerciseId },
+    );
+    const response = new ExerciseProgressResponseDto();
+    response.sufficientData = result.sufficientData;
+    response.exerciseId = result.exerciseId;
+    response.exerciseName = result.exerciseName;
+    response.message = result.message;
+    response.records = result.records.map((r) => {
+      const dto = new ExerciseProgressRecordDto();
+      dto.sessionId = r.sessionId;
+      dto.date = r.date.toISOString();
+      dto.weightUsed = r.weightUsed;
+      dto.repsPerformed = r.repsPerformed;
+      dto.setsCompleted = r.setsCompleted;
+      dto.totalSets = r.totalSets;
+      return dto;
+    });
+    return response;
   }
 
   @Get(':sessionId')

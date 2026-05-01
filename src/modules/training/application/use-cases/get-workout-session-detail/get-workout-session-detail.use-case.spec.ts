@@ -16,7 +16,6 @@ describe('GetWorkoutSessionDetailUseCase', () => {
   let workoutSessionRepository: WorkoutSessionRepository;
   let routineRepository: RoutineRepository;
   const actor: CurrentActor = { userId: 'user-1' };
-  const otherActor: CurrentActor = { userId: 'user-2' };
 
   const exercise = WorkoutExercise.create(
     'exercise-1',
