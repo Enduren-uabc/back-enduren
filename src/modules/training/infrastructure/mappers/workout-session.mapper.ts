@@ -1,0 +1,81 @@
+import { WorkoutSession } from '../../domain/entities/workout-session.entity';
+import { WorkoutSessionStatus } from '../../domain/value-objects/workout-session-status.value-object';
+import { WorkoutExercise } from '../../domain/value-objects/workout-exercise.value-object';
+import { WorkoutSet } from '../../domain/value-objects/workout-set.value-object';
+import { WorkoutSessionTypeormEntity } from '../persistence/typeorm/entities/workout-session-typeorm.entity';
+import { WorkoutSessionExerciseTypeormEntity } from '../persistence/typeorm/entities/workout-session-exercise-typeorm.entity';
+import { WorkoutSessionSetTypeormEntity } from '../persistence/typeorm/entities/workout-session-set-typeorm.entity';
+
+export class WorkoutSessionMapper {
+  public static toDomain(
+    ormEntity: WorkoutSessionTypeormEntity,
+  ): WorkoutSession {
+    const exercises = (ormEntity.exercises ?? []).map((ex) => {
+      const workoutSets = (ex.workoutSets ?? []).map((ws) =>
+        WorkoutSet.reconstitute(
+          ws.setNumber,
+          ws.repsPerformed,
+          ws.weightUsed,
+          ws.completed,
+        ),
+      );
+
+      return WorkoutExercise.reconstitute(
+        ex.exerciseId,
+        ex.exerciseName,
+        ex.orderIndex,
+        ex.sets,
+        ex.repsPerSet,
+        ex.weight,
+        workoutSets,
+      );
+    });
+
+    return WorkoutSession.reconstitute(
+      ormEntity.id,
+      ormEntity.userId,
+      ormEntity.routineId,
+      ormEntity.status as WorkoutSessionStatus,
+      exercises,
+      ormEntity.startedAt,
+      ormEntity.finishedAt,
+    );
+  }
+
+  public static toOrm(domain: WorkoutSession): WorkoutSessionTypeormEntity {
+    const ormEntity = new WorkoutSessionTypeormEntity();
+    ormEntity.id = domain.id;
+    ormEntity.userId = domain.userId;
+    ormEntity.routineId = domain.routineId;
+    ormEntity.status = domain.status;
+    ormEntity.startedAt = domain.startedAt;
+    ormEntity.finishedAt = domain.finishedAt;
+
+    ormEntity.exercises = domain.exercises.map((ex) => {
+      const exOrm = new WorkoutSessionExerciseTypeormEntity();
+      exOrm.id = crypto.randomUUID();
+      exOrm.sessionId = domain.id;
+      exOrm.exerciseId = ex.exerciseId;
+      exOrm.exerciseName = ex.exerciseName;
+      exOrm.orderIndex = ex.order;
+      exOrm.sets = ex.sets;
+      exOrm.repsPerSet = ex.repsPerSet;
+      exOrm.weight = ex.weight;
+
+      exOrm.workoutSets = ex.workoutSets.map((ws) => {
+        const wsOrm = new WorkoutSessionSetTypeormEntity();
+        wsOrm.id = crypto.randomUUID();
+        wsOrm.sessionExerciseId = exOrm.id;
+        wsOrm.setNumber = ws.setNumber;
+        wsOrm.repsPerformed = ws.repsPerformed;
+        wsOrm.weightUsed = ws.weightUsed;
+        wsOrm.completed = ws.completed;
+        return wsOrm;
+      });
+
+      return exOrm;
+    });
+
+    return ormEntity;
+  }
+}
