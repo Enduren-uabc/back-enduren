@@ -21,6 +21,7 @@ describe('RemoveExerciseFromRoutineUseCase', () => {
       findByUserId: jest.fn(),
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
+      findActiveByUserId: jest.fn(),
     };
     useCase = new RemoveExerciseFromRoutineUseCase(routineRepository);
   });
@@ -48,6 +49,7 @@ describe('RemoveExerciseFromRoutineUseCase', () => {
       'My Routine',
       'user-1',
       [day],
+      false,
       new Date(),
       new Date(),
     );

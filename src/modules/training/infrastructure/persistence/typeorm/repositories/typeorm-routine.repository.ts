@@ -51,4 +51,15 @@ export class TypeormRoutineRepository implements RoutineRepository {
   public async countByUserId(userId: string): Promise<number> {
     return this.ormRepo.count({ where: { userId } });
   }
+
+  public async findActiveByUserId(userId: string): Promise<Routine | null> {
+    const ormEntity = await this.ormRepo.findOne({
+      where: { userId, isActive: true },
+      relations: ['days', 'days.exercises'],
+    });
+    if (!ormEntity) {
+      return null;
+    }
+    return RoutineMapper.toDomain(ormEntity);
+  }
 }

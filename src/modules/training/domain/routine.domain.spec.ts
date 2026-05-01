@@ -270,6 +270,23 @@ describe('Routine Entity', () => {
       expect(routine.userId).toBe('user-1');
       expect(routine.days).toHaveLength(1);
       expect(routine.days[0].dayOfWeek).toBe('monday');
+      expect(routine.isActive).toBe(false);
+    });
+
+    it('should default isActive to false when not specified', () => {
+      const routine = Routine.create('id-1', 'My Routine', 'user-1', validDays);
+      expect(routine.isActive).toBe(false);
+    });
+
+    it('should allow isActive=true when explicitly set', () => {
+      const routine = Routine.create(
+        'id-1',
+        'My Routine',
+        'user-1',
+        validDays,
+        true,
+      );
+      expect(routine.isActive).toBe(true);
     });
 
     it('should trim the routine name', () => {
@@ -342,6 +359,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         days,
+        false,
         now,
         now,
       );
@@ -351,6 +369,61 @@ describe('Routine Entity', () => {
       expect(routine.days).toHaveLength(1);
       expect(routine.days[0].exerciseCount).toBe(1);
       expect(routine.days[0].exercises[0].name).toBe('Push-ups');
+      expect(routine.isActive).toBe(false);
+    });
+
+    it('should reconstitute a routine with isActive=true', () => {
+      const now = new Date();
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        validDays,
+        true,
+        now,
+        now,
+      );
+      expect(routine.isActive).toBe(true);
+    });
+  });
+
+  describe('activate', () => {
+    it('should return a new routine with isActive=true', () => {
+      const routine = Routine.create(
+        'id-1',
+        'My Routine',
+        'user-1',
+        validDays,
+        false,
+      );
+      expect(routine.isActive).toBe(false);
+      const activated = routine.activate();
+      expect(activated.isActive).toBe(true);
+      expect(activated.id).toBe(routine.id);
+      expect(activated.name).toBe(routine.name);
+      expect(activated.userId).toBe(routine.userId);
+      expect(activated.days).toHaveLength(routine.days.length);
+      expect(routine.isActive).toBe(false);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should return a new routine with isActive=false', () => {
+      const routine = Routine.create(
+        'id-1',
+        'My Routine',
+        'user-1',
+        validDays,
+        true,
+      );
+      expect(routine.isActive).toBe(true);
+      const deactivated = routine.deactivate();
+      expect(deactivated.isActive).toBe(false);
+      expect(deactivated.id).toBe(routine.id);
+      expect(deactivated.name).toBe(routine.name);
+      expect(deactivated.userId).toBe(routine.userId);
+      expect(deactivated.days).toHaveLength(routine.days.length);
+      expect(routine.isActive).toBe(true);
     });
   });
 
@@ -390,6 +463,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -429,6 +503,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -475,6 +550,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -492,6 +568,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -511,6 +588,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -559,6 +637,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -575,6 +654,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -591,6 +671,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );
@@ -608,6 +689,7 @@ describe('Routine Entity', () => {
         'My Routine',
         'user-1',
         [day],
+        false,
         new Date(),
         new Date(),
       );

@@ -21,6 +21,7 @@ describe('AddExerciseToRoutineDayUseCase', () => {
       findByUserId: jest.fn(),
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
+      findActiveByUserId: jest.fn(),
     };
     useCase = new AddExerciseToRoutineDayUseCase(routineRepository);
   });
@@ -48,6 +49,7 @@ describe('AddExerciseToRoutineDayUseCase', () => {
       'My Routine',
       'user-1',
       [day],
+      false,
       new Date(),
       new Date(),
     );

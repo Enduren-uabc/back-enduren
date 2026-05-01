@@ -19,6 +19,7 @@ export interface CreateRoutineOutput {
   id: string;
   name: string;
   userId: string;
+  isActive: boolean;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{ id: string; name: string; order: number }>;
@@ -84,7 +85,16 @@ export class CreateRoutineUseCase {
     // Generate ID
     const id = crypto.randomUUID();
 
-    const routine = Routine.create(id, input.name, actor.userId, days);
+    // RF-09.0.3: Auto-assign first routine as active when user has 0 existing routines
+    const isActive = currentCount === 0;
+
+    const routine = Routine.create(
+      id,
+      input.name,
+      actor.userId,
+      days,
+      isActive,
+    );
 
     const saved = await this.routineRepository.save(routine);
 
@@ -92,6 +102,7 @@ export class CreateRoutineUseCase {
       id: saved.id,
       name: saved.name,
       userId: saved.userId,
+      isActive: saved.isActive,
       days: saved.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

@@ -19,6 +19,7 @@ export interface ConfigureExerciseOutput {
   id: string;
   name: string;
   userId: string;
+  isActive: boolean;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -81,6 +82,7 @@ export class ConfigureExerciseUseCase {
           weight: e.configuration?.weight ?? null,
         })),
       })),
+      isActive: routine.isActive,
       createdAt: routine.createdAt,
       updatedAt: routine.updatedAt,
     };

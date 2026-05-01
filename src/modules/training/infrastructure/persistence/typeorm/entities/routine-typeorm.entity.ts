@@ -19,6 +19,9 @@ export class RoutineTypeormEntity {
   @Column('uuid')
   userId!: string;
 
+  @Column('boolean', { default: false })
+  isActive!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
 

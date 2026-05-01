@@ -22,6 +22,7 @@ describe('CreateRoutineUseCase', () => {
       findByUserId: jest.fn(),
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
+      findActiveByUserId: jest.fn(),
     };
     useCase = new CreateRoutineUseCase(routineRepository);
   });
@@ -170,6 +171,7 @@ describe('CreateRoutineUseCase', () => {
       expect(result.days[2].dayOfWeek).toBe('friday');
       expect(result.id).toBeDefined();
       expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.isActive).toBe(true);
     });
 
     it('should reject an invalid day of week', async () => {
@@ -184,6 +186,42 @@ describe('CreateRoutineUseCase', () => {
           dayOfWeeks: ['invalidday'],
         }),
       ).rejects.toThrow(RoutineDomainError);
+    });
+  });
+
+  describe('RF-09.0.3: Auto-assign first routine as active', () => {
+    it('should set isActive=true when user has 0 existing routines', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(0);
+      (routineRepository.save as jest.Mock).mockImplementation(
+        (routine: Routine) => Promise.resolve(routine),
+      );
+
+      const result = await useCase.execute(actor, {
+        name: 'First Routine',
+        dayOfWeeks: ['monday'],
+      });
+
+      expect(result.isActive).toBe(true);
+    });
+
+    it('should set isActive=false when user already has routines', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(2);
+      (routineRepository.save as jest.Mock).mockImplementation(
+        (routine: Routine) => Promise.resolve(routine),
+      );
+
+      const result = await useCase.execute(actor, {
+        name: 'Third Routine',
+        dayOfWeeks: ['monday'],
+      });
+
+      expect(result.isActive).toBe(false);
     });
   });
 });
