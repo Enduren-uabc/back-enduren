@@ -42,4 +42,13 @@ export class TypeormWorkoutSessionRepository implements WorkoutSessionRepository
     }
     return WorkoutSessionMapper.toDomain(ormEntity);
   }
+
+  public async findFinishedByUserId(userId: string): Promise<WorkoutSession[]> {
+    const ormEntities = await this.ormRepo.find({
+      where: { userId, status: 'finished' },
+      relations: ['exercises', 'exercises.workoutSets'],
+      order: { startedAt: 'DESC' },
+    });
+    return ormEntities.map((e) => WorkoutSessionMapper.toDomain(e));
+  }
 }

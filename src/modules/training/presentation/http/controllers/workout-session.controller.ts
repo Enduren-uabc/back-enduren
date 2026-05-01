@@ -17,6 +17,8 @@ import {
 import { FinishWorkoutSessionUseCase } from '../../../application/use-cases/finish-workout-session/finish-workout-session.use-case';
 import { ResumeWorkoutSessionUseCase } from '../../../application/use-cases/resume-workout-session/resume-workout-session.use-case';
 import { GetWorkoutSessionUseCase } from '../../../application/use-cases/get-workout-session/get-workout-session.use-case';
+import { GetWorkoutSessionHistoryUseCase } from '../../../application/use-cases/get-workout-session-history/get-workout-session-history.use-case';
+import { GetWorkoutSessionDetailUseCase } from '../../../application/use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
 import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
@@ -28,9 +30,11 @@ import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.req
 import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
 import {
   WorkoutSessionResponseDto,
+  WorkoutSessionDetailResponseDto,
   WorkoutExerciseResponseDto,
   WorkoutSetResponseDto,
 } from '../dtos/workout-session.response';
+import { WorkoutSessionSummaryResponseDto } from '../dtos/workout-session-summary.response';
 import { WorkoutSessionDomainErrorFilter } from '../filters/workout-session-domain-error.filter';
 
 @Controller('workout-sessions')
@@ -40,6 +44,8 @@ export class WorkoutSessionController {
   private readonly finishWorkoutSessionUseCase: FinishWorkoutSessionUseCase;
   private readonly resumeWorkoutSessionUseCase: ResumeWorkoutSessionUseCase;
   private readonly getWorkoutSessionUseCase: GetWorkoutSessionUseCase;
+  private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase;
+  private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase;
   private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase;
   private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase;
   private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase;
@@ -63,6 +69,14 @@ export class WorkoutSessionController {
     );
     this.getWorkoutSessionUseCase = new GetWorkoutSessionUseCase(
       workoutSessionRepository,
+    );
+    this.getWorkoutSessionHistoryUseCase = new GetWorkoutSessionHistoryUseCase(
+      workoutSessionRepository,
+      routineRepository,
+    );
+    this.getWorkoutSessionDetailUseCase = new GetWorkoutSessionDetailUseCase(
+      workoutSessionRepository,
+      routineRepository,
     );
     this.registerSetRepsAndWeightUseCase = new RegisterSetRepsAndWeightUseCase(
       workoutSessionRepository,
@@ -108,15 +122,34 @@ export class WorkoutSessionController {
     return this.mapToResponse(result);
   }
 
+  @Get('history')
+  public async history(): Promise<WorkoutSessionSummaryResponseDto[]> {
+    const results = await this.getWorkoutSessionHistoryUseCase.execute(
+      this.currentActor,
+    );
+    return results.map((r) => {
+      const dto = new WorkoutSessionSummaryResponseDto();
+      dto.id = r.id;
+      dto.routineId = r.routineId;
+      dto.routineName = r.routineName;
+      dto.startedAt = r.startedAt;
+      dto.finishedAt = r.finishedAt;
+      dto.durationMinutes = r.durationMinutes;
+      dto.exerciseCount = r.exerciseCount;
+      dto.status = r.status;
+      return dto;
+    });
+  }
+
   @Get(':sessionId')
   public async get(
     @Param('sessionId') sessionId: string,
-  ): Promise<WorkoutSessionResponseDto> {
-    const result = await this.getWorkoutSessionUseCase.execute(
+  ): Promise<WorkoutSessionDetailResponseDto> {
+    const result = await this.getWorkoutSessionDetailUseCase.execute(
       this.currentActor,
       { sessionId },
     );
-    return this.mapToResponse(result);
+    return this.mapToDetailResponse(result);
   }
 
   @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber')
@@ -212,6 +245,62 @@ export class WorkoutSessionController {
     });
     response.startedAt = result.startedAt;
     response.finishedAt = result.finishedAt;
+    return response;
+  }
+
+  private mapToDetailResponse(result: {
+    id: string;
+    userId: string;
+    routineId: string;
+    routineName: string;
+    status: string;
+    currentExerciseIndex: number;
+    exercises: Array<{
+      exerciseId: string;
+      exerciseName: string;
+      order: number;
+      sets: number;
+      repsPerSet: number;
+      weight: number;
+      workoutSets: Array<{
+        setNumber: number;
+        repsPerformed: number | null;
+        weightUsed: number | null;
+        completed: boolean;
+      }>;
+    }>;
+    startedAt: Date;
+    finishedAt: Date | null;
+    durationMinutes: number | null;
+  }): WorkoutSessionDetailResponseDto {
+    const response = new WorkoutSessionDetailResponseDto();
+    response.id = result.id;
+    response.userId = result.userId;
+    response.routineId = result.routineId;
+    response.routineName = result.routineName;
+    response.status = result.status;
+    response.currentExerciseIndex = result.currentExerciseIndex;
+    response.exercises = result.exercises.map((ex) => {
+      const exDto = new WorkoutExerciseResponseDto();
+      exDto.exerciseId = ex.exerciseId;
+      exDto.exerciseName = ex.exerciseName;
+      exDto.order = ex.order;
+      exDto.sets = ex.sets;
+      exDto.repsPerSet = ex.repsPerSet;
+      exDto.weight = ex.weight;
+      exDto.workoutSets = ex.workoutSets.map((ws) => {
+        const wsDto = new WorkoutSetResponseDto();
+        wsDto.setNumber = ws.setNumber;
+        wsDto.repsPerformed = ws.repsPerformed;
+        wsDto.weightUsed = ws.weightUsed;
+        wsDto.completed = ws.completed;
+        return wsDto;
+      });
+      return exDto;
+    });
+    response.startedAt = result.startedAt;
+    response.finishedAt = result.finishedAt;
+    response.durationMinutes = result.durationMinutes;
     return response;
   }
 }

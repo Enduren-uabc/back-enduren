@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   WorkoutSessionDomainError,
@@ -36,6 +37,8 @@ export class WorkoutSessionDomainErrorFilter implements ExceptionFilter {
         throw new NotFoundException(host.message);
       case WorkoutSessionErrorCode.SESSION_ALREADY_AT_LAST_EXERCISE:
         throw new ConflictException(host.message);
+      case WorkoutSessionErrorCode.SESSION_NOT_OWNED:
+        throw new ForbiddenException(host.message);
       default:
         throw new BadRequestException(host.message);
     }

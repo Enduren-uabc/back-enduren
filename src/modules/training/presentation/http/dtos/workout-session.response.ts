@@ -25,3 +25,16 @@ export class WorkoutSessionResponseDto {
   startedAt!: Date;
   finishedAt!: Date | null;
 }
+
+export class WorkoutSessionDetailResponseDto {
+  id!: string;
+  userId!: string;
+  routineId!: string;
+  routineName!: string;
+  status!: string;
+  currentExerciseIndex!: number;
+  exercises!: WorkoutExerciseResponseDto[];
+  startedAt!: Date;
+  finishedAt!: Date | null;
+  durationMinutes!: number | null;
+}
