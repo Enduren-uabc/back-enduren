@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Delete,
+  Get,
   Patch,
   Body,
   Param,
@@ -18,6 +19,9 @@ import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases
 import { ConfigureExerciseUseCase } from '../../../application/use-cases/configure-exercise/configure-exercise.use-case';
 import { ActivateRoutineUseCase } from '../../../application/use-cases/activate-routine/activate-routine.use-case';
 import { DeactivateRoutineUseCase } from '../../../application/use-cases/deactivate-routine/deactivate-routine.use-case';
+import { ListRoutinesUseCase } from '../../../application/use-cases/list-routines/list-routines.use-case';
+import { GetRoutineDetailUseCase } from '../../../application/use-cases/get-routine-detail/get-routine-detail.use-case';
+import { DeleteRoutineUseCase } from '../../../application/use-cases/delete-routine/delete-routine.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
@@ -28,6 +32,8 @@ import {
   RoutineDayResponseDto,
   ExerciseResponseDto,
 } from '../dtos/routine.response';
+import { ListRoutinesResponseDto } from '../dtos/list-routines.response';
+import { DeleteRoutineResponseDto } from '../dtos/delete-routine.response';
 import { isValidDayOfWeek } from '../../../domain/value-objects/routine-day.value-object';
 import { RoutineDomainErrorFilter } from '../filters/routine-domain-error.filter';
 
@@ -40,6 +46,9 @@ export class RoutineController {
   private readonly configureExerciseUseCase: ConfigureExerciseUseCase;
   private readonly activateRoutineUseCase: ActivateRoutineUseCase;
   private readonly deactivateRoutineUseCase: DeactivateRoutineUseCase;
+  private readonly listRoutinesUseCase: ListRoutinesUseCase;
+  private readonly getRoutineDetailUseCase: GetRoutineDetailUseCase;
+  private readonly deleteRoutineUseCase: DeleteRoutineUseCase;
 
   constructor(
     @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
@@ -59,6 +68,31 @@ export class RoutineController {
     this.deactivateRoutineUseCase = new DeactivateRoutineUseCase(
       routineRepository,
     );
+    this.listRoutinesUseCase = new ListRoutinesUseCase(routineRepository);
+    this.getRoutineDetailUseCase = new GetRoutineDetailUseCase(
+      routineRepository,
+    );
+    this.deleteRoutineUseCase = new DeleteRoutineUseCase(routineRepository);
+  }
+
+  @Get()
+  public async list(): Promise<ListRoutinesResponseDto> {
+    const results = await this.listRoutinesUseCase.execute(this.currentActor);
+
+    const response = new ListRoutinesResponseDto();
+    response.routines = results.map((r) => this.mapToResponse(r));
+    return response;
+  }
+
+  @Get(':routineId')
+  public async getDetail(
+    @Param('routineId') routineId: string,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.getRoutineDetailUseCase.execute(
+      this.currentActor,
+      { routineId },
+    );
+    return this.mapToResponse(result);
   }
 
   @Post()
@@ -163,6 +197,20 @@ export class RoutineController {
     );
 
     return this.mapToResponse(result);
+  }
+
+  @Delete(':routineId')
+  public async delete(
+    @Param('routineId') routineId: string,
+  ): Promise<DeleteRoutineResponseDto> {
+    const result = await this.deleteRoutineUseCase.execute(this.currentActor, {
+      routineId,
+    });
+
+    const response = new DeleteRoutineResponseDto();
+    response.id = result.id;
+    response.deleted = result.deleted;
+    return response;
   }
 
   private mapToResponse(result: {

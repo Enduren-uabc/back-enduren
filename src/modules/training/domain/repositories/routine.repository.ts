@@ -7,4 +7,6 @@ export interface RoutineRepository {
   existsByNameForUser(name: string, userId: string): Promise<boolean>;
   countByUserId(userId: string): Promise<number>;
   findActiveByUserId(userId: string): Promise<Routine | null>;
+  findByIdAndUserId(id: string, userId: string): Promise<Routine | null>;
+  delete(routine: Routine): Promise<void>;
 }

@@ -47,6 +47,8 @@ export class RoutineDomainErrorFilter implements ExceptionFilter {
         throw new BadRequestException(host.message);
       case RoutineErrorCode.EXERCISE_WEIGHT_INVALID:
         throw new BadRequestException(host.message);
+      case RoutineErrorCode.ROUTINE_IS_ACTIVE:
+        throw new ConflictException(host.message);
       default:
         throw new BadRequestException(host.message);
     }
