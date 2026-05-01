@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   Inject,
+  UseFilters,
 } from '@nestjs/common';
 import {
   CreateRoutineUseCase,
@@ -15,6 +16,8 @@ import {
 import { AddExerciseToRoutineDayUseCase } from '../../../application/use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
 import { ConfigureExerciseUseCase } from '../../../application/use-cases/configure-exercise/configure-exercise.use-case';
+import { ActivateRoutineUseCase } from '../../../application/use-cases/activate-routine/activate-routine.use-case';
+import { DeactivateRoutineUseCase } from '../../../application/use-cases/deactivate-routine/deactivate-routine.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
@@ -26,13 +29,17 @@ import {
   ExerciseResponseDto,
 } from '../dtos/routine.response';
 import { isValidDayOfWeek } from '../../../domain/value-objects/routine-day.value-object';
+import { RoutineDomainErrorFilter } from '../filters/routine-domain-error.filter';
 
 @Controller('routines')
+@UseFilters(RoutineDomainErrorFilter)
 export class RoutineController {
   private readonly createRoutineUseCase: CreateRoutineUseCase;
   private readonly addExerciseUseCase: AddExerciseToRoutineDayUseCase;
   private readonly removeExerciseUseCase: RemoveExerciseFromRoutineUseCase;
   private readonly configureExerciseUseCase: ConfigureExerciseUseCase;
+  private readonly activateRoutineUseCase: ActivateRoutineUseCase;
+  private readonly deactivateRoutineUseCase: DeactivateRoutineUseCase;
 
   constructor(
     @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
@@ -46,6 +53,10 @@ export class RoutineController {
       routineRepository,
     );
     this.configureExerciseUseCase = new ConfigureExerciseUseCase(
+      routineRepository,
+    );
+    this.activateRoutineUseCase = new ActivateRoutineUseCase(routineRepository);
+    this.deactivateRoutineUseCase = new DeactivateRoutineUseCase(
       routineRepository,
     );
   }
@@ -125,6 +136,30 @@ export class RoutineController {
         repsPerSet: dto.repsPerSet,
         weight: dto.weight,
       },
+    );
+
+    return this.mapToResponse(result);
+  }
+
+  @Patch(':routineId/activate')
+  public async activate(
+    @Param('routineId') routineId: string,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.activateRoutineUseCase.execute(
+      this.currentActor,
+      { routineId },
+    );
+
+    return this.mapToResponse(result);
+  }
+
+  @Patch(':routineId/deactivate')
+  public async deactivate(
+    @Param('routineId') routineId: string,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.deactivateRoutineUseCase.execute(
+      this.currentActor,
+      { routineId },
     );
 
     return this.mapToResponse(result);
