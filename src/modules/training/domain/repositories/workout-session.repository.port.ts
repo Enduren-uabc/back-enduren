@@ -9,4 +9,8 @@ export interface WorkoutSessionRepository {
   findById(id: string): Promise<WorkoutSession | null>;
   findInProgressByUserId(userId: string): Promise<WorkoutSession | null>;
   findFinishedByUserId(userId: string): Promise<WorkoutSession[]>;
+  findFinishedByUserIdAndExerciseId(
+    userId: string,
+    exerciseId: string,
+  ): Promise<WorkoutSession[]>;
 }
