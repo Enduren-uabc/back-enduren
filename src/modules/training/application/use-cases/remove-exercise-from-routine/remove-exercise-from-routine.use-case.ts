@@ -18,7 +18,14 @@ export interface RemoveExerciseFromRoutineOutput {
   userId: string;
   days: Array<{
     dayOfWeek: string;
-    exercises: Array<{ id: string; name: string; order: number }>;
+    exercises: Array<{
+      id: string;
+      name: string;
+      order: number;
+      sets: number | null;
+      repsPerSet: number | null;
+      weight: number | null;
+    }>;
   }>;
   createdAt: Date;
   updatedAt: Date;
@@ -63,6 +70,9 @@ export class RemoveExerciseFromRoutineUseCase {
           id: e.id,
           name: e.name,
           order: e.order,
+          sets: e.configuration?.sets ?? null,
+          repsPerSet: e.configuration?.repsPerSet ?? null,
+          weight: e.configuration?.weight ?? null,
         })),
       })),
       createdAt: routine.createdAt,

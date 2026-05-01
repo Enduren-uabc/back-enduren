@@ -1,6 +1,7 @@
 import { Routine } from './entities/routine.entity';
 import { RoutineDay } from './value-objects/routine-day.value-object';
 import { Exercise } from './entities/exercise.entity';
+import { ExerciseConfiguration } from './value-objects/exercise-configuration.value-object';
 import {
   RoutineDomainError,
   RoutineErrorCode,
@@ -197,6 +198,64 @@ describe('Exercise Entity', () => {
       expect(exercise.name).toBe('Push-ups');
       expect(exercise.order).toBe(0);
     });
+  });
+});
+
+describe('RoutineDay - configureExercise', () => {
+  it('should configure an exercise in a day (RF-11.0.5)', () => {
+    const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+    const day = RoutineDay.reconstitute('monday', exercises);
+    const updated = day.configureExercise('ex-1', 3, 12, 50);
+    expect(updated.exercises[0].configuration).not.toBeNull();
+    expect(updated.exercises[0].configuration!.sets).toBe(3);
+    expect(updated.exercises[0].configuration!.repsPerSet).toBe(12);
+    expect(updated.exercises[0].configuration!.weight).toBe(50);
+  });
+
+  it('should not mutate the original day when configuring an exercise', () => {
+    const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+    const day = RoutineDay.reconstitute('monday', exercises);
+    day.configureExercise('ex-1', 3, 12, 50);
+    expect(day.exercises[0].configuration).toBeNull();
+  });
+
+  it('should reject configuring a non-existent exercise in day', () => {
+    const day = RoutineDay.create('monday');
+    expect(() => day.configureExercise('nonexistent', 3, 12, 50)).toThrow(
+      RoutineDomainError,
+    );
+    try {
+      day.configureExercise('nonexistent', 3, 12, 50);
+    } catch (error) {
+      expect(error).toBeInstanceOf(RoutineDomainError);
+      expect((error as RoutineDomainError).code).toBe(
+        RoutineErrorCode.EXERCISE_NOT_FOUND,
+      );
+    }
+  });
+
+  it('should reject invalid sets via configureExercise (RF-11.0.1)', () => {
+    const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+    const day = RoutineDay.reconstitute('monday', exercises);
+    expect(() => day.configureExercise('ex-1', 0, 12, 50)).toThrow(
+      RoutineDomainError,
+    );
+  });
+
+  it('should reject invalid repsPerSet via configureExercise (RF-11.0.2)', () => {
+    const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+    const day = RoutineDay.reconstitute('monday', exercises);
+    expect(() => day.configureExercise('ex-1', 3, 0, 50)).toThrow(
+      RoutineDomainError,
+    );
+  });
+
+  it('should reject negative weight via configureExercise (RF-11.0.3)', () => {
+    const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+    const day = RoutineDay.reconstitute('monday', exercises);
+    expect(() => day.configureExercise('ex-1', 3, 12, -5)).toThrow(
+      RoutineDomainError,
+    );
   });
 });
 
@@ -421,6 +480,144 @@ describe('Routine Entity', () => {
       );
       routine.removeExerciseFromDay('monday', 'ex-1');
       expect(routine.days[0].exercises).toHaveLength(1);
+    });
+  });
+
+  describe('configureExercise (RF-11.0.5)', () => {
+    it('should configure an exercise in a day', () => {
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+      const day = RoutineDay.reconstitute('monday', exercises);
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        [day],
+        new Date(),
+        new Date(),
+      );
+
+      const updated = routine.configureExercise('monday', 'ex-1', 3, 12, 50);
+      expect(updated.days[0].exercises[0].configuration).not.toBeNull();
+      expect(updated.days[0].exercises[0].configuration!.sets).toBe(3);
+      expect(updated.days[0].exercises[0].configuration!.repsPerSet).toBe(12);
+      expect(updated.days[0].exercises[0].configuration!.weight).toBe(50);
+    });
+
+    it('should not mutate the original routine', () => {
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+      const day = RoutineDay.reconstitute('monday', exercises);
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        [day],
+        new Date(),
+        new Date(),
+      );
+
+      routine.configureExercise('monday', 'ex-1', 3, 12, 50);
+      expect(routine.days[0].exercises[0].configuration).toBeNull();
+    });
+
+    it('should reject configuring exercise in a non-existent day', () => {
+      const days = [RoutineDay.create('monday')];
+      const routine = Routine.create('id-1', 'My Routine', 'user-1', days);
+      expect(() =>
+        routine.configureExercise('friday', 'ex-1', 3, 12, 50),
+      ).toThrow(RoutineDomainError);
+      try {
+        routine.configureExercise('friday', 'ex-1', 3, 12, 50);
+      } catch (error) {
+        expect(error).toBeInstanceOf(RoutineDomainError);
+        expect((error as RoutineDomainError).code).toBe(
+          RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
+        );
+      }
+    });
+
+    it('should reject configuring a non-existent exercise', () => {
+      const days = [RoutineDay.create('monday')];
+      const routine = Routine.create('id-1', 'My Routine', 'user-1', days);
+      expect(() =>
+        routine.configureExercise('monday', 'nonexistent', 3, 12, 50),
+      ).toThrow(RoutineDomainError);
+      try {
+        routine.configureExercise('monday', 'nonexistent', 3, 12, 50);
+      } catch (error) {
+        expect(error).toBeInstanceOf(RoutineDomainError);
+        expect((error as RoutineDomainError).code).toBe(
+          RoutineErrorCode.EXERCISE_NOT_FOUND,
+        );
+      }
+    });
+
+    it('should reject invalid sets via configureExercise (RF-11.0.1)', () => {
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+      const day = RoutineDay.reconstitute('monday', exercises);
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        [day],
+        new Date(),
+        new Date(),
+      );
+      expect(() =>
+        routine.configureExercise('monday', 'ex-1', 0, 12, 50),
+      ).toThrow(RoutineDomainError);
+    });
+
+    it('should reject invalid repsPerSet via configureExercise (RF-11.0.2)', () => {
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+      const day = RoutineDay.reconstitute('monday', exercises);
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        [day],
+        new Date(),
+        new Date(),
+      );
+      expect(() =>
+        routine.configureExercise('monday', 'ex-1', 3, 0, 50),
+      ).toThrow(RoutineDomainError);
+    });
+
+    it('should reject negative weight via configureExercise (RF-11.0.3)', () => {
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
+      const day = RoutineDay.reconstitute('monday', exercises);
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        [day],
+        new Date(),
+        new Date(),
+      );
+      expect(() =>
+        routine.configureExercise('monday', 'ex-1', 3, 12, -5),
+      ).toThrow(RoutineDomainError);
+    });
+
+    it('should re-configure an already configured exercise', () => {
+      const config = ExerciseConfiguration.reconstitute(3, 12, 50);
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0, config)];
+      const day = RoutineDay.reconstitute('monday', exercises);
+      const routine = Routine.reconstitute(
+        'id-1',
+        'My Routine',
+        'user-1',
+        [day],
+        new Date(),
+        new Date(),
+      );
+
+      const updated = routine.configureExercise('monday', 'ex-1', 5, 8, 60);
+      expect(updated.days[0].exercises[0].configuration!.sets).toBe(5);
+      expect(updated.days[0].exercises[0].configuration!.repsPerSet).toBe(8);
+      expect(updated.days[0].exercises[0].configuration!.weight).toBe(60);
+      // Original unchanged
+      expect(routine.days[0].exercises[0].configuration!.sets).toBe(3);
     });
   });
 });

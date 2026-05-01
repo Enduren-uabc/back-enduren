@@ -1,5 +1,4 @@
 import { Routine } from '../../../domain/entities/routine.entity';
-import { Exercise } from '../../../domain/entities/exercise.entity';
 import {
   RoutineDomainError,
   RoutineErrorCode,
@@ -7,14 +6,16 @@ import {
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
 
-export interface AddExerciseToRoutineDayInput {
+export interface ConfigureExerciseInput {
   routineId: string;
   dayOfWeek: string;
-  name: string;
-  order?: number;
+  exerciseId: string;
+  sets: number;
+  repsPerSet: number;
+  weight: number;
 }
 
-export interface AddExerciseToRoutineDayOutput {
+export interface ConfigureExerciseOutput {
   id: string;
   name: string;
   userId: string;
@@ -33,14 +34,14 @@ export interface AddExerciseToRoutineDayOutput {
   updatedAt: Date;
 }
 
-export class AddExerciseToRoutineDayUseCase {
+export class ConfigureExerciseUseCase {
   constructor(private readonly routineRepository: RoutineRepository) {}
 
   public async execute(
     _actor: CurrentActor,
-    input: AddExerciseToRoutineDayInput,
-  ): Promise<AddExerciseToRoutineDayOutput> {
-    // Validate routine exists
+    input: ConfigureExerciseInput,
+  ): Promise<ConfigureExerciseOutput> {
+    // Validate routine exists (RF-11.0.5)
     const routine = await this.routineRepository.findById(input.routineId);
     if (!routine) {
       throw new RoutineDomainError(
@@ -50,38 +51,21 @@ export class AddExerciseToRoutineDayUseCase {
       );
     }
 
-    // Validate exercise name is non-empty (RF-10.0.3 — day selection required is enforced by route)
-    if (!input.name || input.name.trim().length === 0) {
-      throw new RoutineDomainError(
-        RoutineErrorCode.EXERCISE_NAME_REQUIRED,
-        'Exercise name is required',
-        { name: input.name },
-      );
-    }
-
-    // Determine order: if not provided, place at end of day's exercises
-    const dayOfWeek = input.dayOfWeek;
-    const existingDay = routine.days.find((d) => d.dayOfWeek === dayOfWeek);
-    const order =
-      input.order !== undefined
-        ? input.order
-        : existingDay
-          ? existingDay.exercises.length
-          : 0;
-
-    // Create exercise domain entity (validates name)
-    const exerciseId = crypto.randomUUID();
-    const exercise = Exercise.create(exerciseId, input.name, order);
-
-    // Delegate to aggregate root — enforces day exists and max 10 exercises
-    const updatedRoutine = routine.addExerciseToDay(dayOfWeek, exercise);
+    // Delegate configuration to domain — enforces day exists, exercise exists, and configuration invariants
+    const updatedRoutine = routine.configureExercise(
+      input.dayOfWeek,
+      input.exerciseId,
+      input.sets,
+      input.repsPerSet,
+      input.weight,
+    );
 
     const saved = await this.routineRepository.save(updatedRoutine);
 
     return this.mapToOutput(saved);
   }
 
-  private mapToOutput(routine: Routine): AddExerciseToRoutineDayOutput {
+  private mapToOutput(routine: Routine): ConfigureExerciseOutput {
     return {
       id: routine.id,
       name: routine.name,
