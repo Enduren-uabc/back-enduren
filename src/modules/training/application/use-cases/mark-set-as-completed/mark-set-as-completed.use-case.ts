@@ -5,11 +5,15 @@ import {
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
 
-export interface GetWorkoutSessionInput {
+export const MARK_SET_AS_COMPLETED_PORT = Symbol('MARK_SET_AS_COMPLETED_PORT');
+
+export interface MarkSetAsCompletedInput {
   sessionId: string;
+  exerciseIndex: number;
+  setNumber: number;
 }
 
-export interface GetWorkoutSessionOutput {
+export interface MarkSetAsCompletedOutput {
   id: string;
   userId: string;
   routineId: string;
@@ -34,18 +38,21 @@ export interface GetWorkoutSessionOutput {
 }
 
 /**
- * GetWorkoutSession use case.
- * Retrieves session details by ID for the current actor.
+ * MarkSetAsCompleted use case (RF-12.0.3).
+ * Validates session exists and is IN_PROGRESS,
+ * validates exerciseIndex and setNumber,
+ * delegates to WorkoutSession.markSetAsCompleted,
+ * saves updated session.
  */
-export class GetWorkoutSessionUseCase {
+export class MarkSetAsCompletedUseCase {
   constructor(
     private readonly workoutSessionRepository: WorkoutSessionRepository,
   ) {}
 
   public async execute(
     actor: CurrentActor,
-    input: GetWorkoutSessionInput,
-  ): Promise<GetWorkoutSessionOutput> {
+    input: MarkSetAsCompletedInput,
+  ): Promise<MarkSetAsCompletedOutput> {
     const session = await this.workoutSessionRepository.findById(
       input.sessionId,
     );
@@ -58,13 +65,28 @@ export class GetWorkoutSessionUseCase {
       );
     }
 
+    if (!session.isInProgress()) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Workout session is already finished',
+        { sessionId: input.sessionId },
+      );
+    }
+
+    const updatedSession = session.markSetAsCompleted(
+      input.exerciseIndex,
+      input.setNumber,
+    );
+
+    const saved = await this.workoutSessionRepository.save(updatedSession);
+
     return {
-      id: session.id,
-      userId: session.userId,
-      routineId: session.routineId,
-      status: session.status,
-      currentExerciseIndex: session.currentExerciseIndex,
-      exercises: session.exercises.map((ex) => ({
+      id: saved.id,
+      userId: saved.userId,
+      routineId: saved.routineId,
+      status: saved.status,
+      currentExerciseIndex: saved.currentExerciseIndex,
+      exercises: saved.exercises.map((ex) => ({
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,
         order: ex.order,
@@ -78,8 +100,8 @@ export class GetWorkoutSessionUseCase {
           completed: ws.completed,
         })),
       })),
-      startedAt: session.startedAt,
-      finishedAt: session.finishedAt,
+      startedAt: saved.startedAt,
+      finishedAt: saved.finishedAt,
     };
   }
 }

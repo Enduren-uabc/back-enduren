@@ -5,11 +5,19 @@ import {
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
 
-export interface GetWorkoutSessionInput {
+export const REGISTER_SET_REPS_AND_WEIGHT_PORT = Symbol(
+  'REGISTER_SET_REPS_AND_WEIGHT_PORT',
+);
+
+export interface RegisterSetRepsAndWeightInput {
   sessionId: string;
+  exerciseIndex: number;
+  setNumber: number;
+  repsPerformed: number;
+  weightUsed: number;
 }
 
-export interface GetWorkoutSessionOutput {
+export interface RegisterSetRepsAndWeightOutput {
   id: string;
   userId: string;
   routineId: string;
@@ -34,18 +42,21 @@ export interface GetWorkoutSessionOutput {
 }
 
 /**
- * GetWorkoutSession use case.
- * Retrieves session details by ID for the current actor.
+ * RegisterSetRepsAndWeight use case (RF-12.0.2).
+ * Validates session exists and is IN_PROGRESS,
+ * validates exerciseIndex and setNumber are valid for the session,
+ * delegates to WorkoutSession.registerSetRepsAndWeight,
+ * saves updated session.
  */
-export class GetWorkoutSessionUseCase {
+export class RegisterSetRepsAndWeightUseCase {
   constructor(
     private readonly workoutSessionRepository: WorkoutSessionRepository,
   ) {}
 
   public async execute(
     actor: CurrentActor,
-    input: GetWorkoutSessionInput,
-  ): Promise<GetWorkoutSessionOutput> {
+    input: RegisterSetRepsAndWeightInput,
+  ): Promise<RegisterSetRepsAndWeightOutput> {
     const session = await this.workoutSessionRepository.findById(
       input.sessionId,
     );
@@ -58,13 +69,30 @@ export class GetWorkoutSessionUseCase {
       );
     }
 
+    if (!session.isInProgress()) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Workout session is already finished',
+        { sessionId: input.sessionId },
+      );
+    }
+
+    const updatedSession = session.registerSetRepsAndWeight(
+      input.exerciseIndex,
+      input.setNumber,
+      input.repsPerformed,
+      input.weightUsed,
+    );
+
+    const saved = await this.workoutSessionRepository.save(updatedSession);
+
     return {
-      id: session.id,
-      userId: session.userId,
-      routineId: session.routineId,
-      status: session.status,
-      currentExerciseIndex: session.currentExerciseIndex,
-      exercises: session.exercises.map((ex) => ({
+      id: saved.id,
+      userId: saved.userId,
+      routineId: saved.routineId,
+      status: saved.status,
+      currentExerciseIndex: saved.currentExerciseIndex,
+      exercises: saved.exercises.map((ex) => ({
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,
         order: ex.order,
@@ -78,8 +106,8 @@ export class GetWorkoutSessionUseCase {
           completed: ws.completed,
         })),
       })),
-      startedAt: session.startedAt,
-      finishedAt: session.finishedAt,
+      startedAt: saved.startedAt,
+      finishedAt: saved.finishedAt,
     };
   }
 }

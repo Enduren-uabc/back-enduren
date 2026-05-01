@@ -21,6 +21,9 @@ export class WorkoutSessionTypeormEntity {
   @Column('varchar')
   status!: string;
 
+  @Column('int', { default: 0 })
+  currentExerciseIndex!: number;
+
   @CreateDateColumn()
   startedAt!: Date;
 

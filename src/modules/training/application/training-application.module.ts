@@ -4,6 +4,9 @@ import { StartWorkoutSessionUseCase } from './use-cases/start-workout-session/st
 import { FinishWorkoutSessionUseCase } from './use-cases/finish-workout-session/finish-workout-session.use-case';
 import { ResumeWorkoutSessionUseCase } from './use-cases/resume-workout-session/resume-workout-session.use-case';
 import { GetWorkoutSessionUseCase } from './use-cases/get-workout-session/get-workout-session.use-case';
+import { RegisterSetRepsAndWeightUseCase } from './use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
+import { MarkSetAsCompletedUseCase } from './use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
+import { AdvanceToNextExerciseUseCase } from './use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
 
 @Module({
   providers: [
@@ -12,6 +15,9 @@ import { GetWorkoutSessionUseCase } from './use-cases/get-workout-session/get-wo
     FinishWorkoutSessionUseCase,
     ResumeWorkoutSessionUseCase,
     GetWorkoutSessionUseCase,
+    RegisterSetRepsAndWeightUseCase,
+    MarkSetAsCompletedUseCase,
+    AdvanceToNextExerciseUseCase,
   ],
   exports: [
     CreateRoutineUseCase,
@@ -19,6 +25,9 @@ import { GetWorkoutSessionUseCase } from './use-cases/get-workout-session/get-wo
     FinishWorkoutSessionUseCase,
     ResumeWorkoutSessionUseCase,
     GetWorkoutSessionUseCase,
+    RegisterSetRepsAndWeightUseCase,
+    MarkSetAsCompletedUseCase,
+    AdvanceToNextExerciseUseCase,
   ],
 })
 export class TrainingApplicationModule {}

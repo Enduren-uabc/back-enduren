@@ -1,4 +1,8 @@
 import { WorkoutSet } from './workout-set.value-object';
+import {
+  WorkoutSessionDomainError,
+  WorkoutSessionErrorCode,
+} from '../errors/workout-session-domain.error';
 
 /**
  * WorkoutExercise value object.
@@ -6,6 +10,7 @@ import { WorkoutSet } from './workout-set.value-object';
  * This is a snapshot — it is NOT the same as the Routine's Exercise entity.
  * Contains: exerciseId, exerciseName, order, configuration (sets, repsPerSet, weight),
  * and a list of WorkoutSet entries (initially all pending/empty).
+ * Immutable: registerSetRepsAndWeight(), markSetAsCompleted() return new instances.
  */
 export class WorkoutExercise {
   public readonly exerciseId: string;
@@ -110,6 +115,84 @@ export class WorkoutExercise {
       weight,
       workoutSets,
     );
+  }
+
+  /**
+   * Registers reps and weight for a specific set in this exercise.
+   * Delegates to WorkoutSet.registerRepsAndWeight().
+   * Returns a new WorkoutExercise with the updated sets array.
+   */
+  public registerSetRepsAndWeight(
+    setNumber: number,
+    repsPerformed: number,
+    weightUsed: number,
+  ): WorkoutExercise {
+    const setIndex = this.workoutSets.findIndex(
+      (ws) => ws.setNumber === setNumber,
+    );
+    if (setIndex === -1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_NOT_FOUND,
+        `Set number ${setNumber} not found in exercise ${this.exerciseName}`,
+        { setNumber, exerciseId: this.exerciseId },
+      );
+    }
+
+    const updatedSet = this.workoutSets[setIndex].registerRepsAndWeight(
+      repsPerformed,
+      weightUsed,
+    );
+    const updatedSets = [...this.workoutSets];
+    updatedSets[setIndex] = updatedSet;
+
+    return new WorkoutExercise(
+      this.exerciseId,
+      this.exerciseName,
+      this.order,
+      this.sets,
+      this.repsPerSet,
+      this.weight,
+      updatedSets,
+    );
+  }
+
+  /**
+   * Marks a specific set as completed in this exercise.
+   * Delegates to WorkoutSet.markAsCompleted().
+   * Returns a new WorkoutExercise with the updated sets array.
+   */
+  public markSetAsCompleted(setNumber: number): WorkoutExercise {
+    const setIndex = this.workoutSets.findIndex(
+      (ws) => ws.setNumber === setNumber,
+    );
+    if (setIndex === -1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_NOT_FOUND,
+        `Set number ${setNumber} not found in exercise ${this.exerciseName}`,
+        { setNumber, exerciseId: this.exerciseId },
+      );
+    }
+
+    const updatedSet = this.workoutSets[setIndex].markAsCompleted();
+    const updatedSets = [...this.workoutSets];
+    updatedSets[setIndex] = updatedSet;
+
+    return new WorkoutExercise(
+      this.exerciseId,
+      this.exerciseName,
+      this.order,
+      this.sets,
+      this.repsPerSet,
+      this.weight,
+      updatedSets,
+    );
+  }
+
+  /**
+   * Checks if all sets in this exercise are completed.
+   */
+  public areAllSetsCompleted(): boolean {
+    return this.workoutSets.every((ws) => ws.completed === true);
   }
 
   public equals(other: WorkoutExercise): boolean {

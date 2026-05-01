@@ -20,6 +20,7 @@ export class WorkoutSessionResponseDto {
   userId!: string;
   routineId!: string;
   status!: string;
+  currentExerciseIndex!: number;
   exercises!: WorkoutExerciseResponseDto[];
   startedAt!: Date;
   finishedAt!: Date | null;

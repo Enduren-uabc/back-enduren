@@ -14,6 +14,7 @@ export interface FinishWorkoutSessionOutput {
   userId: string;
   routineId: string;
   status: string;
+  currentExerciseIndex: number;
   exercises: Array<{
     exerciseId: string;
     exerciseName: string;
@@ -84,6 +85,7 @@ export class FinishWorkoutSessionUseCase {
       userId: saved.userId,
       routineId: saved.routineId,
       status: saved.status,
+      currentExerciseIndex: saved.currentExerciseIndex,
       exercises: saved.exercises.map((ex) => ({
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,

@@ -37,6 +37,7 @@ export class WorkoutSessionMapper {
       ormEntity.routineId,
       ormEntity.status as WorkoutSessionStatus,
       exercises,
+      ormEntity.currentExerciseIndex ?? 0,
       ormEntity.startedAt,
       ormEntity.finishedAt,
     );
@@ -48,6 +49,7 @@ export class WorkoutSessionMapper {
     ormEntity.userId = domain.userId;
     ormEntity.routineId = domain.routineId;
     ormEntity.status = domain.status;
+    ormEntity.currentExerciseIndex = domain.currentExerciseIndex;
     ormEntity.startedAt = domain.startedAt;
     ormEntity.finishedAt = domain.finishedAt;
 
