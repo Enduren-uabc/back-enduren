@@ -1,25 +1,31 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { createTestingApp } from './testing-module';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+describe('App (e2e) - Health check with SQLite', () => {
+  let app: INestApplication;
+  let req: ReturnType<typeof import('supertest')>;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+  beforeAll(async () => {
+    const testingApp = await createTestingApp();
+    app = testingApp.app;
+    req = testingApp.request;
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('application boots and training module responds', async () => {
+    // Smoke test: the app boots with SQLite and the training module is available
+    const response = await req
+      .post('/routines')
+      .send({ name: 'Health Check Routine', dayOfWeeks: ['monday'] })
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      name: 'Health Check Routine',
+      userId: '00000000-0000-0000-0000-000000000001',
+      isActive: true,
+    });
   });
 });

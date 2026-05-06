@@ -1,0 +1,224 @@
+import {
+  RoutineDomainError,
+  RoutineErrorCode,
+} from '../errors/routine-domain.error';
+import { RoutineDay } from '../value-objects/routine-day.value-object';
+import { Exercise } from './exercise.entity';
+
+export class Routine {
+  public readonly id: string;
+  public readonly name: string;
+  public readonly userId: string;
+  public readonly days: RoutineDay[];
+  public readonly isActive: boolean;
+  public readonly createdAt: Date;
+  public readonly updatedAt: Date;
+
+  private constructor(
+    id: string,
+    name: string,
+    userId: string,
+    days: RoutineDay[],
+    isActive: boolean,
+    createdAt: Date,
+    updatedAt: Date,
+  ) {
+    this.id = id;
+    this.name = name;
+    this.userId = userId;
+    this.days = days;
+    this.isActive = isActive;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+  }
+
+  /**
+   * Creates a new Routine with core invariants enforced:
+   * - Name must be non-empty.
+   * - At least one day is required.
+   * - isActive defaults to false unless explicitly set.
+   */
+  public static create(
+    id: string,
+    name: string,
+    userId: string,
+    days: RoutineDay[],
+    isActive: boolean = false,
+  ): Routine {
+    if (!name || name.trim().length === 0) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_NAME_REQUIRED,
+        'Routine name is required',
+        { name },
+      );
+    }
+
+    if (!days || days.length === 0) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_DAYS_MINIMUM,
+        'Routine must have at least one day',
+        { daysCount: days?.length ?? 0 },
+      );
+    }
+
+    const now = new Date();
+    return new Routine(id, name.trim(), userId, [...days], isActive, now, now);
+  }
+
+  /**
+   * Reconstitutes a Routine from persistence without re-running creation invariants.
+   */
+  public static reconstitute(
+    id: string,
+    name: string,
+    userId: string,
+    days: RoutineDay[],
+    isActive: boolean,
+    createdAt: Date,
+    updatedAt: Date,
+  ): Routine {
+    return new Routine(
+      id,
+      name,
+      userId,
+      [...days],
+      isActive,
+      createdAt,
+      updatedAt,
+    );
+  }
+
+  /**
+   * Activates this routine. Returns a new Routine with isActive: true.
+   * No domain invariants to enforce beyond the field change.
+   */
+  public activate(): Routine {
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      this.days,
+      true,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Deactivates this routine. Returns a new Routine with isActive: false.
+   * No domain invariants to enforce beyond the field change.
+   */
+  public deactivate(): Routine {
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      this.days,
+      false,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Adds an exercise to a specific day of the routine.
+   * Enforces: day must exist (RF-10.0.2), day must not exceed 10 exercises (RF-10.0.4, RF-10.0.5).
+   * Returns a new Routine with the exercise added.
+   */
+  public addExerciseToDay(dayOfWeek: string, exercise: Exercise): Routine {
+    const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
+    if (dayIndex === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
+        `Day "${dayOfWeek}" not found in routine`,
+        { dayOfWeek },
+      );
+    }
+
+    const updatedDay = this.days[dayIndex].addExercise(exercise);
+    const updatedDays = [...this.days];
+    updatedDays[dayIndex] = updatedDay;
+
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      updatedDays,
+      this.isActive,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Removes an exercise from a specific day of the routine.
+   * Enforces: day must exist, exercise must exist in day (RF-10.0.6).
+   * Returns a new Routine with the exercise removed.
+   */
+  public removeExerciseFromDay(dayOfWeek: string, exerciseId: string): Routine {
+    const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
+    if (dayIndex === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
+        `Day "${dayOfWeek}" not found in routine`,
+        { dayOfWeek },
+      );
+    }
+
+    const updatedDay = this.days[dayIndex].removeExercise(exerciseId);
+    const updatedDays = [...this.days];
+    updatedDays[dayIndex] = updatedDay;
+
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      updatedDays,
+      this.isActive,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Configures an exercise within a specific day of the routine.
+   * Enforces: day must exist, exercise must exist in day (RF-11.0.5).
+   * Delegates configuration validation to Exercise.configure() (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
+   * Returns a new Routine with the configured exercise.
+   */
+  public configureExercise(
+    dayOfWeek: string,
+    exerciseId: string,
+    sets: number,
+    repsPerSet: number,
+    weight: number,
+  ): Routine {
+    const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
+    if (dayIndex === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
+        `Day "${dayOfWeek}" not found in routine`,
+        { dayOfWeek },
+      );
+    }
+
+    const updatedDay = this.days[dayIndex].configureExercise(
+      exerciseId,
+      sets,
+      repsPerSet,
+      weight,
+    );
+    const updatedDays = [...this.days];
+    updatedDays[dayIndex] = updatedDay;
+
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      updatedDays,
+      this.isActive,
+      this.createdAt,
+      new Date(),
+    );
+  }
+}

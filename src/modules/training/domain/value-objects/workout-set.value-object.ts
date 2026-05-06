@@ -1,0 +1,127 @@
+import {
+  WorkoutSessionDomainError,
+  WorkoutSessionErrorCode,
+} from '../errors/workout-session-domain.error';
+
+/**
+ * WorkoutSet value object.
+ * Represents a single set within an exercise in a workout session.
+ * Contains: setNumber, repsPerformed (nullable), weightUsed (nullable), completed (defaults false).
+ * Immutable: registerRepsAndWeight() and markAsCompleted() return new instances.
+ */
+export class WorkoutSet {
+  public readonly setNumber: number;
+  public readonly repsPerformed: number | null;
+  public readonly weightUsed: number | null;
+  public readonly completed: boolean;
+
+  private constructor(
+    setNumber: number,
+    repsPerformed: number | null,
+    weightUsed: number | null,
+    completed: boolean,
+  ) {
+    this.setNumber = setNumber;
+    this.repsPerformed = repsPerformed;
+    this.weightUsed = weightUsed;
+    this.completed = completed;
+  }
+
+  /**
+   * Creates a new WorkoutSet with default values (pending/empty).
+   * setNumber must be a positive integer.
+   */
+  public static create(setNumber: number): WorkoutSet {
+    if (!Number.isInteger(setNumber) || setNumber < 1) {
+      throw new Error(
+        `WorkoutSet setNumber must be a positive integer, got: ${setNumber}`,
+      );
+    }
+    return new WorkoutSet(setNumber, null, null, false);
+  }
+
+  /**
+   * Reconstitutes a WorkoutSet from persistence without re-running creation invariants.
+   */
+  public static reconstitute(
+    setNumber: number,
+    repsPerformed: number | null,
+    weightUsed: number | null,
+    completed: boolean,
+  ): WorkoutSet {
+    return new WorkoutSet(setNumber, repsPerformed, weightUsed, completed);
+  }
+
+  /**
+   * Registers the reps performed and weight used for this set.
+   * Validates: repsPerformed must be a positive integer (1+), weightUsed must be >= 0.
+   * Throws domain error if set is already completed.
+   * Returns a new WorkoutSet with repsPerformed and weightUsed filled.
+   */
+  public registerRepsAndWeight(
+    repsPerformed: number,
+    weightUsed: number,
+  ): WorkoutSet {
+    if (this.completed) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_ALREADY_COMPLETED,
+        'Cannot register reps and weight for a completed set',
+        { setNumber: this.setNumber },
+      );
+    }
+
+    if (!Number.isInteger(repsPerformed) || repsPerformed < 1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        'repsPerformed must be a positive integer (1+)',
+        { repsPerformed },
+      );
+    }
+
+    if (typeof weightUsed !== 'number' || weightUsed < 0) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        'weightUsed must be a number >= 0',
+        { weightUsed },
+      );
+    }
+
+    return new WorkoutSet(
+      this.setNumber,
+      repsPerformed,
+      weightUsed,
+      this.completed,
+    );
+  }
+
+  /**
+   * Marks this set as completed.
+   * Validates: repsPerformed and weightUsed must already be set (not null).
+   * Throws domain error if required data is missing.
+   */
+  public markAsCompleted(): WorkoutSet {
+    if (this.repsPerformed === null || this.weightUsed === null) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        'Cannot mark set as completed without registering reps and weight first',
+        { setNumber: this.setNumber },
+      );
+    }
+
+    return new WorkoutSet(
+      this.setNumber,
+      this.repsPerformed,
+      this.weightUsed,
+      true,
+    );
+  }
+
+  public equals(other: WorkoutSet): boolean {
+    return (
+      this.setNumber === other.setNumber &&
+      this.repsPerformed === other.repsPerformed &&
+      this.weightUsed === other.weightUsed &&
+      this.completed === other.completed
+    );
+  }
+}
