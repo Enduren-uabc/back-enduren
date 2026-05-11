@@ -8,10 +8,10 @@ import {
   Param,
   Inject,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
 import {
   CreateRoutineUseCase,
-  CURRENT_ACTOR_PORT,
   ROUTINE_REPOSITORY_PORT,
 } from '../../../application/use-cases/create-routine/create-routine.use-case';
 import { AddExerciseToRoutineDayUseCase } from '../../../application/use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
@@ -36,8 +36,12 @@ import { ListRoutinesResponseDto } from '../dtos/list-routines.response';
 import { DeleteRoutineResponseDto } from '../dtos/delete-routine.response';
 import { isValidDayOfWeek } from '../../../domain/value-objects/routine-day.value-object';
 import { RoutineDomainErrorFilter } from '../filters/routine-domain-error.filter';
+import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
+import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 
 @Controller('routines')
+@UseGuards(JwtAuthGuard)
 @UseFilters(RoutineDomainErrorFilter)
 export class RoutineController {
   private readonly createRoutineUseCase: CreateRoutineUseCase;
@@ -52,7 +56,6 @@ export class RoutineController {
 
   constructor(
     @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
-    @Inject(CURRENT_ACTOR_PORT) private readonly currentActor: CurrentActor,
   ) {
     this.createRoutineUseCase = new CreateRoutineUseCase(routineRepository);
     this.addExerciseUseCase = new AddExerciseToRoutineDayUseCase(
@@ -75,9 +78,15 @@ export class RoutineController {
     this.deleteRoutineUseCase = new DeleteRoutineUseCase(routineRepository);
   }
 
+  private getActor(user: JwtPayload): CurrentActor {
+    return { userId: user.sub };
+  }
+
   @Get()
-  public async list(): Promise<ListRoutinesResponseDto> {
-    const results = await this.listRoutinesUseCase.execute(this.currentActor);
+  public async list(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ListRoutinesResponseDto> {
+    const results = await this.listRoutinesUseCase.execute(this.getActor(user));
 
     const response = new ListRoutinesResponseDto();
     response.routines = results.map((r) => this.mapToResponse(r));
@@ -86,10 +95,11 @@ export class RoutineController {
 
   @Get(':routineId')
   public async getDetail(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
   ): Promise<RoutineResponseDto> {
     const result = await this.getRoutineDetailUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { routineId },
     );
     return this.mapToResponse(result);
@@ -97,9 +107,10 @@ export class RoutineController {
 
   @Post()
   public async create(
+    @CurrentUser() user: JwtPayload,
     @Body() dto: CreateRoutineRequestDto,
   ): Promise<RoutineResponseDto> {
-    const result = await this.createRoutineUseCase.execute(this.currentActor, {
+    const result = await this.createRoutineUseCase.execute(this.getActor(user), {
       name: dto.name,
       dayOfWeeks: dto.dayOfWeeks,
     });
@@ -109,6 +120,7 @@ export class RoutineController {
 
   @Post(':routineId/days/:dayOfWeek/exercises')
   public async addExercise(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
     @Param('dayOfWeek') dayOfWeek: string,
     @Body() dto: AddExerciseRequestDto,
@@ -118,7 +130,7 @@ export class RoutineController {
       throw new Error(`Invalid day of week: ${dayOfWeek}`);
     }
 
-    const result = await this.addExerciseUseCase.execute(this.currentActor, {
+    const result = await this.addExerciseUseCase.execute(this.getActor(user), {
       routineId,
       dayOfWeek,
       name: dto.name,
@@ -130,6 +142,7 @@ export class RoutineController {
 
   @Delete(':routineId/days/:dayOfWeek/exercises/:exerciseId')
   public async removeExercise(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
     @Param('dayOfWeek') dayOfWeek: string,
     @Param('exerciseId') exerciseId: string,
@@ -139,7 +152,7 @@ export class RoutineController {
       throw new Error(`Invalid day of week: ${dayOfWeek}`);
     }
 
-    const result = await this.removeExerciseUseCase.execute(this.currentActor, {
+    const result = await this.removeExerciseUseCase.execute(this.getActor(user), {
       routineId,
       dayOfWeek,
       exerciseId,
@@ -150,6 +163,7 @@ export class RoutineController {
 
   @Patch(':routineId/days/:dayOfWeek/exercises/:exerciseId')
   public async configureExercise(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
     @Param('dayOfWeek') dayOfWeek: string,
     @Param('exerciseId') exerciseId: string,
@@ -161,7 +175,7 @@ export class RoutineController {
     }
 
     const result = await this.configureExerciseUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         routineId,
         dayOfWeek,
@@ -177,10 +191,11 @@ export class RoutineController {
 
   @Patch(':routineId/activate')
   public async activate(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
   ): Promise<RoutineResponseDto> {
     const result = await this.activateRoutineUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { routineId },
     );
 
@@ -189,10 +204,11 @@ export class RoutineController {
 
   @Patch(':routineId/deactivate')
   public async deactivate(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
   ): Promise<RoutineResponseDto> {
     const result = await this.deactivateRoutineUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { routineId },
     );
 
@@ -201,9 +217,10 @@ export class RoutineController {
 
   @Delete(':routineId')
   public async delete(
+    @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
   ): Promise<DeleteRoutineResponseDto> {
-    const result = await this.deleteRoutineUseCase.execute(this.currentActor, {
+    const result = await this.deleteRoutineUseCase.execute(this.getActor(user), {
       routineId,
     });
 

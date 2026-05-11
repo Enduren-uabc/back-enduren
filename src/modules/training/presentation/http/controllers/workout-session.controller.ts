@@ -7,6 +7,7 @@ import {
   Param,
   Inject,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
 import {
   StartWorkoutSessionUseCase,
@@ -26,7 +27,6 @@ import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/adv
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
-import { CURRENT_ACTOR_PORT } from '../../../application/use-cases/create-routine/create-routine.use-case';
 import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.request';
 import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
 import {
@@ -41,8 +41,12 @@ import {
   ExerciseProgressRecordDto,
 } from '../dtos/exercise-progress-response';
 import { WorkoutSessionDomainErrorFilter } from '../filters/workout-session-domain-error.filter';
+import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
+import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 
 @Controller('workout-sessions')
+@UseGuards(JwtAuthGuard)
 @UseFilters(WorkoutSessionDomainErrorFilter)
 export class WorkoutSessionController {
   private readonly startWorkoutSessionUseCase: StartWorkoutSessionUseCase;
@@ -61,7 +65,6 @@ export class WorkoutSessionController {
     workoutSessionRepository: WorkoutSessionRepository,
     @Inject(ROUTINE_REPOSITORY_PORT_FOR_SESSION)
     routineRepository: RoutineRepository,
-    @Inject(CURRENT_ACTOR_PORT) private readonly currentActor: CurrentActor,
   ) {
     this.startWorkoutSessionUseCase = new StartWorkoutSessionUseCase(
       workoutSessionRepository,
@@ -98,15 +101,20 @@ export class WorkoutSessionController {
     );
   }
 
+  private getActor(user: JwtPayload): CurrentActor {
+    return { userId: user.sub };
+  }
+
   @Post()
   public async start(
+    @CurrentUser() user: JwtPayload,
     @Body() dto: StartWorkoutSessionRequestDto,
   ): Promise<WorkoutSessionResponseDto> {
     const input: StartWorkoutSessionInput = {
       routineId: dto.routineId,
     };
     const result = await this.startWorkoutSessionUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       input,
     );
     return this.mapToResponse(result);
@@ -114,27 +122,32 @@ export class WorkoutSessionController {
 
   @Patch(':sessionId/finish')
   public async finish(
+    @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.finishWorkoutSessionUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { sessionId },
     );
     return this.mapToResponse(result);
   }
 
   @Get('in-progress')
-  public async resume(): Promise<WorkoutSessionResponseDto> {
+  public async resume(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<WorkoutSessionResponseDto> {
     const result = await this.resumeWorkoutSessionUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
     );
     return this.mapToResponse(result);
   }
 
   @Get('history')
-  public async history(): Promise<WorkoutSessionSummaryResponseDto[]> {
+  public async history(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<WorkoutSessionSummaryResponseDto[]> {
     const results = await this.getWorkoutSessionHistoryUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
     );
     return results.map((r) => {
       const dto = new WorkoutSessionSummaryResponseDto();
@@ -152,10 +165,11 @@ export class WorkoutSessionController {
 
   @Get('exercises/:exerciseId/progress')
   public async exerciseProgress(
+    @CurrentUser() user: JwtPayload,
     @Param('exerciseId') exerciseId: string,
   ): Promise<ExerciseProgressResponseDto> {
     const result = await this.getExerciseProgressUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { exerciseId },
     );
     const response = new ExerciseProgressResponseDto();
@@ -178,10 +192,11 @@ export class WorkoutSessionController {
 
   @Get(':sessionId')
   public async get(
+    @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
   ): Promise<WorkoutSessionDetailResponseDto> {
     const result = await this.getWorkoutSessionDetailUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { sessionId },
     );
     return this.mapToDetailResponse(result);
@@ -189,13 +204,14 @@ export class WorkoutSessionController {
 
   @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber')
   public async registerSetRepsAndWeight(
+    @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
     @Param('exerciseIndex') exerciseIndex: number,
     @Param('setNumber') setNumber: number,
     @Body() dto: RegisterSetRepsAndWeightRequestDto,
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.registerSetRepsAndWeightUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         sessionId,
         exerciseIndex,
@@ -209,12 +225,13 @@ export class WorkoutSessionController {
 
   @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber/complete')
   public async markSetAsCompleted(
+    @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
     @Param('exerciseIndex') exerciseIndex: number,
     @Param('setNumber') setNumber: number,
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.markSetAsCompletedUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { sessionId, exerciseIndex, setNumber },
     );
     return this.mapToResponse(result);
@@ -222,10 +239,11 @@ export class WorkoutSessionController {
 
   @Post(':sessionId/advance-exercise')
   public async advanceToNextExercise(
+    @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.advanceToNextExerciseUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { sessionId },
     );
     return this.mapToResponse(result);
