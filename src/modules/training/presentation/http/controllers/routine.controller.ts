@@ -85,12 +85,9 @@ export class RoutineController {
   @Get()
   public async list(
     @CurrentUser() user: JwtPayload,
-  ): Promise<ListRoutinesResponseDto> {
+  ): Promise<RoutineResponseDto[]> {
     const results = await this.listRoutinesUseCase.execute(this.getActor(user));
-
-    const response = new ListRoutinesResponseDto();
-    response.routines = results.map((r) => this.mapToResponse(r));
-    return response;
+    return results.map((r) => this.mapToResponse(r));
   }
 
   @Get(':routineId')
@@ -254,6 +251,7 @@ export class RoutineController {
     response.name = result.name;
     response.userId = result.userId;
     response.isActive = result.isActive;
+    response.dayOfWeeks = result.days.map((d) => d.dayOfWeek);
     response.days = result.days.map((d) => {
       const dayDto = new RoutineDayResponseDto();
       dayDto.dayOfWeek = d.dayOfWeek;
