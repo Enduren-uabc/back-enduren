@@ -1,14 +1,15 @@
 import { INestApplication } from '@nestjs/common';
 import { createTestingApp } from './testing-module';
+import * as supertest from 'supertest';
 
 describe('Training Routine (e2e) - Smoke Test', () => {
   let app: INestApplication;
-  let request: ReturnType<typeof import('supertest')>;
+  let req: supertest.SuperAgentTest;
 
   beforeAll(async () => {
     const testingApp = await createTestingApp();
     app = testingApp.app;
-    request = testingApp.request;
+    req = testingApp.agent;
   });
 
   afterAll(async () => {
@@ -16,14 +17,23 @@ describe('Training Routine (e2e) - Smoke Test', () => {
   });
 
   it('POST /routines — creates a routine successfully (happy path)', async () => {
-    const response = await request
+    // Register and login to get auth cookies
+    await req
+      .post('/auth/register')
+      .send({
+        email: 'test@routine.com',
+        username: 'testroutine',
+        password: 'Password123',
+      })
+      .expect(201);
+
+    const response = await req
       .post('/routines')
       .send({ name: 'Test Routine', dayOfWeeks: ['monday'] })
       .expect(201);
 
     expect(response.body).toMatchObject({
       name: 'Test Routine',
-      userId: '00000000-0000-0000-0000-000000000001',
       isActive: true,
       days: [{ dayOfWeek: 'monday', exercises: [] }],
     });

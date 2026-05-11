@@ -1,0 +1,18 @@
+export class UserDomainError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'UserDomainError';
+  }
+}
+
+export const UserErrorCode = {
+  USER_EMAIL_ALREADY_EXISTS: 'USER_EMAIL_ALREADY_EXISTS',
+  USER_USERNAME_ALREADY_EXISTS: 'USER_USERNAME_ALREADY_EXISTS',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+  USER_INVALID_PASSWORD: 'USER_INVALID_PASSWORD',
+  USER_ACCOUNT_LOCKED: 'USER_ACCOUNT_LOCKED',
+  USER_WEAK_PASSWORD: 'USER_WEAK_PASSWORD',
+} as const;

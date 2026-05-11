@@ -10,11 +10,9 @@ import { TypeormRoutineRepository } from '../persistence/typeorm/repositories/ty
 import { TypeormWorkoutSessionRepository } from '../persistence/typeorm/repositories/typeorm-workout-session.repository';
 import {
   ROUTINE_REPOSITORY_PORT,
-  CURRENT_ACTOR_PORT,
 } from '../../application/use-cases/create-routine/create-routine.use-case';
 import { WORKOUT_SESSION_REPOSITORY_PORT } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
-import { DevActorService } from './current-actor.provider';
 
 @Module({
   imports: [
@@ -33,10 +31,6 @@ import { DevActorService } from './current-actor.provider';
       useClass: TypeormRoutineRepository,
     },
     {
-      provide: CURRENT_ACTOR_PORT,
-      useClass: DevActorService,
-    },
-    {
       provide: WORKOUT_SESSION_REPOSITORY_PORT,
       useClass: TypeormWorkoutSessionRepository,
     },
@@ -47,7 +41,6 @@ import { DevActorService } from './current-actor.provider';
   ],
   exports: [
     ROUTINE_REPOSITORY_PORT,
-    CURRENT_ACTOR_PORT,
     WORKOUT_SESSION_REPOSITORY_PORT,
     ROUTINE_REPOSITORY_PORT_FOR_SESSION,
   ],

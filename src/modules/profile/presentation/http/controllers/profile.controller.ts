@@ -1,24 +1,32 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   Param,
   Patch,
-  Body,
   Post,
   Query,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
+import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
+import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { ProfilePublicationQueryPort } from '../../../application/ports/profile-publication-query.port';
+import { CheckOnboardingStatusUseCase } from '../../../application/use-cases/check-onboarding-status/check-onboarding-status.use-case';
+import { CreateOrUpdateProfileUseCase } from '../../../application/use-cases/create-or-update-profile/create-or-update-profile.use-case';
 import {
   FollowProfileUseCase,
-  PROFILE_CURRENT_ACTOR_PORT,
   PROFILE_FOLLOW_REPOSITORY_PORT,
   PROFILE_PUBLICATION_QUERY_PORT,
   SOCIAL_PROFILE_REPOSITORY_PORT,
 } from '../../../application/use-cases/follow-profile/follow-profile.use-case';
+import { GetProfileUseCase } from '../../../application/use-cases/get-profile/get-profile.use-case';
 import { GetPublicProfileUseCase } from '../../../application/use-cases/get-public-profile/get-public-profile.use-case';
 import { ListProfileFollowersUseCase } from '../../../application/use-cases/list-profile-followers/list-profile-followers.use-case';
 import { ListProfileFollowingUseCase } from '../../../application/use-cases/list-profile-following/list-profile-following.use-case';
@@ -28,6 +36,8 @@ import { UnfollowProfileUseCase } from '../../../application/use-cases/unfollow-
 import { UpdateOwnProfileUseCase } from '../../../application/use-cases/update-own-profile/update-own-profile.use-case';
 import { ProfileFollowRepository } from '../../../domain/repositories/profile-follow.repository';
 import { SocialProfileRepository } from '../../../domain/repositories/social-profile.repository';
+import { CreateProfileRequestDto } from '../dtos/create-profile.request';
+import { ProfileResponseDto as OnboardingProfileResponseDto } from '../dtos/profile.response';
 import { ProfileDomainErrorFilter } from '../filters/profile-domain-error.filter';
 import { ListProfilePublicationsRequestDto } from '../requests/list-profile-publications.request';
 import { SearchProfilesRequestDto } from '../requests/search-profiles.request';
@@ -36,12 +46,13 @@ import {
   FollowProfileResponseDto,
   ListProfilePublicationsResponseDto,
   ListProfilesResponseDto,
-  ProfileResponseDto,
   ProfilePresenter,
+  ProfileResponseDto as SocialProfileResponseDto,
   PublicProfileResponseDto,
 } from '../responses/profile.response';
 
-@Controller('profiles')
+@Controller()
+@UseGuards(JwtAuthGuard)
 @UseFilters(ProfileDomainErrorFilter)
 export class ProfileController {
   private readonly followProfileUseCase: FollowProfileUseCase;
@@ -60,8 +71,9 @@ export class ProfileController {
     followRepository: ProfileFollowRepository,
     @Inject(PROFILE_PUBLICATION_QUERY_PORT)
     publicationQuery: ProfilePublicationQueryPort,
-    @Inject(PROFILE_CURRENT_ACTOR_PORT)
-    private readonly currentActor: CurrentActor,
+    private readonly createOrUpdateProfileUseCase: CreateOrUpdateProfileUseCase,
+    private readonly getProfileUseCase: GetProfileUseCase,
+    private readonly checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
   ) {
     this.followProfileUseCase = new FollowProfileUseCase(
       profileRepository,
@@ -93,44 +105,90 @@ export class ProfileController {
     );
   }
 
-  @Get('search')
+  @Post('onboarding/profile')
+  @HttpCode(HttpStatus.OK)
+  public async createOrUpdate(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateProfileRequestDto,
+  ): Promise<OnboardingProfileResponseDto> {
+    const result = await this.createOrUpdateProfileUseCase.execute({
+      userId: user.sub,
+      fullName: dto.fullName,
+      birthDate: new Date(dto.birthDate),
+      gender: dto.gender,
+      weight: dto.weight,
+      height: dto.height,
+      experienceLevel: dto.experienceLevel,
+      mainGoal: dto.mainGoal,
+      daysAvailablePerWeek: dto.daysAvailablePerWeek,
+      weightUnit: dto.weightUnit,
+    });
+
+    return this.mapToOnboardingResponse(result);
+  }
+
+  @Get('profile')
+  public async getOwnProfile(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<OnboardingProfileResponseDto | null> {
+    const result = await this.getProfileUseCase.execute(user.sub);
+
+    if (!result) {
+      return null;
+    }
+
+    return this.mapToOnboardingResponse(result);
+  }
+
+  @Get('onboarding/status')
+  public async checkOnboardingStatus(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ completed: boolean }> {
+    return this.checkOnboardingStatusUseCase.execute(user.sub);
+  }
+
+  @Get('profiles/search')
   public async search(
+    @CurrentUser() user: JwtPayload,
     @Query() query: SearchProfilesRequestDto,
   ): Promise<ListProfilesResponseDto> {
     const profiles = await this.searchProfilesUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { query: query.q },
     );
     return ProfilePresenter.listToHttp(profiles);
   }
 
-  @Patch('me')
+  @Patch('profiles/me')
   public async updateMe(
+    @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateOwnProfileRequestDto,
-  ): Promise<ProfileResponseDto> {
+  ): Promise<SocialProfileResponseDto> {
     const profile = await this.updateOwnProfileUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { bio: dto.bio, avatarUrl: dto.avatarUrl },
     );
     return ProfilePresenter.toHttp(profile);
   }
 
-  @Get(':userId')
+  @Get('profiles/:userId')
   public async getPublicProfile(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
   ): Promise<PublicProfileResponseDto> {
     const profile = await this.getPublicProfileUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { userId },
     );
     return ProfilePresenter.publicToHttp(profile);
   }
 
-  @Post(':userId/follow')
+  @Post('profiles/:userId/follow')
   public async follow(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
   ): Promise<FollowProfileResponseDto> {
-    const result = await this.followProfileUseCase.execute(this.currentActor, {
+    const result = await this.followProfileUseCase.execute(this.getActor(user), {
       targetUserId: userId,
     });
 
@@ -141,12 +199,13 @@ export class ProfileController {
     return response;
   }
 
-  @Delete(':userId/follow')
+  @Delete('profiles/:userId/follow')
   public async unfollow(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
   ): Promise<FollowProfileResponseDto> {
     const result = await this.unfollowProfileUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { targetUserId: userId },
     );
 
@@ -157,38 +216,82 @@ export class ProfileController {
     return response;
   }
 
-  @Get(':userId/followers')
+  @Get('profiles/:userId/followers')
   public async followers(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
   ): Promise<ListProfilesResponseDto> {
     const profiles = await this.listFollowersUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { userId },
     );
     return ProfilePresenter.listToHttp(profiles);
   }
 
-  @Get(':userId/following')
+  @Get('profiles/:userId/following')
   public async following(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
   ): Promise<ListProfilesResponseDto> {
     const profiles = await this.listFollowingUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { userId },
     );
     return ProfilePresenter.listToHttp(profiles);
   }
 
-  @Get(':userId/publications')
+  @Get('profiles/:userId/publications')
   public async publications(
+    @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
     @Query() query: ListProfilePublicationsRequestDto,
   ): Promise<ListProfilePublicationsResponseDto> {
-    const page = await this.listPublicationsUseCase.execute(this.currentActor, {
+    const page = await this.listPublicationsUseCase.execute(this.getActor(user), {
       userId,
       limit: query.limit,
       offset: query.offset,
     });
     return ProfilePresenter.publicationsToHttp(page);
+  }
+
+  private getActor(user: JwtPayload): CurrentActor {
+    return { userId: user.sub };
+  }
+
+  private mapToOnboardingResponse(result: {
+    id: string;
+    userId: string;
+    fullName: string;
+    birthDate: Date;
+    gender: string;
+    weight: number;
+    height: number;
+    experienceLevel: string;
+    mainGoal: string;
+    daysAvailablePerWeek: number;
+    weightUnit: string;
+    onboardingCompleted: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }): OnboardingProfileResponseDto {
+    const response = new OnboardingProfileResponseDto();
+    response.id = result.id;
+    response.userId = result.userId;
+    response.fullName = result.fullName;
+    response.birthDate =
+      result.birthDate instanceof Date
+        ? result.birthDate.toISOString().split('T')[0]
+        : String(result.birthDate).split('T')[0];
+    response.gender = result.gender;
+    response.weight = result.weight;
+    response.height = result.height;
+    response.experienceLevel = result.experienceLevel;
+    response.mainGoal = result.mainGoal;
+    response.daysAvailablePerWeek = result.daysAvailablePerWeek;
+    response.weightUnit = result.weightUnit;
+    response.onboardingCompleted = result.onboardingCompleted;
+    response.createdAt = result.createdAt;
+    response.updatedAt = result.updatedAt;
+    return response;
   }
 }

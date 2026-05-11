@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { TrainingModule } from './modules/training/training.module';
 import { PublicationModule } from './modules/publication/publication.module';
 import { ProfileModule } from './modules/profile/profile.module';
-import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -30,12 +33,19 @@ import { AuthModule } from './modules/auth/auth.module';
         migrationsRun: true,
       }),
     }),
+    AuthModule,
+    UsersModule,
     TrainingModule,
     PublicationModule,
     ProfileModule,
-    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

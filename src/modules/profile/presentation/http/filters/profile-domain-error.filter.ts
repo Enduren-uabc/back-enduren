@@ -16,6 +16,7 @@ export class ProfileDomainErrorFilter implements ExceptionFilter {
     switch (error.code) {
       case ProfileErrorCode.PROFILE_NOT_FOUND:
         throw new NotFoundException(error.message);
+      case ProfileErrorCode.PROFILE_ALREADY_EXISTS:
       case ProfileErrorCode.PROFILE_SELF_FOLLOW_NOT_ALLOWED:
         throw new ConflictException(error.message);
       case ProfileErrorCode.PROFILE_DISPLAY_NAME_REQUIRED:
