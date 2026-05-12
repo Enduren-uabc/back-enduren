@@ -84,7 +84,7 @@ export class WorkoutExercise {
     }
 
     const workoutSets: WorkoutSet[] = targetSets.map((ts) =>
-      WorkoutSet.create(ts.setNumber),
+      WorkoutSet.create(ts.setNumber, ts.reps, ts.weight),
     );
 
     return new WorkoutExercise(

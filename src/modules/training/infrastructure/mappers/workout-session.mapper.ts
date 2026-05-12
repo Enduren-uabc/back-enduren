@@ -17,6 +17,8 @@ export class WorkoutSessionMapper {
           ws.repsPerformed,
           ws.weightUsed,
           ws.completed,
+          ws.targetReps,
+          ws.targetWeight,
         ),
       );
 
@@ -77,6 +79,8 @@ export class WorkoutSessionMapper {
         wsOrm.setNumber = ws.setNumber;
         wsOrm.repsPerformed = ws.repsPerformed;
         wsOrm.weightUsed = ws.weightUsed;
+        wsOrm.targetReps = ws.targetReps;
+        wsOrm.targetWeight = ws.targetWeight;
         wsOrm.completed = ws.completed;
         return wsOrm;
       });
