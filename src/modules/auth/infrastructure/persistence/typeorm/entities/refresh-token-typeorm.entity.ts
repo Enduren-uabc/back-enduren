@@ -11,12 +11,12 @@ export class RefreshTokenTypeormEntity {
   @Column('uuid')
   userId!: string;
 
-  @Column('timestamp')
+  @Column('datetime')
   expiresAt!: Date;
 
   @CreateDateColumn()
   createdAt!: Date;
 
-  @Column('timestamp', { nullable: true })
+  @Column('datetime', { nullable: true })
   usedAt!: Date | null;
 }

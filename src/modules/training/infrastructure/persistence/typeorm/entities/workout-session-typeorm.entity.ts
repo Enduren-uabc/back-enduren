@@ -27,7 +27,7 @@ export class WorkoutSessionTypeormEntity {
   @CreateDateColumn()
   startedAt!: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   finishedAt!: Date | null;
 
   @OneToMany(
