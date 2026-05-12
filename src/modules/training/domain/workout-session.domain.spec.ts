@@ -468,6 +468,22 @@ describe('WorkoutExercise value object', () => {
       expect(exercise.workoutSets[0].weightUsed).toBeNull();
     });
 
+    it('should clone targetReps and targetWeight from routine sets into workoutSets', () => {
+      const exercise = WorkoutExercise.create(
+        'exercise-1',
+        'Bench Press',
+        1,
+        targetSets3,
+      );
+
+      expect(exercise.workoutSets[0].targetReps).toBe(10);
+      expect(exercise.workoutSets[0].targetWeight).toBe(50);
+      expect(exercise.workoutSets[1].targetReps).toBe(10);
+      expect(exercise.workoutSets[1].targetWeight).toBe(50);
+      expect(exercise.workoutSets[2].targetReps).toBe(10);
+      expect(exercise.workoutSets[2].targetWeight).toBe(50);
+    });
+
     it('should reject empty exerciseId', () => {
       expect(() =>
         WorkoutExercise.create('', 'Bench Press', 1, targetSets3),
@@ -673,6 +689,19 @@ describe('WorkoutSet value object', () => {
       expect(set.setNumber).toBe(1);
       expect(set.repsPerformed).toBeNull();
       expect(set.weightUsed).toBeNull();
+      expect(set.targetReps).toBeNull();
+      expect(set.targetWeight).toBeNull();
+      expect(set.completed).toBe(false);
+    });
+
+    it('should create a WorkoutSet with targetReps and targetWeight', () => {
+      const set = WorkoutSet.create(1, 10, 50);
+
+      expect(set.setNumber).toBe(1);
+      expect(set.targetReps).toBe(10);
+      expect(set.targetWeight).toBe(50);
+      expect(set.repsPerformed).toBeNull();
+      expect(set.weightUsed).toBeNull();
       expect(set.completed).toBe(false);
     });
 
@@ -694,18 +723,33 @@ describe('WorkoutSet value object', () => {
       expect(set.repsPerformed).toBe(10);
       expect(set.weightUsed).toBe(50);
       expect(set.completed).toBe(true);
+      expect(set.targetReps).toBeNull();
+      expect(set.targetWeight).toBeNull();
+    });
+
+    it('should reconstitute from persistence with target values', () => {
+      const set = WorkoutSet.reconstitute(1, 10, 50, true, 12, 55);
+
+      expect(set.setNumber).toBe(1);
+      expect(set.repsPerformed).toBe(10);
+      expect(set.weightUsed).toBe(50);
+      expect(set.completed).toBe(true);
+      expect(set.targetReps).toBe(12);
+      expect(set.targetWeight).toBe(55);
     });
   });
 
   describe('registerRepsAndWeight', () => {
     it('should register reps and weight for a pending set', () => {
-      const set = WorkoutSet.create(1);
+      const set = WorkoutSet.create(1, 10, 50);
       const updated = set.registerRepsAndWeight(10, 50);
 
       expect(updated.repsPerformed).toBe(10);
       expect(updated.weightUsed).toBe(50);
       expect(updated.completed).toBe(false);
       expect(updated.setNumber).toBe(1);
+      expect(updated.targetReps).toBe(10);
+      expect(updated.targetWeight).toBe(50);
     });
 
     it('should throw SESSION_SET_ALREADY_COMPLETED when set is already completed', () => {
@@ -779,13 +823,15 @@ describe('WorkoutSet value object', () => {
 
   describe('markAsCompleted', () => {
     it('should mark a set as completed when reps and weight are set', () => {
-      const set = WorkoutSet.create(1);
+      const set = WorkoutSet.create(1, 12, 55);
       const withReps = set.registerRepsAndWeight(10, 50);
       const completed = withReps.markAsCompleted();
 
       expect(completed.completed).toBe(true);
       expect(completed.repsPerformed).toBe(10);
       expect(completed.weightUsed).toBe(50);
+      expect(completed.targetReps).toBe(12);
+      expect(completed.targetWeight).toBe(55);
     });
 
     it('should throw SESSION_SET_MISSING_REQUIRED_DATA when reps are not set', () => {

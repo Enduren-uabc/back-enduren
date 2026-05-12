@@ -270,6 +270,8 @@ export class WorkoutSessionController {
         setNumber: number;
         repsPerformed: number | null;
         weightUsed: number | null;
+        targetReps: number | null;
+        targetWeight: number | null;
         completed: boolean;
       }>;
     }>;
@@ -299,6 +301,8 @@ export class WorkoutSessionController {
         wsDto.setNumber = ws.setNumber;
         wsDto.repsPerformed = ws.repsPerformed;
         wsDto.weightUsed = ws.weightUsed;
+        wsDto.targetReps = ws.targetReps;
+        wsDto.targetWeight = ws.targetWeight;
         wsDto.completed = ws.completed;
         return wsDto;
       });
@@ -329,6 +333,8 @@ export class WorkoutSessionController {
         setNumber: number;
         repsPerformed: number | null;
         weightUsed: number | null;
+        targetReps: number | null;
+        targetWeight: number | null;
         completed: boolean;
       }>;
     }>;
@@ -360,6 +366,8 @@ export class WorkoutSessionController {
         wsDto.setNumber = ws.setNumber;
         wsDto.repsPerformed = ws.repsPerformed;
         wsDto.weightUsed = ws.weightUsed;
+        wsDto.targetReps = ws.targetReps;
+        wsDto.targetWeight = ws.targetWeight;
         wsDto.completed = ws.completed;
         return wsDto;
       });

@@ -118,6 +118,10 @@ describe('StartWorkoutSessionUseCase', () => {
       expect(result.exercises[0].targetSets[2].reps).toBe(8);
       expect(result.exercises[0].targetSets[2].weight).toBe(55);
       expect(result.exercises[0].workoutSets).toHaveLength(3);
+      expect(result.exercises[0].workoutSets[0].targetReps).toBe(10);
+      expect(result.exercises[0].workoutSets[0].targetWeight).toBe(50);
+      expect(result.exercises[0].workoutSets[2].targetReps).toBe(8);
+      expect(result.exercises[0].workoutSets[2].targetWeight).toBe(55);
 
       // Exercise without configuration (defaults)
       expect(result.exercises[1].exerciseId).toBe('exercise-2');
@@ -125,6 +129,8 @@ describe('StartWorkoutSessionUseCase', () => {
       expect(result.exercises[1].targetSets).toHaveLength(3);
       expect(result.exercises[1].targetSets[0].reps).toBe(10);
       expect(result.exercises[1].targetSets[0].weight).toBe(0);
+      expect(result.exercises[1].workoutSets[0].targetReps).toBe(10);
+      expect(result.exercises[1].workoutSets[0].targetWeight).toBe(0);
     });
   });
 
