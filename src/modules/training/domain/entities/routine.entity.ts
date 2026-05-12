@@ -12,6 +12,7 @@ export class Routine {
   public readonly userId: string;
   public readonly days: RoutineDay[];
   public readonly isActive: boolean;
+  public readonly trainingStrategyKey: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -21,6 +22,7 @@ export class Routine {
     userId: string,
     days: RoutineDay[],
     isActive: boolean,
+    trainingStrategyKey: string | null,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -29,6 +31,7 @@ export class Routine {
     this.userId = userId;
     this.days = days;
     this.isActive = isActive;
+    this.trainingStrategyKey = trainingStrategyKey;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -45,6 +48,7 @@ export class Routine {
     userId: string,
     days: RoutineDay[],
     isActive: boolean = false,
+    trainingStrategyKey: string | null = null,
   ): Routine {
     if (!name || name.trim().length === 0) {
       throw new RoutineDomainError(
@@ -63,7 +67,16 @@ export class Routine {
     }
 
     const now = new Date();
-    return new Routine(id, name.trim(), userId, [...days], isActive, now, now);
+    return new Routine(
+      id,
+      name.trim(),
+      userId,
+      [...days],
+      isActive,
+      trainingStrategyKey,
+      now,
+      now,
+    );
   }
 
   /**
@@ -75,6 +88,7 @@ export class Routine {
     userId: string,
     days: RoutineDay[],
     isActive: boolean,
+    trainingStrategyKey: string | null,
     createdAt: Date,
     updatedAt: Date,
   ): Routine {
@@ -84,6 +98,7 @@ export class Routine {
       userId,
       [...days],
       isActive,
+      trainingStrategyKey,
       createdAt,
       updatedAt,
     );
@@ -100,6 +115,7 @@ export class Routine {
       this.userId,
       this.days,
       true,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );
@@ -116,6 +132,24 @@ export class Routine {
       this.userId,
       this.days,
       false,
+      this.trainingStrategyKey,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Sets or clears the training strategy for this routine.
+   * Returns a new Routine with the updated strategy key.
+   */
+  public setTrainingStrategy(key: string | null): Routine {
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      this.days,
+      this.isActive,
+      key,
       this.createdAt,
       new Date(),
     );
@@ -146,6 +180,7 @@ export class Routine {
       this.userId,
       updatedDays,
       this.isActive,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );
@@ -176,6 +211,7 @@ export class Routine {
       this.userId,
       updatedDays,
       this.isActive,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );
@@ -210,6 +246,7 @@ export class Routine {
       this.userId,
       updatedDays,
       this.isActive,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );

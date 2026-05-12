@@ -42,6 +42,7 @@ export class RoutineMapper {
       ormEntity.userId,
       days,
       ormEntity.isActive,
+      ormEntity.trainingStrategyKey ?? null,
       ormEntity.createdAt,
       ormEntity.updatedAt,
     );
@@ -53,6 +54,7 @@ export class RoutineMapper {
     ormEntity.name = domain.name;
     ormEntity.userId = domain.userId;
     ormEntity.isActive = domain.isActive;
+    ormEntity.trainingStrategyKey = domain.trainingStrategyKey;
     ormEntity.createdAt = domain.createdAt;
     ormEntity.updatedAt = domain.updatedAt;
 
