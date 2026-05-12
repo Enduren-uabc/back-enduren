@@ -14,30 +14,48 @@ export class WorkoutSet {
   public readonly repsPerformed: number | null;
   public readonly weightUsed: number | null;
   public readonly completed: boolean;
+  public readonly targetReps: number | null;
+  public readonly targetWeight: number | null;
 
   private constructor(
     setNumber: number,
     repsPerformed: number | null,
     weightUsed: number | null,
     completed: boolean,
+    targetReps: number | null,
+    targetWeight: number | null,
   ) {
     this.setNumber = setNumber;
     this.repsPerformed = repsPerformed;
     this.weightUsed = weightUsed;
     this.completed = completed;
+    this.targetReps = targetReps;
+    this.targetWeight = targetWeight;
   }
 
   /**
    * Creates a new WorkoutSet with default values (pending/empty).
    * setNumber must be a positive integer.
+   * targetReps and targetWeight are cloned from the routine's ExerciseSet.
    */
-  public static create(setNumber: number): WorkoutSet {
+  public static create(
+    setNumber: number,
+    targetReps?: number,
+    targetWeight?: number,
+  ): WorkoutSet {
     if (!Number.isInteger(setNumber) || setNumber < 1) {
       throw new Error(
         `WorkoutSet setNumber must be a positive integer, got: ${setNumber}`,
       );
     }
-    return new WorkoutSet(setNumber, null, null, false);
+    return new WorkoutSet(
+      setNumber,
+      null,
+      null,
+      false,
+      targetReps ?? null,
+      targetWeight ?? null,
+    );
   }
 
   /**
@@ -48,8 +66,17 @@ export class WorkoutSet {
     repsPerformed: number | null,
     weightUsed: number | null,
     completed: boolean,
+    targetReps?: number | null,
+    targetWeight?: number | null,
   ): WorkoutSet {
-    return new WorkoutSet(setNumber, repsPerformed, weightUsed, completed);
+    return new WorkoutSet(
+      setNumber,
+      repsPerformed,
+      weightUsed,
+      completed,
+      targetReps ?? null,
+      targetWeight ?? null,
+    );
   }
 
   /**
@@ -91,6 +118,8 @@ export class WorkoutSet {
       repsPerformed,
       weightUsed,
       this.completed,
+      this.targetReps,
+      this.targetWeight,
     );
   }
 
@@ -113,6 +142,8 @@ export class WorkoutSet {
       this.repsPerformed,
       this.weightUsed,
       true,
+      this.targetReps,
+      this.targetWeight,
     );
   }
 
@@ -121,7 +152,9 @@ export class WorkoutSet {
       this.setNumber === other.setNumber &&
       this.repsPerformed === other.repsPerformed &&
       this.weightUsed === other.weightUsed &&
-      this.completed === other.completed
+      this.completed === other.completed &&
+      this.targetReps === other.targetReps &&
+      this.targetWeight === other.targetWeight
     );
   }
 }

@@ -32,6 +32,8 @@ export interface AdvanceToNextExerciseOutput {
       setNumber: number;
       repsPerformed: number | null;
       weightUsed: number | null;
+      targetReps: number | null;
+      targetWeight: number | null;
       completed: boolean;
     }>;
   }>;
@@ -98,6 +100,8 @@ export class AdvanceToNextExerciseUseCase {
           setNumber: ws.setNumber,
           repsPerformed: ws.repsPerformed,
           weightUsed: ws.weightUsed,
+          targetReps: ws.targetReps,
+          targetWeight: ws.targetWeight,
           completed: ws.completed,
         })),
       })),

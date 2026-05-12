@@ -37,6 +37,8 @@ export interface StartWorkoutSessionOutput {
       setNumber: number;
       repsPerformed: number | null;
       weightUsed: number | null;
+      targetReps: number | null;
+      targetWeight: number | null;
       completed: boolean;
     }>;
   }>;
@@ -138,6 +140,8 @@ export class StartWorkoutSessionUseCase {
           setNumber: ws.setNumber,
           repsPerformed: ws.repsPerformed,
           weightUsed: ws.weightUsed,
+          targetReps: ws.targetReps,
+          targetWeight: ws.targetWeight,
           completed: ws.completed,
         })),
       })),

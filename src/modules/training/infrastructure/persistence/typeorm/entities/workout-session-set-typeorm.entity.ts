@@ -18,6 +18,12 @@ export class WorkoutSessionSetTypeormEntity {
   @Column('float', { nullable: true })
   weightUsed!: number | null;
 
+  @Column('int', { nullable: true })
+  targetReps!: number | null;
+
+  @Column('float', { nullable: true })
+  targetWeight!: number | null;
+
   @Column('boolean', { default: false })
   completed!: boolean;
 
