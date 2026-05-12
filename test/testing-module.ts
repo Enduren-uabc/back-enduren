@@ -8,6 +8,9 @@ import { ExerciseTypeormEntity } from '../src/modules/training/infrastructure/pe
 import { WorkoutSessionTypeormEntity } from '../src/modules/training/infrastructure/persistence/typeorm/entities/workout-session-typeorm.entity';
 import { WorkoutSessionExerciseTypeormEntity } from '../src/modules/training/infrastructure/persistence/typeorm/entities/workout-session-exercise-typeorm.entity';
 import { WorkoutSessionSetTypeormEntity } from '../src/modules/training/infrastructure/persistence/typeorm/entities/workout-session-set-typeorm.entity';
+import { ExerciseSetTypeormEntity } from '../src/modules/training/infrastructure/persistence/typeorm/entities/exercise-set-typeorm.entity';
+import { TrainingStrategyTypeormEntity } from '../src/modules/training/infrastructure/persistence/typeorm/entities/training-strategy-typeorm.entity';
+import { ExerciseCatalogTypeormEntity } from '../src/modules/training/infrastructure/persistence/typeorm/entities/exercise-catalog-typeorm.entity';
 import { UserTypeormEntity } from '../src/modules/users/infrastructure/persistence/typeorm/entities/user-typeorm.entity';
 import { RefreshTokenTypeormEntity } from '../src/modules/auth/infrastructure/persistence/typeorm/entities/refresh-token-typeorm.entity';
 import { ProfileTypeormEntity } from '../src/modules/profile/infrastructure/persistence/typeorm/entities/profile-typeorm.entity';
@@ -16,7 +19,7 @@ import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { ProfileModule } from '../src/modules/profile/profile.module';
 import * as supertest from 'supertest';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 
 /**
  * Creates a NestJS application with an in-memory SQLite database for e2e tests.
@@ -49,6 +52,9 @@ export async function createTestingApp(): Promise<{
           WorkoutSessionTypeormEntity,
           WorkoutSessionExerciseTypeormEntity,
           WorkoutSessionSetTypeormEntity,
+          ExerciseSetTypeormEntity,
+          TrainingStrategyTypeormEntity,
+          ExerciseCatalogTypeormEntity,
           UserTypeormEntity,
           RefreshTokenTypeormEntity,
           ProfileTypeormEntity,
