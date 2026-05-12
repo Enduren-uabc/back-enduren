@@ -8,13 +8,16 @@ import { WorkoutSessionTypeormEntity } from '../persistence/typeorm/entities/wor
 import { WorkoutSessionExerciseTypeormEntity } from '../persistence/typeorm/entities/workout-session-exercise-typeorm.entity';
 import { WorkoutSessionSetTypeormEntity } from '../persistence/typeorm/entities/workout-session-set-typeorm.entity';
 import { ExerciseCatalogTypeormEntity } from '../persistence/typeorm/entities/exercise-catalog-typeorm.entity';
+import { TrainingStrategyTypeormEntity } from '../persistence/typeorm/entities/training-strategy-typeorm.entity';
 import { TypeormRoutineRepository } from '../persistence/typeorm/repositories/typeorm-routine.repository';
 import { TypeormWorkoutSessionRepository } from '../persistence/typeorm/repositories/typeorm-workout-session.repository';
 import { TypeormExerciseCatalogRepository } from '../persistence/typeorm/repositories/typeorm-exercise-catalog.repository';
+import { TypeormTrainingStrategyRepository } from '../persistence/typeorm/repositories/typeorm-training-strategy.repository';
 import { ROUTINE_REPOSITORY_PORT } from '../../application/use-cases/create-routine/create-routine.use-case';
 import { WORKOUT_SESSION_REPOSITORY_PORT } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { EXERCISE_CATALOG_REPOSITORY_PORT } from '../../application/use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
+import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/list-training-strategies/list-training-strategies.use-case';
 
 @Module({
   imports: [
@@ -27,6 +30,7 @@ import { EXERCISE_CATALOG_REPOSITORY_PORT } from '../../application/use-cases/li
       WorkoutSessionExerciseTypeormEntity,
       WorkoutSessionSetTypeormEntity,
       ExerciseCatalogTypeormEntity,
+      TrainingStrategyTypeormEntity,
     ]),
   ],
   providers: [
@@ -46,12 +50,17 @@ import { EXERCISE_CATALOG_REPOSITORY_PORT } from '../../application/use-cases/li
       provide: EXERCISE_CATALOG_REPOSITORY_PORT,
       useClass: TypeormExerciseCatalogRepository,
     },
+    {
+      provide: TRAINING_STRATEGY_REPOSITORY_PORT,
+      useClass: TypeormTrainingStrategyRepository,
+    },
   ],
   exports: [
     ROUTINE_REPOSITORY_PORT,
     WORKOUT_SESSION_REPOSITORY_PORT,
     ROUTINE_REPOSITORY_PORT_FOR_SESSION,
     EXERCISE_CATALOG_REPOSITORY_PORT,
+    TRAINING_STRATEGY_REPOSITORY_PORT,
   ],
 })
 export class TrainingInfrastructureModule {}

@@ -22,6 +22,9 @@ export class RoutineTypeormEntity {
   @Column('boolean', { default: false })
   isActive!: boolean;
 
+  @Column('varchar', { nullable: true })
+  trainingStrategyKey!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

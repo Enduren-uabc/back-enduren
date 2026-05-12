@@ -131,6 +131,7 @@ export class SyncRoutineUseCase {
       routine.userId,
       updatedDays,
       routine.isActive,
+      routine.trainingStrategyKey,
       routine.createdAt,
       new Date(),
     );
