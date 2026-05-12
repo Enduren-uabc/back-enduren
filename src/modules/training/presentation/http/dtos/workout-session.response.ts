@@ -5,13 +5,17 @@ export class WorkoutSetResponseDto {
   completed!: boolean;
 }
 
+export class WorkoutExerciseTargetSetResponseDto {
+  setNumber!: number;
+  reps!: number;
+  weight!: number;
+}
+
 export class WorkoutExerciseResponseDto {
   exerciseId!: string;
   exerciseName!: string;
   order!: number;
-  sets!: number;
-  repsPerSet!: number;
-  weight!: number;
+  targetSets!: WorkoutExerciseTargetSetResponseDto[];
   workoutSets!: WorkoutSetResponseDto[];
 }
 

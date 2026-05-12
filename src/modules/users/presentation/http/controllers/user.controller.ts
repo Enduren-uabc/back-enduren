@@ -1,16 +1,12 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  UseGuards,
-  Inject,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Inject } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
 import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 import { CreateUserUseCase } from '../../../application/use-cases/create-user/create-user.use-case';
-import { UserRepository, USER_REPOSITORY_PORT } from '../../../domain/repositories/user.repository';
+import {
+  UserRepository,
+  USER_REPOSITORY_PORT,
+} from '../../../domain/repositories/user.repository';
 import { CreateUserRequestDto } from '../dtos/create-user.request';
 import { UserResponseDto } from '../dtos/user.response';
 

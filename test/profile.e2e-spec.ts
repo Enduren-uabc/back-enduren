@@ -18,7 +18,10 @@ describe('Profile / Onboarding (e2e)', () => {
   });
 
   // Helper to register and login a fresh user
-  async function registerAndLogin(email: string, username: string): Promise<void> {
+  async function registerAndLogin(
+    email: string,
+    username: string,
+  ): Promise<void> {
     await req
       .post('/auth/register')
       .send({
@@ -114,9 +117,7 @@ describe('Profile / Onboarding (e2e)', () => {
         })
         .expect(200);
 
-      const response = await req
-        .get('/profile')
-        .expect(200);
+      const response = await req.get('/profile').expect(200);
 
       expect(response.body).toMatchObject({
         fullName: 'Alice Smith',
@@ -150,9 +151,7 @@ describe('Profile / Onboarding (e2e)', () => {
         })
         .expect(200);
 
-      const response = await req
-        .get('/onboarding/status')
-        .expect(200);
+      const response = await req.get('/onboarding/status').expect(200);
 
       expect(response.body).toEqual({ completed: true });
     });
@@ -206,9 +205,7 @@ describe('Profile / Onboarding (e2e)', () => {
       expect(updateResponse.body.onboardingCompleted).toBe(true);
 
       // Verify via GET
-      const getResponse = await req
-        .get('/profile')
-        .expect(200);
+      const getResponse = await req.get('/profile').expect(200);
 
       expect(getResponse.body.fullName).toBe('Updated Name');
     });
@@ -366,9 +363,7 @@ describe('Profile / Onboarding (e2e)', () => {
       const username = 'onboarding13';
       await registerAndLogin(email, username);
 
-      const response = await req
-        .get('/profile')
-        .expect(200);
+      const response = await req.get('/profile').expect(200);
 
       expect(response.body).toBeNull();
     });
@@ -378,9 +373,7 @@ describe('Profile / Onboarding (e2e)', () => {
       const username = 'onboarding14';
       await registerAndLogin(email, username);
 
-      const response = await req
-        .get('/onboarding/status')
-        .expect(200);
+      const response = await req.get('/onboarding/status').expect(200);
 
       expect(response.body).toEqual({ completed: false });
     });
@@ -410,9 +403,7 @@ describe('Profile / Onboarding (e2e)', () => {
     it('GET /profile — rejects unauthenticated requests', async () => {
       const freshReq = supertest.agent(app.getHttpServer());
 
-      const response = await freshReq
-        .get('/profile')
-        .expect(401);
+      const response = await freshReq.get('/profile').expect(401);
 
       expect(response.body.message).toBeDefined();
     });
@@ -420,9 +411,7 @@ describe('Profile / Onboarding (e2e)', () => {
     it('GET /onboarding/status — rejects unauthenticated requests', async () => {
       const freshReq = supertest.agent(app.getHttpServer());
 
-      const response = await freshReq
-        .get('/onboarding/status')
-        .expect(401);
+      const response = await freshReq.get('/onboarding/status').expect(401);
 
       expect(response.body.message).toBeDefined();
     });

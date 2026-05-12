@@ -20,13 +20,17 @@ export class WorkoutSessionMapper {
         ),
       );
 
+      const targetSets = (ex.targetSets ?? []).map((ts) => ({
+        setNumber: ts.setNumber,
+        reps: ts.reps,
+        weight: ts.weight,
+      }));
+
       return WorkoutExercise.reconstitute(
         ex.exerciseId,
         ex.exerciseName,
         ex.orderIndex,
-        ex.sets,
-        ex.repsPerSet,
-        ex.weight,
+        targetSets,
         workoutSets,
       );
     });
@@ -60,9 +64,11 @@ export class WorkoutSessionMapper {
       exOrm.exerciseId = ex.exerciseId;
       exOrm.exerciseName = ex.exerciseName;
       exOrm.orderIndex = ex.order;
-      exOrm.sets = ex.sets;
-      exOrm.repsPerSet = ex.repsPerSet;
-      exOrm.weight = ex.weight;
+      exOrm.targetSets = ex.targetSets.map((ts) => ({
+        setNumber: ts.setNumber,
+        reps: ts.reps,
+        weight: ts.weight,
+      }));
 
       exOrm.workoutSets = ex.workoutSets.map((ws) => {
         const wsOrm = new WorkoutSessionSetTypeormEntity();

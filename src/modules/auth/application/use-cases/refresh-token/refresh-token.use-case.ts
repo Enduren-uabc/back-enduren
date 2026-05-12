@@ -1,8 +1,14 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { RefreshTokenRepository, REFRESH_TOKEN_REPOSITORY_PORT } from '../../../domain/repositories/refresh-token.repository';
-import { UserRepository, USER_REPOSITORY_PORT } from '../../../../users/domain/repositories/user.repository';
+import {
+  RefreshTokenRepository,
+  REFRESH_TOKEN_REPOSITORY_PORT,
+} from '../../../domain/repositories/refresh-token.repository';
+import {
+  UserRepository,
+  USER_REPOSITORY_PORT,
+} from '../../../../users/domain/repositories/user.repository';
 
 export interface RefreshTokenOutput {
   accessToken: string;
@@ -35,20 +41,30 @@ export class RefreshTokenUseCase {
       throw new UnauthorizedException('User not found');
     }
 
+    // Mark old refresh token as used (rotation)
+    stored.markAsUsed();
+    await this.refreshTokenRepository.save(stored);
+
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as `${number}m`,
+      expiresIn: this.configService.get<string>(
+        'JWT_ACCESS_EXPIRATION',
+        '15m',
+      ) as `${number}m`,
     });
 
     // Rotate refresh token
     const newRefreshTokenValue = crypto.randomUUID();
     const refreshExpiresDays = parseInt(
-      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d').replace('d', ''),
+      this.configService
+        .get<string>('JWT_REFRESH_EXPIRATION', '7d')
+        .replace('d', ''),
       10,
     );
 
-    const { RefreshToken } = await import('../../../domain/entities/refresh-token.entity');
+    const { RefreshToken } =
+      await import('../../../domain/entities/refresh-token.entity');
     const newRefreshToken = RefreshToken.create(
       crypto.randomUUID(),
       newRefreshTokenValue,

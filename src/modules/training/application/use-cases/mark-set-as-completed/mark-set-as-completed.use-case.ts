@@ -23,9 +23,11 @@ export interface MarkSetAsCompletedOutput {
     exerciseId: string;
     exerciseName: string;
     order: number;
-    sets: number;
-    repsPerSet: number;
-    weight: number;
+    targetSets: Array<{
+      setNumber: number;
+      reps: number;
+      weight: number;
+    }>;
     workoutSets: Array<{
       setNumber: number;
       repsPerformed: number | null;
@@ -90,9 +92,11 @@ export class MarkSetAsCompletedUseCase {
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,
         order: ex.order,
-        sets: ex.sets,
-        repsPerSet: ex.repsPerSet,
-        weight: ex.weight,
+        targetSets: ex.targetSets.map((ts) => ({
+          setNumber: ts.setNumber,
+          reps: ts.reps,
+          weight: ts.weight,
+        })),
         workoutSets: ex.workoutSets.map((ws) => ({
           setNumber: ws.setNumber,
           repsPerformed: ws.repsPerformed,

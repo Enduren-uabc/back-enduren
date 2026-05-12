@@ -1,8 +1,17 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserRepository, USER_REPOSITORY_PORT } from '../../../../users/domain/repositories/user.repository';
-import { PasswordHasher, PASSWORD_HASHER_PORT } from '../../../infrastructure/providers/password-hasher.provider';
-import { RefreshTokenRepository, REFRESH_TOKEN_REPOSITORY_PORT } from '../../../domain/repositories/refresh-token.repository';
+import {
+  UserRepository,
+  USER_REPOSITORY_PORT,
+} from '../../../../users/domain/repositories/user.repository';
+import {
+  PasswordHasher,
+  PASSWORD_HASHER_PORT,
+} from '../../../infrastructure/providers/password-hasher.provider';
+import {
+  RefreshTokenRepository,
+  REFRESH_TOKEN_REPOSITORY_PORT,
+} from '../../../domain/repositories/refresh-token.repository';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 import { User } from '../../../../users/domain/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
@@ -47,23 +56,43 @@ export class RegisterUserUseCase {
     }
 
     const passwordHash = await this.passwordHasher.hash(input.password);
-    const user = User.create(crypto.randomUUID(), email, username, passwordHash);
+    const user = User.create(
+      crypto.randomUUID(),
+      email,
+      username,
+      passwordHash,
+    );
     const saved = await this.userRepository.save(user);
 
     const tokens = await this.generateTokens(saved);
-    return { user: { id: saved.id, email: saved.email, username: saved.username, role: saved.role }, ...tokens };
+    return {
+      user: {
+        id: saved.id,
+        email: saved.email,
+        username: saved.username,
+        role: saved.role,
+      },
+      ...tokens,
+    };
   }
 
-  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(
+    user: User,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as `${number}m`,
+      expiresIn: this.configService.get<string>(
+        'JWT_ACCESS_EXPIRATION',
+        '15m',
+      ) as `${number}m`,
     });
 
     const refreshTokenValue = crypto.randomUUID();
     const refreshExpiresDays = parseInt(
-      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d').replace('d', ''),
+      this.configService
+        .get<string>('JWT_REFRESH_EXPIRATION', '7d')
+        .replace('d', ''),
       10,
     );
     const refreshToken = RefreshToken.create(

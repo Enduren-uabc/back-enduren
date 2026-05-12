@@ -13,14 +13,11 @@ describe('FinishWorkoutSessionUseCase', () => {
   let workoutSessionRepository: WorkoutSessionRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
-  const exercise = WorkoutExercise.create(
-    'exercise-1',
-    'Bench Press',
-    1,
-    3,
-    10,
-    50,
-  );
+  const exercise = WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+    { setNumber: 3, reps: 8, weight: 55 },
+  ]);
 
   beforeEach(() => {
     workoutSessionRepository = {
@@ -79,6 +76,7 @@ describe('FinishWorkoutSessionUseCase', () => {
       });
 
       expect(result.exercises[0].exerciseId).toBe('exercise-1');
+      expect(result.exercises[0].targetSets).toHaveLength(3);
       expect(result.exercises[0].workoutSets).toHaveLength(3);
       expect(result.exercises[0].workoutSets[0].setNumber).toBe(1);
     });

@@ -4,11 +4,17 @@ import {
   WorkoutSessionErrorCode,
 } from '../errors/workout-session-domain.error';
 
+export interface WorkoutExerciseTargetSet {
+  setNumber: number;
+  reps: number;
+  weight: number;
+}
+
 /**
  * WorkoutExercise value object.
  * Represents an exercise loaded from the routine configuration at session start time.
  * This is a snapshot — it is NOT the same as the Routine's Exercise entity.
- * Contains: exerciseId, exerciseName, order, configuration (sets, repsPerSet, weight),
+ * Contains: exerciseId, exerciseName, order, targetSets (from routine),
  * and a list of WorkoutSet entries (initially all pending/empty).
  * Immutable: registerSetRepsAndWeight(), markSetAsCompleted() return new instances.
  */
@@ -16,40 +22,32 @@ export class WorkoutExercise {
   public readonly exerciseId: string;
   public readonly exerciseName: string;
   public readonly order: number;
-  public readonly sets: number;
-  public readonly repsPerSet: number;
-  public readonly weight: number;
+  public readonly targetSets: WorkoutExerciseTargetSet[];
   public readonly workoutSets: WorkoutSet[];
 
   private constructor(
     exerciseId: string,
     exerciseName: string,
     order: number,
-    sets: number,
-    repsPerSet: number,
-    weight: number,
+    targetSets: WorkoutExerciseTargetSet[],
     workoutSets: WorkoutSet[],
   ) {
     this.exerciseId = exerciseId;
     this.exerciseName = exerciseName;
     this.order = order;
-    this.sets = sets;
-    this.repsPerSet = repsPerSet;
-    this.weight = weight;
+    this.targetSets = targetSets;
     this.workoutSets = workoutSets;
   }
 
   /**
    * Creates a WorkoutExercise from routine configuration at session start time.
-   * Generates WorkoutSet entries for each set (all pending/empty).
+   * Generates WorkoutSet entries for each target set (all pending/empty).
    */
   public static create(
     exerciseId: string,
     exerciseName: string,
     order: number,
-    sets: number,
-    repsPerSet: number,
-    weight: number,
+    targetSets: WorkoutExerciseTargetSet[],
   ): WorkoutExercise {
     if (!exerciseId || exerciseId.trim().length === 0) {
       throw new Error('WorkoutExercise exerciseId is required');
@@ -62,34 +60,38 @@ export class WorkoutExercise {
         `WorkoutExercise order must be a positive integer, got: ${order}`,
       );
     }
-    if (!Number.isInteger(sets) || sets < 1 || sets > 10) {
+    if (!Array.isArray(targetSets) || targetSets.length === 0) {
       throw new Error(
-        `WorkoutExercise sets must be an integer between 1 and 10, got: ${sets}`,
+        `WorkoutExercise targetSets must be a non-empty array, got: ${targetSets}`,
       );
     }
-    if (!Number.isInteger(repsPerSet) || repsPerSet < 1 || repsPerSet > 50) {
-      throw new Error(
-        `WorkoutExercise repsPerSet must be an integer between 1 and 50, got: ${repsPerSet}`,
-      );
-    }
-    if (typeof weight !== 'number' || weight < 0) {
-      throw new Error(
-        `WorkoutExercise weight must be a number >= 0, got: ${weight}`,
-      );
+    for (const ts of targetSets) {
+      if (!Number.isInteger(ts.setNumber) || ts.setNumber < 1) {
+        throw new Error(
+          `WorkoutExercise targetSet setNumber must be a positive integer, got: ${ts.setNumber}`,
+        );
+      }
+      if (!Number.isInteger(ts.reps) || ts.reps < 1) {
+        throw new Error(
+          `WorkoutExercise targetSet reps must be a positive integer, got: ${ts.reps}`,
+        );
+      }
+      if (typeof ts.weight !== 'number' || ts.weight < 0) {
+        throw new Error(
+          `WorkoutExercise targetSet weight must be a number >= 0, got: ${ts.weight}`,
+        );
+      }
     }
 
-    const workoutSets: WorkoutSet[] = [];
-    for (let i = 1; i <= sets; i++) {
-      workoutSets.push(WorkoutSet.create(i));
-    }
+    const workoutSets: WorkoutSet[] = targetSets.map((ts) =>
+      WorkoutSet.create(ts.setNumber),
+    );
 
     return new WorkoutExercise(
       exerciseId,
       exerciseName,
       order,
-      sets,
-      repsPerSet,
-      weight,
+      targetSets,
       workoutSets,
     );
   }
@@ -101,18 +103,14 @@ export class WorkoutExercise {
     exerciseId: string,
     exerciseName: string,
     order: number,
-    sets: number,
-    repsPerSet: number,
-    weight: number,
+    targetSets: WorkoutExerciseTargetSet[],
     workoutSets: WorkoutSet[],
   ): WorkoutExercise {
     return new WorkoutExercise(
       exerciseId,
       exerciseName,
       order,
-      sets,
-      repsPerSet,
-      weight,
+      targetSets,
       workoutSets,
     );
   }
@@ -149,9 +147,7 @@ export class WorkoutExercise {
       this.exerciseId,
       this.exerciseName,
       this.order,
-      this.sets,
-      this.repsPerSet,
-      this.weight,
+      this.targetSets,
       updatedSets,
     );
   }
@@ -181,9 +177,7 @@ export class WorkoutExercise {
       this.exerciseId,
       this.exerciseName,
       this.order,
-      this.sets,
-      this.repsPerSet,
-      this.weight,
+      this.targetSets,
       updatedSets,
     );
   }
@@ -200,9 +194,13 @@ export class WorkoutExercise {
       this.exerciseId === other.exerciseId &&
       this.exerciseName === other.exerciseName &&
       this.order === other.order &&
-      this.sets === other.sets &&
-      this.repsPerSet === other.repsPerSet &&
-      this.weight === other.weight &&
+      this.targetSets.length === other.targetSets.length &&
+      this.targetSets.every(
+        (ts, i) =>
+          ts.setNumber === other.targetSets[i].setNumber &&
+          ts.reps === other.targetSets[i].reps &&
+          ts.weight === other.targetSets[i].weight,
+      ) &&
       this.workoutSets.length === other.workoutSets.length &&
       this.workoutSets.every((s, i) => s.equals(other.workoutSets[i]))
     );

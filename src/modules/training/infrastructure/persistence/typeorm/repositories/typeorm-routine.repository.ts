@@ -22,7 +22,7 @@ export class TypeormRoutineRepository implements RoutineRepository {
   public async findById(id: string): Promise<Routine | null> {
     const ormEntity = await this.ormRepo.findOne({
       where: { id },
-      relations: ['days', 'days.exercises'],
+      relations: ['days', 'days.exercises', 'days.exercises.sets'],
     });
     if (!ormEntity) {
       return null;
@@ -33,7 +33,7 @@ export class TypeormRoutineRepository implements RoutineRepository {
   public async findByUserId(userId: string): Promise<Routine[]> {
     const ormEntities = await this.ormRepo.find({
       where: { userId },
-      relations: ['days', 'days.exercises'],
+      relations: ['days', 'days.exercises', 'days.exercises.sets'],
     });
     return ormEntities.map((e) => RoutineMapper.toDomain(e));
   }
@@ -55,7 +55,7 @@ export class TypeormRoutineRepository implements RoutineRepository {
   public async findActiveByUserId(userId: string): Promise<Routine | null> {
     const ormEntity = await this.ormRepo.findOne({
       where: { userId, isActive: true },
-      relations: ['days', 'days.exercises'],
+      relations: ['days', 'days.exercises', 'days.exercises.sets'],
     });
     if (!ormEntity) {
       return null;
@@ -69,7 +69,7 @@ export class TypeormRoutineRepository implements RoutineRepository {
   ): Promise<Routine | null> {
     const ormEntity = await this.ormRepo.findOne({
       where: { id, userId },
-      relations: ['days', 'days.exercises'],
+      relations: ['days', 'days.exercises', 'days.exercises.sets'],
     });
     if (!ormEntity) {
       return null;

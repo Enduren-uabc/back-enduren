@@ -88,7 +88,7 @@ export class GetExerciseProgressUseCase {
       const setsCompleted = completedSets.length;
 
       // Total configured sets for this exercise in this session
-      const totalSets = exercise!.sets;
+      const totalSets = exercise!.targetSets.length;
 
       return {
         sessionId: session.id,

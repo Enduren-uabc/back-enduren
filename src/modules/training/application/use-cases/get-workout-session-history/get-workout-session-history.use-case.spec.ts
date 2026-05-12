@@ -5,7 +5,6 @@ import { CurrentActor } from '../../ports/current-actor.port';
 import { WorkoutSession } from '../../../domain/entities/workout-session.entity';
 import { WorkoutExercise } from '../../../domain/value-objects/workout-exercise.value-object';
 import { Routine } from '../../../domain/entities/routine.entity';
-import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
 
 describe('GetWorkoutSessionHistoryUseCase', () => {
   let useCase: GetWorkoutSessionHistoryUseCase;
@@ -13,14 +12,11 @@ describe('GetWorkoutSessionHistoryUseCase', () => {
   let routineRepository: RoutineRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
-  const exercise = WorkoutExercise.create(
-    'exercise-1',
-    'Bench Press',
-    1,
-    3,
-    10,
-    50,
-  );
+  const exercise = WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+    { setNumber: 3, reps: 8, weight: 55 },
+  ]);
 
   beforeEach(() => {
     workoutSessionRepository = {
@@ -36,6 +32,8 @@ describe('GetWorkoutSessionHistoryUseCase', () => {
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
       findActiveByUserId: jest.fn(),
+      findByIdAndUserId: jest.fn(),
+      delete: jest.fn(),
     };
     useCase = new GetWorkoutSessionHistoryUseCase(
       workoutSessionRepository,
@@ -75,16 +73,7 @@ describe('GetWorkoutSessionHistoryUseCase', () => {
         'routine-1',
         'My Routine',
         'user-1',
-        [
-          RoutineDay.reconstitute('monday', [
-            {
-              id: 'exercise-1',
-              name: 'Bench Press',
-              order: 1,
-              configuration: null,
-            },
-          ]),
-        ],
+        [],
         true,
         new Date(),
         new Date(),
@@ -116,14 +105,11 @@ describe('GetWorkoutSessionHistoryUseCase', () => {
     });
 
     it('should resolve routine names for different routines', async () => {
-      const exercise2 = WorkoutExercise.create(
-        'exercise-2',
-        'Squat',
-        1,
-        3,
-        10,
-        80,
-      );
+      const exercise2 = WorkoutExercise.create('exercise-2', 'Squat', 1, [
+        { setNumber: 1, reps: 10, weight: 80 },
+        { setNumber: 2, reps: 10, weight: 80 },
+        { setNumber: 3, reps: 8, weight: 85 },
+      ]);
 
       const session1 = WorkoutSession.reconstitute(
         'session-1',

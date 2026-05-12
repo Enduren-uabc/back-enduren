@@ -38,6 +38,8 @@ describe('App (e2e) - Health check with SQLite', () => {
       isActive: true,
     });
     expect(response.body.userId).toBeDefined();
-    expect(response.body.userId).not.toBe('00000000-0000-0000-0000-000000000001');
+    expect(response.body.userId).not.toBe(
+      '00000000-0000-0000-0000-000000000001',
+    );
   });
 });

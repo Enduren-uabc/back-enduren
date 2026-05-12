@@ -9,6 +9,12 @@ import {
 import { WorkoutSessionTypeormEntity } from './workout-session-typeorm.entity';
 import { WorkoutSessionSetTypeormEntity } from './workout-session-set-typeorm.entity';
 
+export interface WorkoutSessionTargetSetJson {
+  setNumber: number;
+  reps: number;
+  weight: number;
+}
+
 @Entity('workout_session_exercises')
 export class WorkoutSessionExerciseTypeormEntity {
   @PrimaryColumn('uuid')
@@ -26,14 +32,8 @@ export class WorkoutSessionExerciseTypeormEntity {
   @Column('int')
   orderIndex!: number;
 
-  @Column('int')
-  sets!: number;
-
-  @Column('int')
-  repsPerSet!: number;
-
-  @Column('float')
-  weight!: number;
+  @Column('simple-json', { nullable: true })
+  targetSets!: WorkoutSessionTargetSetJson[] | null;
 
   @ManyToOne(
     () => WorkoutSessionTypeormEntity,

@@ -22,7 +22,18 @@ export interface CreateRoutineOutput {
   isActive: boolean;
   days: Array<{
     dayOfWeek: string;
-    exercises: Array<{ id: string; name: string; order: number }>;
+    exercises: Array<{
+      id: string;
+      name: string;
+      order: number;
+      sets: Array<{
+        id: string;
+        setNumber: number;
+        reps: number;
+        weight: number;
+        restSeconds: number | null;
+      }>;
+    }>;
   }>;
   createdAt: Date;
   updatedAt: Date;
@@ -110,6 +121,13 @@ export class CreateRoutineUseCase {
           id: e.id,
           name: e.name,
           order: e.order,
+          sets: e.sets.map((s) => ({
+            id: s.id,
+            setNumber: s.setNumber,
+            reps: s.reps,
+            weight: s.weight,
+            restSeconds: s.restSeconds,
+          })),
         })),
       })),
       createdAt: saved.createdAt,

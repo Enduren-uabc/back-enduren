@@ -4,6 +4,7 @@ import { CurrentActor } from '../../ports/current-actor.port';
 import { Routine } from '../../../domain/entities/routine.entity';
 import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
 import { Exercise } from '../../../domain/entities/exercise.entity';
+import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
 
 describe('ListRoutinesUseCase', () => {
   let useCase: ListRoutinesUseCase;
@@ -75,7 +76,11 @@ describe('ListRoutinesUseCase', () => {
     const day = RoutineDay.create('monday');
     const exercise = Exercise.create('ex-1', 'Push-ups', 0);
     const dayWithEx = day.addExercise(exercise);
-    const dayWithConfig = dayWithEx.configureExercise('ex-1', 3, 12, 50);
+    const sets = [
+      RoutineExerciseSet.create(1, 12, 50),
+      RoutineExerciseSet.create(2, 10, 45),
+    ];
+    const dayWithConfig = dayWithEx.configureExercise('ex-1', sets);
     const routine = Routine.reconstitute(
       'r-1',
       'Routine A',
@@ -93,8 +98,10 @@ describe('ListRoutinesUseCase', () => {
     expect(result).toHaveLength(1);
     expect(result[0].days).toHaveLength(1);
     expect(result[0].days[0].exercises).toHaveLength(1);
-    expect(result[0].days[0].exercises[0].sets).toBe(3);
-    expect(result[0].days[0].exercises[0].repsPerSet).toBe(12);
-    expect(result[0].days[0].exercises[0].weight).toBe(50);
+    expect(result[0].days[0].exercises[0].sets).toHaveLength(2);
+    expect(result[0].days[0].exercises[0].sets[0].setNumber).toBe(1);
+    expect(result[0].days[0].exercises[0].sets[0].reps).toBe(12);
+    expect(result[0].days[0].exercises[0].sets[0].weight).toBe(50);
+    expect(result[0].days[0].exercises[0].sets[1].reps).toBe(10);
   });
 });

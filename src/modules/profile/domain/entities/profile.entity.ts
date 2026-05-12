@@ -1,6 +1,11 @@
 export type Gender = 'male' | 'female' | 'other';
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
-export type MainGoal = 'lose_weight' | 'gain_muscle' | 'maintain' | 'improve_endurance' | 'general_fitness';
+export type MainGoal =
+  | 'lose_weight'
+  | 'gain_muscle'
+  | 'maintain'
+  | 'improve_endurance'
+  | 'general_fitness';
 export type WeightUnit = 'kg' | 'lbs';
 
 export interface ProfileProps {

@@ -6,8 +6,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RefreshTokenTypeormEntity } from './infrastructure/persistence/typeorm/entities/refresh-token-typeorm.entity';
 import { TypeormRefreshTokenRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-refresh-token.repository';
 import { REFRESH_TOKEN_REPOSITORY_PORT } from './domain/repositories/refresh-token.repository';
-import { PASSWORD_HASHER_PORT, BcryptPasswordHasher } from './infrastructure/providers/password-hasher.provider';
-import { COOKIE_HELPER_PORT, AuthCookieHelper } from './infrastructure/providers/cookie-helper.provider';
+import {
+  PASSWORD_HASHER_PORT,
+  BcryptPasswordHasher,
+} from './infrastructure/providers/password-hasher.provider';
+import {
+  COOKIE_HELPER_PORT,
+  AuthCookieHelper,
+} from './infrastructure/providers/cookie-helper.provider';
 import { JwtStrategy } from './presentation/http/strategies/jwt.strategy';
 import { JwtAuthGuard } from './presentation/http/guards/jwt-auth.guard';
 import { RegisterUserUseCase } from './application/use-cases/register-user/register-user.use-case';
@@ -27,7 +33,10 @@ import { UsersModule } from '../users/users.module';
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: config.get<string>('JWT_ACCESS_EXPIRATION', '15m') as `${number}m`,
+          expiresIn: config.get<string>(
+            'JWT_ACCESS_EXPIRATION',
+            '15m',
+          ) as `${number}m`,
         },
       }),
     }),
