@@ -22,15 +22,18 @@ import { DeactivateRoutineUseCase } from '../../../application/use-cases/deactiv
 import { ListRoutinesUseCase } from '../../../application/use-cases/list-routines/list-routines.use-case';
 import { GetRoutineDetailUseCase } from '../../../application/use-cases/get-routine-detail/get-routine-detail.use-case';
 import { DeleteRoutineUseCase } from '../../../application/use-cases/delete-routine/delete-routine.use-case';
+import { SyncRoutineUseCase } from '../../../application/use-cases/sync-routine/sync-routine.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
 import { AddExerciseRequestDto } from '../dtos/add-exercise.request';
 import { ConfigureExerciseRequestDto } from '../dtos/configure-exercise.request';
+import { SyncRoutineRequestDto } from '../dtos/sync-routine.request';
 import {
   RoutineResponseDto,
   RoutineDayResponseDto,
   ExerciseResponseDto,
+  ExerciseSetResponseDto,
 } from '../dtos/routine.response';
 import { ListRoutinesResponseDto } from '../dtos/list-routines.response';
 import { DeleteRoutineResponseDto } from '../dtos/delete-routine.response';
@@ -53,6 +56,7 @@ export class RoutineController {
   private readonly listRoutinesUseCase: ListRoutinesUseCase;
   private readonly getRoutineDetailUseCase: GetRoutineDetailUseCase;
   private readonly deleteRoutineUseCase: DeleteRoutineUseCase;
+  private readonly syncRoutineUseCase: SyncRoutineUseCase;
 
   constructor(
     @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
@@ -76,6 +80,7 @@ export class RoutineController {
       routineRepository,
     );
     this.deleteRoutineUseCase = new DeleteRoutineUseCase(routineRepository);
+    this.syncRoutineUseCase = new SyncRoutineUseCase(routineRepository);
   }
 
   private getActor(user: JwtPayload): CurrentActor {
@@ -107,10 +112,13 @@ export class RoutineController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateRoutineRequestDto,
   ): Promise<RoutineResponseDto> {
-    const result = await this.createRoutineUseCase.execute(this.getActor(user), {
-      name: dto.name,
-      dayOfWeeks: dto.dayOfWeeks,
-    });
+    const result = await this.createRoutineUseCase.execute(
+      this.getActor(user),
+      {
+        name: dto.name,
+        dayOfWeeks: dto.dayOfWeeks,
+      },
+    );
 
     return this.mapToResponse(result);
   }
@@ -149,11 +157,14 @@ export class RoutineController {
       throw new Error(`Invalid day of week: ${dayOfWeek}`);
     }
 
-    const result = await this.removeExerciseUseCase.execute(this.getActor(user), {
-      routineId,
-      dayOfWeek,
-      exerciseId,
-    });
+    const result = await this.removeExerciseUseCase.execute(
+      this.getActor(user),
+      {
+        routineId,
+        dayOfWeek,
+        exerciseId,
+      },
+    );
 
     return this.mapToResponse(result);
   }
@@ -178,8 +189,6 @@ export class RoutineController {
         dayOfWeek,
         exerciseId,
         sets: dto.sets,
-        repsPerSet: dto.repsPerSet,
-        weight: dto.weight,
       },
     );
 
@@ -217,14 +226,31 @@ export class RoutineController {
     @CurrentUser() user: JwtPayload,
     @Param('routineId') routineId: string,
   ): Promise<DeleteRoutineResponseDto> {
-    const result = await this.deleteRoutineUseCase.execute(this.getActor(user), {
-      routineId,
-    });
+    const result = await this.deleteRoutineUseCase.execute(
+      this.getActor(user),
+      {
+        routineId,
+      },
+    );
 
     const response = new DeleteRoutineResponseDto();
     response.id = result.id;
     response.deleted = result.deleted;
     return response;
+  }
+
+  @Patch(':routineId/sync')
+  public async sync(
+    @CurrentUser() user: JwtPayload,
+    @Param('routineId') routineId: string,
+    @Body() dto: SyncRoutineRequestDto,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.syncRoutineUseCase.execute(this.getActor(user), {
+      routineId,
+      days: dto.days,
+    });
+
+    return this.mapToResponse(result);
   }
 
   private mapToResponse(result: {
@@ -238,9 +264,13 @@ export class RoutineController {
         id: string;
         name: string;
         order: number;
-        sets?: number | null;
-        repsPerSet?: number | null;
-        weight?: number | null;
+        sets: Array<{
+          id: string;
+          setNumber: number;
+          reps: number;
+          weight: number;
+          restSeconds: number | null;
+        }>;
       }>;
     }>;
     createdAt: Date;
@@ -260,9 +290,15 @@ export class RoutineController {
         exDto.id = e.id;
         exDto.name = e.name;
         exDto.order = e.order;
-        exDto.sets = e.sets ?? null;
-        exDto.repsPerSet = e.repsPerSet ?? null;
-        exDto.weight = e.weight ?? null;
+        exDto.sets = e.sets.map((s) => {
+          const setDto = new ExerciseSetResponseDto();
+          setDto.id = s.id;
+          setDto.setNumber = s.setNumber;
+          setDto.reps = s.reps;
+          setDto.weight = s.weight;
+          setDto.restSeconds = s.restSeconds;
+          return setDto;
+        });
         return exDto;
       });
       return dayDto;

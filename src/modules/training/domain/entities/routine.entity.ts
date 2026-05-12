@@ -3,6 +3,7 @@ import {
   RoutineErrorCode,
 } from '../errors/routine-domain.error';
 import { RoutineDay } from '../value-objects/routine-day.value-object';
+import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-object';
 import { Exercise } from './exercise.entity';
 
 export class Routine {
@@ -183,15 +184,12 @@ export class Routine {
   /**
    * Configures an exercise within a specific day of the routine.
    * Enforces: day must exist, exercise must exist in day (RF-11.0.5).
-   * Delegates configuration validation to Exercise.configure() (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
    * Returns a new Routine with the configured exercise.
    */
   public configureExercise(
     dayOfWeek: string,
     exerciseId: string,
-    sets: number,
-    repsPerSet: number,
-    weight: number,
+    sets: RoutineExerciseSet[],
   ): Routine {
     const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
     if (dayIndex === -1) {
@@ -202,12 +200,7 @@ export class Routine {
       );
     }
 
-    const updatedDay = this.days[dayIndex].configureExercise(
-      exerciseId,
-      sets,
-      repsPerSet,
-      weight,
-    );
+    const updatedDay = this.days[dayIndex].configureExercise(exerciseId, sets);
     const updatedDays = [...this.days];
     updatedDays[dayIndex] = updatedDay;
 

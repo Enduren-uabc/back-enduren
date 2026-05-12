@@ -10,14 +10,11 @@ import {
 describe('WorkoutSession domain entity', () => {
   const validUserId = 'user-1';
   const validRoutineId = 'routine-1';
-  const validExercise = WorkoutExercise.create(
-    'exercise-1',
-    'Bench Press',
-    1,
-    3,
-    10,
-    50,
-  );
+  const validExercise = WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+    { setNumber: 3, reps: 10, weight: 50 },
+  ]);
 
   describe('create', () => {
     it('should create a session in IN_PROGRESS state', () => {
@@ -69,14 +66,12 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should create a session with exercises loaded from routine', () => {
-      const exercise2 = WorkoutExercise.create(
-        'exercise-2',
-        'Squat',
-        2,
-        4,
-        8,
-        80,
-      );
+      const exercise2 = WorkoutExercise.create('exercise-2', 'Squat', 2, [
+        { setNumber: 1, reps: 8, weight: 80 },
+        { setNumber: 2, reps: 8, weight: 80 },
+        { setNumber: 3, reps: 8, weight: 80 },
+        { setNumber: 4, reps: 8, weight: 80 },
+      ]);
 
       const session = WorkoutSession.create(
         'session-1',
@@ -334,14 +329,11 @@ describe('WorkoutSession domain entity', () => {
   });
 
   describe('advanceToNextExercise', () => {
-    const exercise2 = WorkoutExercise.create(
-      'exercise-2',
-      'Squat',
-      2,
-      3,
-      8,
-      80,
-    );
+    const exercise2 = WorkoutExercise.create('exercise-2', 'Squat', 2, [
+      { setNumber: 1, reps: 8, weight: 80 },
+      { setNumber: 2, reps: 8, weight: 80 },
+      { setNumber: 3, reps: 8, weight: 80 },
+    ]);
 
     it('should advance to next exercise when all sets are completed', () => {
       const session = WorkoutSession.create(
@@ -432,23 +424,30 @@ describe('WorkoutSession domain entity', () => {
 });
 
 describe('WorkoutExercise value object', () => {
+  const targetSets3 = [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+    { setNumber: 3, reps: 10, weight: 50 },
+  ];
+
+  const targetSets2 = [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+  ];
+
   describe('create', () => {
     it('should create a WorkoutExercise with valid data', () => {
       const exercise = WorkoutExercise.create(
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       expect(exercise.exerciseId).toBe('exercise-1');
       expect(exercise.exerciseName).toBe('Bench Press');
       expect(exercise.order).toBe(1);
-      expect(exercise.sets).toBe(3);
-      expect(exercise.repsPerSet).toBe(10);
-      expect(exercise.weight).toBe(50);
+      expect(exercise.targetSets).toHaveLength(3);
       expect(exercise.workoutSets).toHaveLength(3);
     });
 
@@ -457,9 +456,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       expect(exercise.workoutSets).toHaveLength(3);
@@ -473,43 +470,41 @@ describe('WorkoutExercise value object', () => {
 
     it('should reject empty exerciseId', () => {
       expect(() =>
-        WorkoutExercise.create('', 'Bench Press', 1, 3, 10, 50),
+        WorkoutExercise.create('', 'Bench Press', 1, targetSets3),
       ).toThrow();
     });
 
     it('should reject empty exerciseName', () => {
       expect(() =>
-        WorkoutExercise.create('exercise-1', '', 1, 3, 10, 50),
+        WorkoutExercise.create('exercise-1', '', 1, targetSets3),
       ).toThrow();
     });
 
     it('should reject invalid order', () => {
       expect(() =>
-        WorkoutExercise.create('exercise-1', 'Bench Press', 0, 3, 10, 50),
+        WorkoutExercise.create('exercise-1', 'Bench Press', 0, targetSets3),
       ).toThrow();
     });
 
-    it('should reject sets out of range', () => {
+    it('should reject empty targetSets', () => {
       expect(() =>
-        WorkoutExercise.create('exercise-1', 'Bench Press', 1, 0, 10, 50),
-      ).toThrow();
-      expect(() =>
-        WorkoutExercise.create('exercise-1', 'Bench Press', 1, 11, 10, 50),
+        WorkoutExercise.create('exercise-1', 'Bench Press', 1, []),
       ).toThrow();
     });
 
-    it('should reject repsPerSet out of range', () => {
+    it('should reject targetSet with invalid reps', () => {
       expect(() =>
-        WorkoutExercise.create('exercise-1', 'Bench Press', 1, 3, 0, 50),
-      ).toThrow();
-      expect(() =>
-        WorkoutExercise.create('exercise-1', 'Bench Press', 1, 3, 51, 50),
+        WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+          { setNumber: 1, reps: 0, weight: 50 },
+        ]),
       ).toThrow();
     });
 
-    it('should reject negative weight', () => {
+    it('should reject negative weight in targetSet', () => {
       expect(() =>
-        WorkoutExercise.create('exercise-1', 'Bench Press', 1, 3, 10, -1),
+        WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+          { setNumber: 1, reps: 10, weight: -1 },
+        ]),
       ).toThrow();
     });
   });
@@ -524,9 +519,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
         sets,
       );
 
@@ -543,9 +536,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       const updated = exercise.registerSetRepsAndWeight(1, 10, 50);
@@ -560,9 +551,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       expect(() => exercise.registerSetRepsAndWeight(99, 10, 50)).toThrow(
@@ -583,9 +572,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       const updated = exercise.registerSetRepsAndWeight(1, 10, 50);
@@ -601,9 +588,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       const withReps = exercise.registerSetRepsAndWeight(1, 10, 50);
@@ -619,9 +604,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       expect(() => exercise.markSetAsCompleted(99)).toThrow(
@@ -644,9 +627,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       expect(exercise.areAllSetsCompleted()).toBe(false);
@@ -657,9 +638,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        3,
-        10,
-        50,
+        targetSets3,
       );
 
       let updated = exercise.registerSetRepsAndWeight(1, 10, 50);
@@ -673,9 +652,7 @@ describe('WorkoutExercise value object', () => {
         'exercise-1',
         'Bench Press',
         1,
-        2,
-        10,
-        50,
+        targetSets2,
       );
 
       let updated = exercise.registerSetRepsAndWeight(1, 10, 50);

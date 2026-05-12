@@ -10,6 +10,7 @@ import { AdvanceToNextExerciseUseCase } from './use-cases/advance-to-next-exerci
 import { GetWorkoutSessionHistoryUseCase } from './use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from './use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from './use-cases/get-exercise-progress/get-exercise-progress.use-case';
+import { ListExerciseCatalogUseCase } from './use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
 
 @Module({
   providers: [
@@ -24,6 +25,7 @@ import { GetExerciseProgressUseCase } from './use-cases/get-exercise-progress/ge
     GetWorkoutSessionHistoryUseCase,
     GetWorkoutSessionDetailUseCase,
     GetExerciseProgressUseCase,
+    ListExerciseCatalogUseCase,
   ],
   exports: [
     CreateRoutineUseCase,
@@ -37,6 +39,7 @@ import { GetExerciseProgressUseCase } from './use-cases/get-exercise-progress/ge
     GetWorkoutSessionHistoryUseCase,
     GetWorkoutSessionDetailUseCase,
     GetExerciseProgressUseCase,
+    ListExerciseCatalogUseCase,
   ],
 })
 export class TrainingApplicationModule {}

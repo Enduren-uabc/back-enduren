@@ -28,9 +28,11 @@ export interface StartWorkoutSessionOutput {
     exerciseId: string;
     exerciseName: string;
     order: number;
-    sets: number;
-    repsPerSet: number;
-    weight: number;
+    targetSets: Array<{
+      setNumber: number;
+      reps: number;
+      weight: number;
+    }>;
     workoutSets: Array<{
       setNumber: number;
       repsPerformed: number | null;
@@ -85,14 +87,24 @@ export class StartWorkoutSessionUseCase {
       await import('../../../domain/value-objects/workout-exercise.value-object');
     const workoutExercises = routine.days.flatMap((day) =>
       day.exercises.map((exercise) => {
-        const config = exercise.configuration;
+        const targetSets =
+          exercise.sets.length > 0
+            ? exercise.sets.map((s) => ({
+                setNumber: s.setNumber,
+                reps: s.reps,
+                weight: s.weight,
+              }))
+            : [
+                { setNumber: 1, reps: 10, weight: 0 },
+                { setNumber: 2, reps: 10, weight: 0 },
+                { setNumber: 3, reps: 10, weight: 0 },
+              ];
+
         return WorkoutExercise.create(
           exercise.id,
           exercise.name,
-          exercise.order,
-          config ? config.sets : 3,
-          config ? config.repsPerSet : 10,
-          config ? config.weight : 0,
+          exercise.order + 1,
+          targetSets,
         );
       }),
     );
@@ -117,9 +129,11 @@ export class StartWorkoutSessionUseCase {
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,
         order: ex.order,
-        sets: ex.sets,
-        repsPerSet: ex.repsPerSet,
-        weight: ex.weight,
+        targetSets: ex.targetSets.map((ts) => ({
+          setNumber: ts.setNumber,
+          reps: ts.reps,
+          weight: ts.weight,
+        })),
         workoutSets: ex.workoutSets.map((ws) => ({
           setNumber: ws.setNumber,
           repsPerformed: ws.repsPerformed,

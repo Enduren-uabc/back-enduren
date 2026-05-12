@@ -5,7 +5,7 @@ import { CurrentActor } from '../../ports/current-actor.port';
 import { Routine } from '../../../domain/entities/routine.entity';
 import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
 import { Exercise } from '../../../domain/entities/exercise.entity';
-import { ExerciseConfiguration } from '../../../domain/value-objects/exercise-configuration.value-object';
+import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
 import {
   WorkoutSessionDomainError,
   WorkoutSessionErrorCode,
@@ -22,14 +22,18 @@ describe('StartWorkoutSessionUseCase', () => {
     'exercise-1',
     'Bench Press',
     1,
-    ExerciseConfiguration.reconstitute(3, 10, 50),
+    [
+      RoutineExerciseSet.reconstitute('s-1', 1, 10, 50, null),
+      RoutineExerciseSet.reconstitute('s-2', 2, 10, 50, null),
+      RoutineExerciseSet.reconstitute('s-3', 3, 8, 55, null),
+    ],
   );
 
   const exerciseWithoutConfig = Exercise.reconstitute(
     'exercise-2',
     'Squat',
     2,
-    null,
+    [],
   );
 
   const routineDay = RoutineDay.reconstitute('monday', [
@@ -60,6 +64,8 @@ describe('StartWorkoutSessionUseCase', () => {
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
       findActiveByUserId: jest.fn(),
+      findByIdAndUserId: jest.fn(),
+      delete: jest.fn(),
     };
     useCase = new StartWorkoutSessionUseCase(
       workoutSessionRepository,
@@ -89,7 +95,7 @@ describe('StartWorkoutSessionUseCase', () => {
       expect(result.finishedAt).toBeNull();
     });
 
-    it('should load exercises from routine configuration (RF-12.0.1)', async () => {
+    it('should load exercises from routine configuration with detailed sets (RF-12.0.1)', async () => {
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
       (
         workoutSessionRepository.findInProgressByUserId as jest.Mock
@@ -105,17 +111,20 @@ describe('StartWorkoutSessionUseCase', () => {
       // Exercise with configuration
       expect(result.exercises[0].exerciseId).toBe('exercise-1');
       expect(result.exercises[0].exerciseName).toBe('Bench Press');
-      expect(result.exercises[0].sets).toBe(3);
-      expect(result.exercises[0].repsPerSet).toBe(10);
-      expect(result.exercises[0].weight).toBe(50);
+      expect(result.exercises[0].targetSets).toHaveLength(3);
+      expect(result.exercises[0].targetSets[0].setNumber).toBe(1);
+      expect(result.exercises[0].targetSets[0].reps).toBe(10);
+      expect(result.exercises[0].targetSets[0].weight).toBe(50);
+      expect(result.exercises[0].targetSets[2].reps).toBe(8);
+      expect(result.exercises[0].targetSets[2].weight).toBe(55);
       expect(result.exercises[0].workoutSets).toHaveLength(3);
 
       // Exercise without configuration (defaults)
       expect(result.exercises[1].exerciseId).toBe('exercise-2');
       expect(result.exercises[1].exerciseName).toBe('Squat');
-      expect(result.exercises[1].sets).toBe(3);
-      expect(result.exercises[1].repsPerSet).toBe(10);
-      expect(result.exercises[1].weight).toBe(0);
+      expect(result.exercises[1].targetSets).toHaveLength(3);
+      expect(result.exercises[1].targetSets[0].reps).toBe(10);
+      expect(result.exercises[1].targetSets[0].weight).toBe(0);
     });
   });
 

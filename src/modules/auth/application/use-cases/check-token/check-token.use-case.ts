@@ -1,5 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { UserRepository, USER_REPOSITORY_PORT } from '../../../../users/domain/repositories/user.repository';
+import {
+  UserRepository,
+  USER_REPOSITORY_PORT,
+} from '../../../../users/domain/repositories/user.repository';
 
 export interface CheckTokenOutput {
   id: string;

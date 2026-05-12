@@ -1,5 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Profile, Gender, ExperienceLevel, MainGoal, WeightUnit } from '../../../domain/entities/profile.entity';
+import {
+  Profile,
+  Gender,
+  ExperienceLevel,
+  MainGoal,
+  WeightUnit,
+} from '../../../domain/entities/profile.entity';
 import {
   ProfileRepository,
   PROFILE_REPOSITORY_PORT,
@@ -42,7 +48,9 @@ export class CreateOrUpdateProfileUseCase {
     private readonly profileRepository: ProfileRepository,
   ) {}
 
-  async execute(input: CreateOrUpdateProfileInput): Promise<CreateOrUpdateProfileOutput> {
+  async execute(
+    input: CreateOrUpdateProfileInput,
+  ): Promise<CreateOrUpdateProfileOutput> {
     const existing = await this.profileRepository.findByUserId(input.userId);
 
     let profile: Profile;

@@ -4,7 +4,7 @@ import { CurrentActor } from '../../ports/current-actor.port';
 import { Routine } from '../../../domain/entities/routine.entity';
 import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
 import { Exercise } from '../../../domain/entities/exercise.entity';
-import { ExerciseConfiguration } from '../../../domain/value-objects/exercise-configuration.value-object';
+import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
 import {
   RoutineDomainError,
   RoutineErrorCode,
@@ -23,6 +23,8 @@ describe('ConfigureExerciseUseCase', () => {
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
       findActiveByUserId: jest.fn(),
+      findByIdAndUserId: jest.fn(),
+      delete: jest.fn(),
     };
     useCase = new ConfigureExerciseUseCase(routineRepository);
   });
@@ -55,7 +57,7 @@ describe('ConfigureExerciseUseCase', () => {
   };
 
   describe('happy path (RF-11.0.5, RF-11.0.6)', () => {
-    it('should configure an exercise with valid sets, repsPerSet and weight', async () => {
+    it('should configure an exercise with valid sets', async () => {
       const routine = createRoutineWithExercise('monday');
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
       (routineRepository.save as jest.Mock).mockImplementation((r: Routine) =>
@@ -66,16 +68,20 @@ describe('ConfigureExerciseUseCase', () => {
         routineId: 'routine-1',
         dayOfWeek: 'monday',
         exerciseId: 'ex-1',
-        sets: 3,
-        repsPerSet: 12,
-        weight: 50,
+        sets: [
+          { setNumber: 1, reps: 12, weight: 50 },
+          { setNumber: 2, reps: 10, weight: 45 },
+          { setNumber: 3, reps: 8, weight: 40 },
+        ],
       });
 
       expect(result.id).toBe('routine-1');
       expect(result.days[0].exercises[0].id).toBe('ex-1');
-      expect(result.days[0].exercises[0].sets).toBe(3);
-      expect(result.days[0].exercises[0].repsPerSet).toBe(12);
-      expect(result.days[0].exercises[0].weight).toBe(50);
+      expect(result.days[0].exercises[0].sets).toHaveLength(3);
+      expect(result.days[0].exercises[0].sets[0].setNumber).toBe(1);
+      expect(result.days[0].exercises[0].sets[0].reps).toBe(12);
+      expect(result.days[0].exercises[0].sets[0].weight).toBe(50);
+      expect(result.days[0].exercises[0].sets[2].reps).toBe(8);
     });
 
     it('should configure an exercise with minimum valid values', async () => {
@@ -89,17 +95,15 @@ describe('ConfigureExerciseUseCase', () => {
         routineId: 'routine-1',
         dayOfWeek: 'monday',
         exerciseId: 'ex-1',
-        sets: 1,
-        repsPerSet: 1,
-        weight: 0,
+        sets: [{ setNumber: 1, reps: 1, weight: 0 }],
       });
 
-      expect(result.days[0].exercises[0].sets).toBe(1);
-      expect(result.days[0].exercises[0].repsPerSet).toBe(1);
-      expect(result.days[0].exercises[0].weight).toBe(0);
+      expect(result.days[0].exercises[0].sets).toHaveLength(1);
+      expect(result.days[0].exercises[0].sets[0].reps).toBe(1);
+      expect(result.days[0].exercises[0].sets[0].weight).toBe(0);
     });
 
-    it('should configure an exercise with maximum valid values', async () => {
+    it('should configure an exercise with restSeconds', async () => {
       const routine = createRoutineWithExercise('monday');
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
       (routineRepository.save as jest.Mock).mockImplementation((r: Routine) =>
@@ -110,23 +114,17 @@ describe('ConfigureExerciseUseCase', () => {
         routineId: 'routine-1',
         dayOfWeek: 'monday',
         exerciseId: 'ex-1',
-        sets: 10,
-        repsPerSet: 50,
-        weight: 999.99,
+        sets: [{ setNumber: 1, reps: 10, weight: 60, restSeconds: 90 }],
       });
 
-      expect(result.days[0].exercises[0].sets).toBe(10);
-      expect(result.days[0].exercises[0].repsPerSet).toBe(50);
-      expect(result.days[0].exercises[0].weight).toBe(999.99);
+      expect(result.days[0].exercises[0].sets[0].restSeconds).toBe(90);
     });
 
     it('should re-configure an already configured exercise', async () => {
-      const exercise = Exercise.reconstitute(
-        'ex-1',
-        'Push-ups',
-        0,
-        ExerciseConfiguration.reconstitute(3, 12, 50),
-      );
+      const exercise = Exercise.reconstitute('ex-1', 'Push-ups', 0, [
+        RoutineExerciseSet.reconstitute('s-1', 1, 12, 50, null),
+        RoutineExerciseSet.reconstitute('s-2', 2, 12, 50, null),
+      ]);
       const day = RoutineDay.reconstitute('monday', [exercise]);
       const routine = Routine.reconstitute(
         'routine-1',
@@ -146,14 +144,16 @@ describe('ConfigureExerciseUseCase', () => {
         routineId: 'routine-1',
         dayOfWeek: 'monday',
         exerciseId: 'ex-1',
-        sets: 5,
-        repsPerSet: 8,
-        weight: 60,
+        sets: [
+          { setNumber: 1, reps: 8, weight: 60 },
+          { setNumber: 2, reps: 8, weight: 60 },
+          { setNumber: 3, reps: 6, weight: 70 },
+        ],
       });
 
-      expect(result.days[0].exercises[0].sets).toBe(5);
-      expect(result.days[0].exercises[0].repsPerSet).toBe(8);
-      expect(result.days[0].exercises[0].weight).toBe(60);
+      expect(result.days[0].exercises[0].sets).toHaveLength(3);
+      expect(result.days[0].exercises[0].sets[0].reps).toBe(8);
+      expect(result.days[0].exercises[0].sets[0].weight).toBe(60);
     });
   });
 
@@ -166,9 +166,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'nonexistent',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 12,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 10, weight: 50 }],
         }),
       ).rejects.toThrow(RoutineDomainError);
 
@@ -177,9 +175,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'nonexistent',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 12,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 10, weight: 50 }],
         });
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);
@@ -200,9 +196,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'nonexistent-exercise',
-          sets: 3,
-          repsPerSet: 12,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 10, weight: 50 }],
         }),
       ).rejects.toThrow(RoutineDomainError);
 
@@ -211,9 +205,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'nonexistent-exercise',
-          sets: 3,
-          repsPerSet: 12,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 10, weight: 50 }],
         });
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);
@@ -234,9 +226,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'friday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 12,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 10, weight: 50 }],
         }),
       ).rejects.toThrow(RoutineDomainError);
 
@@ -245,9 +235,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'friday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 12,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 10, weight: 50 }],
         });
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);
@@ -259,7 +247,7 @@ describe('ConfigureExerciseUseCase', () => {
   });
 
   describe('invalid configuration values', () => {
-    it('should reject sets out of range (RF-11.0.1)', async () => {
+    it('should reject empty sets array', async () => {
       const routine = createRoutineWithExercise('monday');
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
 
@@ -268,30 +256,12 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 0,
-          repsPerSet: 10,
-          weight: 50,
+          sets: [],
         }),
       ).rejects.toThrow(RoutineDomainError);
-
-      try {
-        await useCase.execute(actor, {
-          routineId: 'routine-1',
-          dayOfWeek: 'monday',
-          exerciseId: 'ex-1',
-          sets: 0,
-          repsPerSet: 10,
-          weight: 50,
-        });
-      } catch (error) {
-        expect(error).toBeInstanceOf(RoutineDomainError);
-        expect((error as RoutineDomainError).code).toBe(
-          RoutineErrorCode.EXERCISE_SETS_OUT_OF_RANGE,
-        );
-      }
     });
 
-    it('should reject repsPerSet out of range (RF-11.0.2)', async () => {
+    it('should reject reps out of range (RF-11.0.2)', async () => {
       const routine = createRoutineWithExercise('monday');
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
 
@@ -300,9 +270,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 0,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 0, weight: 50 }],
         }),
       ).rejects.toThrow(RoutineDomainError);
 
@@ -311,9 +279,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 0,
-          weight: 50,
+          sets: [{ setNumber: 1, reps: 0, weight: 50 }],
         });
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);
@@ -332,9 +298,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 12,
-          weight: -5,
+          sets: [{ setNumber: 1, reps: 12, weight: -5 }],
         }),
       ).rejects.toThrow(RoutineDomainError);
 
@@ -343,9 +307,7 @@ describe('ConfigureExerciseUseCase', () => {
           routineId: 'routine-1',
           dayOfWeek: 'monday',
           exerciseId: 'ex-1',
-          sets: 3,
-          repsPerSet: 12,
-          weight: -5,
+          sets: [{ setNumber: 1, reps: 12, weight: -5 }],
         });
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);

@@ -2,7 +2,7 @@ import {
   RoutineDomainError,
   RoutineErrorCode,
 } from '../errors/routine-domain.error';
-import { ExerciseConfiguration } from '../value-objects/exercise-configuration.value-object';
+import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-object';
 
 /**
  * Exercise domain entity.
@@ -15,18 +15,18 @@ export class Exercise {
   public readonly id: string;
   public readonly name: string;
   public readonly order: number;
-  public readonly configuration: ExerciseConfiguration | null;
+  public readonly sets: RoutineExerciseSet[];
 
   private constructor(
     id: string,
     name: string,
     order: number,
-    configuration: ExerciseConfiguration | null = null,
+    sets: RoutineExerciseSet[],
   ) {
     this.id = id;
     this.name = name;
     this.order = order;
-    this.configuration = configuration;
+    this.sets = sets;
   }
 
   /**
@@ -42,7 +42,7 @@ export class Exercise {
       );
     }
 
-    return new Exercise(id, name.trim(), order, null);
+    return new Exercise(id, name.trim(), order, []);
   }
 
   /**
@@ -52,22 +52,25 @@ export class Exercise {
     id: string,
     name: string,
     order: number,
-    configuration: ExerciseConfiguration | null = null,
+    sets: RoutineExerciseSet[] = [],
   ): Exercise {
-    return new Exercise(id, name, order, configuration);
+    return new Exercise(id, name, order, sets);
   }
 
   /**
-   * Configures this exercise with sets, repsPerSet and weight.
-   * Returns a new Exercise with the configuration applied (immutable pattern).
-   * Delegates validation to ExerciseConfiguration value object (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
+   * Configures this exercise with an array of detailed sets.
+   * Returns a new Exercise with the sets applied (immutable pattern).
+   * Invariants: at least 1 set, reps >= 1, weight >= 0.
    */
-  public configure(sets: number, repsPerSet: number, weight: number): Exercise {
-    const configuration = ExerciseConfiguration.create(
-      sets,
-      repsPerSet,
-      weight,
-    );
-    return new Exercise(this.id, this.name, this.order, configuration);
+  public configureSets(sets: RoutineExerciseSet[]): Exercise {
+    if (sets.length === 0) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.EXERCISE_SETS_OUT_OF_RANGE,
+        'Exercise must have at least 1 set',
+        { setCount: sets.length },
+      );
+    }
+
+    return new Exercise(this.id, this.name, this.order, [...sets]);
   }
 }

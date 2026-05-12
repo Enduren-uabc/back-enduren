@@ -1,7 +1,7 @@
 import { Routine } from './entities/routine.entity';
 import { RoutineDay } from './value-objects/routine-day.value-object';
 import { Exercise } from './entities/exercise.entity';
-import { ExerciseConfiguration } from './value-objects/exercise-configuration.value-object';
+import { RoutineExerciseSet } from './value-objects/routine-exercise-set.value-object';
 import {
   RoutineDomainError,
   RoutineErrorCode,
@@ -166,6 +166,7 @@ describe('Exercise Entity', () => {
       expect(exercise.id).toBe('ex-1');
       expect(exercise.name).toBe('Push-ups');
       expect(exercise.order).toBe(0);
+      expect(exercise.sets).toHaveLength(0);
     });
 
     it('should trim the exercise name', () => {
@@ -197,6 +198,39 @@ describe('Exercise Entity', () => {
       expect(exercise.id).toBe('ex-1');
       expect(exercise.name).toBe('Push-ups');
       expect(exercise.order).toBe(0);
+      expect(exercise.sets).toHaveLength(0);
+    });
+
+    it('should reconstitute an exercise with sets from persistence', () => {
+      const sets = [RoutineExerciseSet.reconstitute('s-1', 1, 10, 50, null)];
+      const exercise = Exercise.reconstitute('ex-1', 'Push-ups', 0, sets);
+      expect(exercise.sets).toHaveLength(1);
+      expect(exercise.sets[0].reps).toBe(10);
+    });
+  });
+
+  describe('configureSets', () => {
+    it('should configure an exercise with sets', () => {
+      const exercise = Exercise.create('ex-1', 'Push-ups', 0);
+      const sets = [
+        RoutineExerciseSet.create(1, 12, 50),
+        RoutineExerciseSet.create(2, 10, 45),
+      ];
+      const configured = exercise.configureSets(sets);
+      expect(configured.sets).toHaveLength(2);
+      expect(configured.sets[0].setNumber).toBe(1);
+      expect(configured.sets[1].reps).toBe(10);
+    });
+
+    it('should reject empty sets array', () => {
+      const exercise = Exercise.create('ex-1', 'Push-ups', 0);
+      expect(() => exercise.configureSets([])).toThrow(RoutineDomainError);
+    });
+
+    it('should not mutate the original exercise', () => {
+      const exercise = Exercise.create('ex-1', 'Push-ups', 0);
+      exercise.configureSets([RoutineExerciseSet.create(1, 10, 50)]);
+      expect(exercise.sets).toHaveLength(0);
     });
   });
 });
@@ -205,27 +239,36 @@ describe('RoutineDay - configureExercise', () => {
   it('should configure an exercise in a day (RF-11.0.5)', () => {
     const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
     const day = RoutineDay.reconstitute('monday', exercises);
-    const updated = day.configureExercise('ex-1', 3, 12, 50);
-    expect(updated.exercises[0].configuration).not.toBeNull();
-    expect(updated.exercises[0].configuration!.sets).toBe(3);
-    expect(updated.exercises[0].configuration!.repsPerSet).toBe(12);
-    expect(updated.exercises[0].configuration!.weight).toBe(50);
+    const sets = [
+      RoutineExerciseSet.create(1, 12, 50),
+      RoutineExerciseSet.create(2, 10, 45),
+    ];
+    const updated = day.configureExercise('ex-1', sets);
+    expect(updated.exercises[0].sets).toHaveLength(2);
+    expect(updated.exercises[0].sets[0].setNumber).toBe(1);
+    expect(updated.exercises[0].sets[0].reps).toBe(12);
+    expect(updated.exercises[0].sets[0].weight).toBe(50);
+    expect(updated.exercises[0].sets[1].reps).toBe(10);
   });
 
   it('should not mutate the original day when configuring an exercise', () => {
     const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
     const day = RoutineDay.reconstitute('monday', exercises);
-    day.configureExercise('ex-1', 3, 12, 50);
-    expect(day.exercises[0].configuration).toBeNull();
+    day.configureExercise('ex-1', [RoutineExerciseSet.create(1, 10, 50)]);
+    expect(day.exercises[0].sets).toHaveLength(0);
   });
 
   it('should reject configuring a non-existent exercise in day', () => {
     const day = RoutineDay.create('monday');
-    expect(() => day.configureExercise('nonexistent', 3, 12, 50)).toThrow(
-      RoutineDomainError,
-    );
+    expect(() =>
+      day.configureExercise('nonexistent', [
+        RoutineExerciseSet.create(1, 10, 50),
+      ]),
+    ).toThrow(RoutineDomainError);
     try {
-      day.configureExercise('nonexistent', 3, 12, 50);
+      day.configureExercise('nonexistent', [
+        RoutineExerciseSet.create(1, 10, 50),
+      ]);
     } catch (error) {
       expect(error).toBeInstanceOf(RoutineDomainError);
       expect((error as RoutineDomainError).code).toBe(
@@ -234,28 +277,26 @@ describe('RoutineDay - configureExercise', () => {
     }
   });
 
-  it('should reject invalid sets via configureExercise (RF-11.0.1)', () => {
+  it('should reject empty sets via configureExercise', () => {
     const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
     const day = RoutineDay.reconstitute('monday', exercises);
-    expect(() => day.configureExercise('ex-1', 0, 12, 50)).toThrow(
-      RoutineDomainError,
-    );
+    expect(() => day.configureExercise('ex-1', [])).toThrow(RoutineDomainError);
   });
 
-  it('should reject invalid repsPerSet via configureExercise (RF-11.0.2)', () => {
+  it('should reject invalid reps via configureExercise (RF-11.0.2)', () => {
     const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
     const day = RoutineDay.reconstitute('monday', exercises);
-    expect(() => day.configureExercise('ex-1', 3, 0, 50)).toThrow(
-      RoutineDomainError,
-    );
+    expect(() =>
+      day.configureExercise('ex-1', [RoutineExerciseSet.create(1, 0, 50)]),
+    ).toThrow(RoutineDomainError);
   });
 
   it('should reject negative weight via configureExercise (RF-11.0.3)', () => {
     const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
     const day = RoutineDay.reconstitute('monday', exercises);
-    expect(() => day.configureExercise('ex-1', 3, 12, -5)).toThrow(
-      RoutineDomainError,
-    );
+    expect(() =>
+      day.configureExercise('ex-1', [RoutineExerciseSet.create(1, 12, -5)]),
+    ).toThrow(RoutineDomainError);
   });
 });
 
@@ -573,11 +614,16 @@ describe('Routine Entity', () => {
         new Date(),
       );
 
-      const updated = routine.configureExercise('monday', 'ex-1', 3, 12, 50);
-      expect(updated.days[0].exercises[0].configuration).not.toBeNull();
-      expect(updated.days[0].exercises[0].configuration!.sets).toBe(3);
-      expect(updated.days[0].exercises[0].configuration!.repsPerSet).toBe(12);
-      expect(updated.days[0].exercises[0].configuration!.weight).toBe(50);
+      const sets = [
+        RoutineExerciseSet.create(1, 12, 50),
+        RoutineExerciseSet.create(2, 10, 45),
+      ];
+      const updated = routine.configureExercise('monday', 'ex-1', sets);
+      expect(updated.days[0].exercises[0].sets).toHaveLength(2);
+      expect(updated.days[0].exercises[0].sets[0].setNumber).toBe(1);
+      expect(updated.days[0].exercises[0].sets[0].reps).toBe(12);
+      expect(updated.days[0].exercises[0].sets[0].weight).toBe(50);
+      expect(updated.days[0].exercises[0].sets[1].reps).toBe(10);
     });
 
     it('should not mutate the original routine', () => {
@@ -593,18 +639,24 @@ describe('Routine Entity', () => {
         new Date(),
       );
 
-      routine.configureExercise('monday', 'ex-1', 3, 12, 50);
-      expect(routine.days[0].exercises[0].configuration).toBeNull();
+      routine.configureExercise('monday', 'ex-1', [
+        RoutineExerciseSet.create(1, 10, 50),
+      ]);
+      expect(routine.days[0].exercises[0].sets).toHaveLength(0);
     });
 
     it('should reject configuring exercise in a non-existent day', () => {
       const days = [RoutineDay.create('monday')];
       const routine = Routine.create('id-1', 'My Routine', 'user-1', days);
       expect(() =>
-        routine.configureExercise('friday', 'ex-1', 3, 12, 50),
+        routine.configureExercise('friday', 'ex-1', [
+          RoutineExerciseSet.create(1, 10, 50),
+        ]),
       ).toThrow(RoutineDomainError);
       try {
-        routine.configureExercise('friday', 'ex-1', 3, 12, 50);
+        routine.configureExercise('friday', 'ex-1', [
+          RoutineExerciseSet.create(1, 10, 50),
+        ]);
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);
         expect((error as RoutineDomainError).code).toBe(
@@ -617,10 +669,14 @@ describe('Routine Entity', () => {
       const days = [RoutineDay.create('monday')];
       const routine = Routine.create('id-1', 'My Routine', 'user-1', days);
       expect(() =>
-        routine.configureExercise('monday', 'nonexistent', 3, 12, 50),
+        routine.configureExercise('monday', 'nonexistent', [
+          RoutineExerciseSet.create(1, 10, 50),
+        ]),
       ).toThrow(RoutineDomainError);
       try {
-        routine.configureExercise('monday', 'nonexistent', 3, 12, 50);
+        routine.configureExercise('monday', 'nonexistent', [
+          RoutineExerciseSet.create(1, 10, 50),
+        ]);
       } catch (error) {
         expect(error).toBeInstanceOf(RoutineDomainError);
         expect((error as RoutineDomainError).code).toBe(
@@ -629,7 +685,7 @@ describe('Routine Entity', () => {
       }
     });
 
-    it('should reject invalid sets via configureExercise (RF-11.0.1)', () => {
+    it('should reject empty sets via configureExercise', () => {
       const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
       const day = RoutineDay.reconstitute('monday', exercises);
       const routine = Routine.reconstitute(
@@ -641,12 +697,12 @@ describe('Routine Entity', () => {
         new Date(),
         new Date(),
       );
-      expect(() =>
-        routine.configureExercise('monday', 'ex-1', 0, 12, 50),
-      ).toThrow(RoutineDomainError);
+      expect(() => routine.configureExercise('monday', 'ex-1', [])).toThrow(
+        RoutineDomainError,
+      );
     });
 
-    it('should reject invalid repsPerSet via configureExercise (RF-11.0.2)', () => {
+    it('should reject invalid reps via configureExercise (RF-11.0.2)', () => {
       const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0)];
       const day = RoutineDay.reconstitute('monday', exercises);
       const routine = Routine.reconstitute(
@@ -659,7 +715,9 @@ describe('Routine Entity', () => {
         new Date(),
       );
       expect(() =>
-        routine.configureExercise('monday', 'ex-1', 3, 0, 50),
+        routine.configureExercise('monday', 'ex-1', [
+          RoutineExerciseSet.create(1, 0, 50),
+        ]),
       ).toThrow(RoutineDomainError);
     });
 
@@ -676,13 +734,19 @@ describe('Routine Entity', () => {
         new Date(),
       );
       expect(() =>
-        routine.configureExercise('monday', 'ex-1', 3, 12, -5),
+        routine.configureExercise('monday', 'ex-1', [
+          RoutineExerciseSet.create(1, 12, -5),
+        ]),
       ).toThrow(RoutineDomainError);
     });
 
     it('should re-configure an already configured exercise', () => {
-      const config = ExerciseConfiguration.reconstitute(3, 12, 50);
-      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0, config)];
+      const sets = [
+        RoutineExerciseSet.reconstitute('s-1', 1, 12, 50, null),
+        RoutineExerciseSet.reconstitute('s-2', 2, 12, 50, null),
+        RoutineExerciseSet.reconstitute('s-3', 3, 10, 45, null),
+      ];
+      const exercises = [Exercise.reconstitute('ex-1', 'Push-ups', 0, sets)];
       const day = RoutineDay.reconstitute('monday', exercises);
       const routine = Routine.reconstitute(
         'id-1',
@@ -694,12 +758,17 @@ describe('Routine Entity', () => {
         new Date(),
       );
 
-      const updated = routine.configureExercise('monday', 'ex-1', 5, 8, 60);
-      expect(updated.days[0].exercises[0].configuration!.sets).toBe(5);
-      expect(updated.days[0].exercises[0].configuration!.repsPerSet).toBe(8);
-      expect(updated.days[0].exercises[0].configuration!.weight).toBe(60);
+      const newSets = [
+        RoutineExerciseSet.create(1, 8, 60),
+        RoutineExerciseSet.create(2, 8, 60),
+      ];
+      const updated = routine.configureExercise('monday', 'ex-1', newSets);
+      expect(updated.days[0].exercises[0].sets).toHaveLength(2);
+      expect(updated.days[0].exercises[0].sets[0].reps).toBe(8);
+      expect(updated.days[0].exercises[0].sets[0].weight).toBe(60);
       // Original unchanged
-      expect(routine.days[0].exercises[0].configuration!.sets).toBe(3);
+      expect(routine.days[0].exercises[0].sets).toHaveLength(3);
+      expect(routine.days[0].exercises[0].sets[0].reps).toBe(12);
     });
   });
 });

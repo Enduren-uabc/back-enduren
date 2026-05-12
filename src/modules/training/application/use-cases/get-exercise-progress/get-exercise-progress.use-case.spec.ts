@@ -24,6 +24,11 @@ describe('GetExerciseProgressUseCase', () => {
       completed: boolean;
     }>,
   ): WorkoutExercise => {
+    const targetSets = Array.from({ length: sets }, (_, i) => ({
+      setNumber: i + 1,
+      reps: repsPerSet,
+      weight,
+    }));
     const workoutSets = workoutSetsData.map((wsData) =>
       WorkoutSet.reconstitute(
         wsData.setNumber,
@@ -36,9 +41,7 @@ describe('GetExerciseProgressUseCase', () => {
       exerciseId,
       exerciseName,
       1,
-      sets,
-      repsPerSet,
-      weight,
+      targetSets,
       workoutSets,
     );
   };

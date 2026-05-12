@@ -31,8 +31,19 @@ export class CreateProfileRequestDto {
   @IsIn(['beginner', 'intermediate', 'advanced'])
   experienceLevel!: 'beginner' | 'intermediate' | 'advanced';
 
-  @IsIn(['lose_weight', 'gain_muscle', 'maintain', 'improve_endurance', 'general_fitness'])
-  mainGoal!: 'lose_weight' | 'gain_muscle' | 'maintain' | 'improve_endurance' | 'general_fitness';
+  @IsIn([
+    'lose_weight',
+    'gain_muscle',
+    'maintain',
+    'improve_endurance',
+    'general_fitness',
+  ])
+  mainGoal!:
+    | 'lose_weight'
+    | 'gain_muscle'
+    | 'maintain'
+    | 'improve_endurance'
+    | 'general_fitness';
 
   @IsOptional()
   @IsInt()

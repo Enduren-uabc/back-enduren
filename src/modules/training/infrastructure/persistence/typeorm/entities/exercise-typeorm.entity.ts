@@ -1,5 +1,13 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { RoutineDayTypeormEntity } from './routine-day-typeorm.entity';
+import { ExerciseSetTypeormEntity } from './exercise-set-typeorm.entity';
 
 @Entity('exercises')
 export class ExerciseTypeormEntity {
@@ -12,15 +20,6 @@ export class ExerciseTypeormEntity {
   @Column('int')
   order!: number;
 
-  @Column('int', { nullable: true })
-  sets!: number | null;
-
-  @Column('int', { nullable: true })
-  repsPerSet!: number | null;
-
-  @Column('float', { nullable: true })
-  weight!: number | null;
-
   @Column('uuid')
   routineDayId!: string;
 
@@ -29,4 +28,11 @@ export class ExerciseTypeormEntity {
   })
   @JoinColumn({ name: 'routineDayId' })
   routineDay!: RoutineDayTypeormEntity;
+
+  @OneToMany(() => ExerciseSetTypeormEntity, (set) => set.exercise, {
+    cascade: true,
+    eager: true,
+    orphanedRowAction: 'delete',
+  })
+  sets!: ExerciseSetTypeormEntity[];
 }

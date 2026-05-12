@@ -1,16 +1,33 @@
-import { IsInt, Min, Max } from 'class-validator';
+import {
+  IsInt,
+  Min,
+  IsOptional,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
-export class ConfigureExerciseRequestDto {
+export class ExerciseSetDto {
   @IsInt()
   @Min(1)
-  @Max(10)
-  sets!: number;
+  setNumber!: number;
 
   @IsInt()
   @Min(1)
-  @Max(50)
-  repsPerSet!: number;
+  reps!: number;
 
   @Min(0)
   weight!: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  restSeconds?: number;
+}
+
+export class ConfigureExerciseRequestDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExerciseSetDto)
+  sets!: ExerciseSetDto[];
 }

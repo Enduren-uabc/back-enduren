@@ -90,9 +90,10 @@ export class ProfileController {
     response.id = result.id;
     response.userId = result.userId;
     response.fullName = result.fullName;
-    response.birthDate = result.birthDate instanceof Date
-      ? result.birthDate.toISOString().split('T')[0]
-      : String(result.birthDate).split('T')[0];
+    response.birthDate =
+      result.birthDate instanceof Date
+        ? result.birthDate.toISOString().split('T')[0]
+        : String(result.birthDate).split('T')[0];
     response.gender = result.gender;
     response.weight = result.weight;
     response.height = result.height;

@@ -24,7 +24,12 @@ export class RefreshToken {
     this.usedAt = props.usedAt;
   }
 
-  static create(id: string, token: string, userId: string, expiresAt: Date): RefreshToken {
+  static create(
+    id: string,
+    token: string,
+    userId: string,
+    expiresAt: Date,
+  ): RefreshToken {
     return new RefreshToken({
       id,
       token,

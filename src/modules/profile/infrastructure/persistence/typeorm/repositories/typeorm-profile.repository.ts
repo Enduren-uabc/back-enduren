@@ -55,8 +55,16 @@ export class TypeormProfileRepository implements ProfileRepository {
       gender: entity.gender as 'male' | 'female' | 'other',
       weight: Number(entity.weight),
       height: Number(entity.height),
-      experienceLevel: entity.experienceLevel as 'beginner' | 'intermediate' | 'advanced',
-      mainGoal: entity.mainGoal as 'lose_weight' | 'gain_muscle' | 'maintain' | 'improve_endurance' | 'general_fitness',
+      experienceLevel: entity.experienceLevel as
+        | 'beginner'
+        | 'intermediate'
+        | 'advanced',
+      mainGoal: entity.mainGoal as
+        | 'lose_weight'
+        | 'gain_muscle'
+        | 'maintain'
+        | 'improve_endurance'
+        | 'general_fitness',
       daysAvailablePerWeek: entity.daysAvailablePerWeek,
       weightUnit: entity.weightUnit as 'kg' | 'lbs',
       createdAt: entity.createdAt,

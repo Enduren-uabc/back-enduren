@@ -8,13 +8,18 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Headers,
+  Inject,
 } from '@nestjs/common';
-import { Response, Request } from 'express';
+import type { Response, Request } from 'express';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtPayload } from '../strategies/jwt.strategy';
-import { CookieHelper, COOKIE_HELPER_PORT } from '../../../infrastructure/providers/cookie-helper.provider';
+import {
+  CookieHelper,
+  COOKIE_HELPER_PORT,
+} from '../../../infrastructure/providers/cookie-helper.provider';
 import { RegisterUserUseCase } from '../../../application/use-cases/register-user/register-user.use-case';
 import { LoginUserUseCase } from '../../../application/use-cases/login-user/login-user.use-case';
 import { LogoutUserUseCase } from '../../../application/use-cases/logout-user/logout-user.use-case';
@@ -23,7 +28,6 @@ import { CheckTokenUseCase } from '../../../application/use-cases/check-token/ch
 import { RegisterDto } from '../dtos/register.dto';
 import { LoginDto } from '../dtos/login.dto';
 import { AuthResponseDto } from '../dtos/auth.response';
-import { Inject } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
@@ -37,21 +41,45 @@ export class AuthController {
     private readonly cookieHelper: CookieHelper,
   ) {}
 
+  private isMobileClient(req: Request): boolean {
+    return req.headers['x-client-type'] === 'mobile';
+  }
+
+  private buildAuthResponse(
+    result: {
+      user: { id: string; email: string; username: string; role: string };
+      accessToken: string;
+      refreshToken: string;
+    },
+    isMobile: boolean,
+  ): AuthResponseDto {
+    const response = new AuthResponseDto();
+    response.id = result.user.id;
+    response.email = result.user.email;
+    response.username = result.user.username;
+    response.role = result.user.role;
+    if (isMobile) {
+      response.accessToken = result.accessToken;
+      response.refreshToken = result.refreshToken;
+    }
+    return response;
+  }
+
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
   ): Promise<AuthResponseDto> {
     const result = await this.registerUseCase.execute(dto);
-    this.cookieHelper.setAuthCookies(res, result.accessToken, result.refreshToken);
-    const response = new AuthResponseDto();
-    response.id = result.user.id;
-    response.email = result.user.email;
-    response.username = result.user.username;
-    response.role = result.user.role;
-    return response;
+    this.cookieHelper.setAuthCookies(
+      res,
+      result.accessToken,
+      result.refreshToken,
+    );
+    return this.buildAuthResponse(result, this.isMobileClient(req));
   }
 
   @Public()
@@ -60,15 +88,15 @@ export class AuthController {
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
   ): Promise<AuthResponseDto> {
     const result = await this.loginUseCase.execute(dto);
-    this.cookieHelper.setAuthCookies(res, result.accessToken, result.refreshToken);
-    const response = new AuthResponseDto();
-    response.id = result.user.id;
-    response.email = result.user.email;
-    response.username = result.user.username;
-    response.role = result.user.role;
-    return response;
+    this.cookieHelper.setAuthCookies(
+      res,
+      result.accessToken,
+      result.refreshToken,
+    );
+    return this.buildAuthResponse(result, this.isMobileClient(req));
   }
 
   @Post('logout')
@@ -76,9 +104,12 @@ export class AuthController {
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @Body() body?: { refreshToken?: string },
   ): Promise<{ success: boolean }> {
-    const refreshToken = req.cookies?.refresh_token;
-    await this.logoutUseCase.execute(refreshToken);
+    const refreshToken = req.cookies?.refresh_token ?? body?.refreshToken;
+    if (refreshToken) {
+      await this.logoutUseCase.execute(refreshToken);
+    }
     this.cookieHelper.clearAuthCookies(res);
     return { success: true };
   }
@@ -89,14 +120,30 @@ export class AuthController {
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ success: boolean }> {
-    const refreshToken = req.cookies?.refresh_token;
+    @Body() body?: { refreshToken?: string },
+  ): Promise<{
+    success: boolean;
+    accessToken?: string;
+    refreshToken?: string;
+  }> {
+    const refreshToken = req.cookies?.refresh_token ?? body?.refreshToken;
     if (!refreshToken) {
       this.cookieHelper.clearAuthCookies(res);
       return { success: false };
     }
     const result = await this.refreshUseCase.execute(refreshToken);
-    this.cookieHelper.setAuthCookies(res, result.accessToken, result.refreshToken);
+    this.cookieHelper.setAuthCookies(
+      res,
+      result.accessToken,
+      result.refreshToken,
+    );
+    if (this.isMobileClient(req)) {
+      return {
+        success: true,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      };
+    }
     return { success: true };
   }
 

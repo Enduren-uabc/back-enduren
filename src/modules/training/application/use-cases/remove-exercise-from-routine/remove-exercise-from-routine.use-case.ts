@@ -23,9 +23,13 @@ export interface RemoveExerciseFromRoutineOutput {
       id: string;
       name: string;
       order: number;
-      sets: number | null;
-      repsPerSet: number | null;
-      weight: number | null;
+      sets: Array<{
+        id: string;
+        setNumber: number;
+        reps: number;
+        weight: number;
+        restSeconds: number | null;
+      }>;
     }>;
   }>;
   createdAt: Date;
@@ -72,9 +76,13 @@ export class RemoveExerciseFromRoutineUseCase {
           id: e.id,
           name: e.name,
           order: e.order,
-          sets: e.configuration?.sets ?? null,
-          repsPerSet: e.configuration?.repsPerSet ?? null,
-          weight: e.configuration?.weight ?? null,
+          sets: e.sets.map((s) => ({
+            id: s.id,
+            setNumber: s.setNumber,
+            reps: s.reps,
+            weight: s.weight,
+            restSeconds: s.restSeconds,
+          })),
         })),
       })),
       createdAt: routine.createdAt,

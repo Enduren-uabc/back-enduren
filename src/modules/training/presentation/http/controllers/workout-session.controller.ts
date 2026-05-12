@@ -34,6 +34,7 @@ import {
   WorkoutSessionDetailResponseDto,
   WorkoutExerciseResponseDto,
   WorkoutSetResponseDto,
+  WorkoutExerciseTargetSetResponseDto,
 } from '../dtos/workout-session.response';
 import { WorkoutSessionSummaryResponseDto } from '../dtos/workout-session-summary.response';
 import {
@@ -259,9 +260,11 @@ export class WorkoutSessionController {
       exerciseId: string;
       exerciseName: string;
       order: number;
-      sets: number;
-      repsPerSet: number;
-      weight: number;
+      targetSets: Array<{
+        setNumber: number;
+        reps: number;
+        weight: number;
+      }>;
       workoutSets: Array<{
         setNumber: number;
         repsPerformed: number | null;
@@ -283,9 +286,13 @@ export class WorkoutSessionController {
       exDto.exerciseId = ex.exerciseId;
       exDto.exerciseName = ex.exerciseName;
       exDto.order = ex.order;
-      exDto.sets = ex.sets;
-      exDto.repsPerSet = ex.repsPerSet;
-      exDto.weight = ex.weight;
+      exDto.targetSets = ex.targetSets.map((ts) => {
+        const tsDto = new WorkoutExerciseTargetSetResponseDto();
+        tsDto.setNumber = ts.setNumber;
+        tsDto.reps = ts.reps;
+        tsDto.weight = ts.weight;
+        return tsDto;
+      });
       exDto.workoutSets = ex.workoutSets.map((ws) => {
         const wsDto = new WorkoutSetResponseDto();
         wsDto.setNumber = ws.setNumber;
@@ -312,9 +319,11 @@ export class WorkoutSessionController {
       exerciseId: string;
       exerciseName: string;
       order: number;
-      sets: number;
-      repsPerSet: number;
-      weight: number;
+      targetSets: Array<{
+        setNumber: number;
+        reps: number;
+        weight: number;
+      }>;
       workoutSets: Array<{
         setNumber: number;
         repsPerformed: number | null;
@@ -338,9 +347,13 @@ export class WorkoutSessionController {
       exDto.exerciseId = ex.exerciseId;
       exDto.exerciseName = ex.exerciseName;
       exDto.order = ex.order;
-      exDto.sets = ex.sets;
-      exDto.repsPerSet = ex.repsPerSet;
-      exDto.weight = ex.weight;
+      exDto.targetSets = ex.targetSets.map((ts) => {
+        const tsDto = new WorkoutExerciseTargetSetResponseDto();
+        tsDto.setNumber = ts.setNumber;
+        tsDto.reps = ts.reps;
+        tsDto.weight = ts.weight;
+        return tsDto;
+      });
       exDto.workoutSets = ex.workoutSets.map((ws) => {
         const wsDto = new WorkoutSetResponseDto();
         wsDto.setNumber = ws.setNumber;

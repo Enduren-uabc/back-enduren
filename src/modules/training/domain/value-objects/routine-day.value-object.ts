@@ -3,6 +3,7 @@ import {
   RoutineErrorCode,
 } from '../errors/routine-domain.error';
 import { Exercise } from '../entities/exercise.entity';
+import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-object';
 
 export type DayOfWeek =
   | 'monday'
@@ -35,10 +36,16 @@ export const MAX_EXERCISES_PER_DAY = 10;
  * Holds Exercise instances and enforces the max 10 exercises per day invariant (RF-10.0.4, RF-10.0.5).
  */
 export class RoutineDay {
+  public readonly id?: string;
   public readonly dayOfWeek: DayOfWeek;
   public readonly exercises: Exercise[];
 
-  private constructor(dayOfWeek: DayOfWeek, exercises: Exercise[]) {
+  private constructor(
+    dayOfWeek: DayOfWeek,
+    exercises: Exercise[],
+    id?: string,
+  ) {
+    this.id = id;
     this.dayOfWeek = dayOfWeek;
     this.exercises = [...exercises];
   }
@@ -61,7 +68,7 @@ export class RoutineDay {
         { dayOfWeek },
       );
     }
-    return new RoutineDay(dayOfWeek, []);
+    return new RoutineDay(dayOfWeek, [], undefined);
   }
 
   /**
@@ -70,8 +77,9 @@ export class RoutineDay {
   public static reconstitute(
     dayOfWeek: DayOfWeek,
     exercises: Exercise[],
+    id?: string,
   ): RoutineDay {
-    return new RoutineDay(dayOfWeek, exercises);
+    return new RoutineDay(dayOfWeek, exercises, id);
   }
 
   /**
@@ -86,7 +94,11 @@ export class RoutineDay {
         { dayOfWeek: this.dayOfWeek, currentCount: this.exercises.length },
       );
     }
-    return new RoutineDay(this.dayOfWeek, [...this.exercises, exercise]);
+    return new RoutineDay(
+      this.dayOfWeek,
+      [...this.exercises, exercise],
+      this.id,
+    );
   }
 
   /**
@@ -105,7 +117,7 @@ export class RoutineDay {
     }
     const updated = [...this.exercises];
     updated.splice(index, 1);
-    return new RoutineDay(this.dayOfWeek, updated);
+    return new RoutineDay(this.dayOfWeek, updated, this.id);
   }
 
   public equals(other: RoutineDay): boolean {
@@ -115,14 +127,11 @@ export class RoutineDay {
   /**
    * Configures an exercise in this day by exercise id.
    * Enforces: exercise must exist in day (RF-11.0.5).
-   * Delegates configuration validation to Exercise.configure() (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
    * Returns a new RoutineDay with the configured exercise.
    */
   public configureExercise(
     exerciseId: string,
-    sets: number,
-    repsPerSet: number,
-    weight: number,
+    sets: RoutineExerciseSet[],
   ): RoutineDay {
     const index = this.exercises.findIndex((e) => e.id === exerciseId);
     if (index === -1) {
@@ -133,13 +142,9 @@ export class RoutineDay {
       );
     }
 
-    const configuredExercise = this.exercises[index].configure(
-      sets,
-      repsPerSet,
-      weight,
-    );
+    const configuredExercise = this.exercises[index].configureSets(sets);
     const updated = [...this.exercises];
     updated[index] = configuredExercise;
-    return new RoutineDay(this.dayOfWeek, updated);
+    return new RoutineDay(this.dayOfWeek, updated, this.id);
   }
 }
