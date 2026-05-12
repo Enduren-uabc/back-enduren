@@ -23,19 +23,24 @@ import { ListRoutinesUseCase } from '../../../application/use-cases/list-routine
 import { GetRoutineDetailUseCase } from '../../../application/use-cases/get-routine-detail/get-routine-detail.use-case';
 import { DeleteRoutineUseCase } from '../../../application/use-cases/delete-routine/delete-routine.use-case';
 import { SyncRoutineUseCase } from '../../../application/use-cases/sync-routine/sync-routine.use-case';
+import { SetRoutineTrainingStrategyUseCase } from '../../../application/use-cases/set-routine-training-strategy/set-routine-training-strategy.use-case';
+import { GenerateExerciseSetsUseCase } from '../../../application/use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
+import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../../application/use-cases/list-training-strategies/list-training-strategies.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
+import { TrainingStrategyRepository } from '../../../domain/repositories/training-strategy.repository';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
 import { AddExerciseRequestDto } from '../dtos/add-exercise.request';
 import { ConfigureExerciseRequestDto } from '../dtos/configure-exercise.request';
 import { SyncRoutineRequestDto } from '../dtos/sync-routine.request';
+import { SetTrainingStrategyRequestDto } from '../dtos/set-training-strategy.request';
+import { GenerateExerciseSetsRequestDto } from '../dtos/generate-exercise-sets.request';
 import {
   RoutineResponseDto,
   RoutineDayResponseDto,
   ExerciseResponseDto,
   ExerciseSetResponseDto,
 } from '../dtos/routine.response';
-import { ListRoutinesResponseDto } from '../dtos/list-routines.response';
 import { DeleteRoutineResponseDto } from '../dtos/delete-routine.response';
 import { isValidDayOfWeek } from '../../../domain/value-objects/routine-day.value-object';
 import { RoutineDomainErrorFilter } from '../filters/routine-domain-error.filter';
@@ -57,9 +62,13 @@ export class RoutineController {
   private readonly getRoutineDetailUseCase: GetRoutineDetailUseCase;
   private readonly deleteRoutineUseCase: DeleteRoutineUseCase;
   private readonly syncRoutineUseCase: SyncRoutineUseCase;
+  private readonly setRoutineTrainingStrategyUseCase: SetRoutineTrainingStrategyUseCase;
+  private readonly generateExerciseSetsUseCase: GenerateExerciseSetsUseCase;
 
   constructor(
     @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
+    @Inject(TRAINING_STRATEGY_REPOSITORY_PORT)
+    trainingStrategyRepository: TrainingStrategyRepository,
   ) {
     this.createRoutineUseCase = new CreateRoutineUseCase(routineRepository);
     this.addExerciseUseCase = new AddExerciseToRoutineDayUseCase(
@@ -81,6 +90,14 @@ export class RoutineController {
     );
     this.deleteRoutineUseCase = new DeleteRoutineUseCase(routineRepository);
     this.syncRoutineUseCase = new SyncRoutineUseCase(routineRepository);
+    this.setRoutineTrainingStrategyUseCase =
+      new SetRoutineTrainingStrategyUseCase(
+        routineRepository,
+        trainingStrategyRepository,
+      );
+    this.generateExerciseSetsUseCase = new GenerateExerciseSetsUseCase(
+      trainingStrategyRepository,
+    );
   }
 
   private getActor(user: JwtPayload): CurrentActor {
@@ -253,11 +270,47 @@ export class RoutineController {
     return this.mapToResponse(result);
   }
 
+  @Patch(':routineId/training-strategy')
+  public async setTrainingStrategy(
+    @CurrentUser() user: JwtPayload,
+    @Param('routineId') routineId: string,
+    @Body() dto: SetTrainingStrategyRequestDto,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.setRoutineTrainingStrategyUseCase.execute(
+      this.getActor(user),
+      {
+        routineId,
+        strategyKey: dto.strategyKey ?? null,
+      },
+    );
+
+    return this.mapToResponse(result);
+  }
+
+  @Post(':routineId/generate-sets')
+  public async generateSets(
+    @CurrentUser() user: JwtPayload,
+    @Param('routineId') routineId: string,
+    @Body() dto: GenerateExerciseSetsRequestDto,
+  ): Promise<{
+    sets: Array<{ setNumber: number; reps: number; weight: number }>;
+  }> {
+    const result = await this.generateExerciseSetsUseCase.execute({
+      strategyKey: dto.strategyKey ?? null,
+      numberOfSets: dto.numberOfSets,
+      initialWeight: dto.initialWeight,
+      initialReps: dto.initialReps,
+    });
+
+    return { sets: result.sets };
+  }
+
   private mapToResponse(result: {
     id: string;
     name: string;
     userId: string;
     isActive: boolean;
+    trainingStrategyKey?: string | null;
     days: Array<{
       dayOfWeek: string;
       exercises: Array<{
@@ -281,6 +334,7 @@ export class RoutineController {
     response.name = result.name;
     response.userId = result.userId;
     response.isActive = result.isActive;
+    response.trainingStrategyKey = result.trainingStrategyKey ?? null;
     response.dayOfWeeks = result.days.map((d) => d.dayOfWeek);
     response.days = result.days.map((d) => {
       const dayDto = new RoutineDayResponseDto();

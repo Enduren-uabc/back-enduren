@@ -23,6 +23,7 @@ export class RoutineResponseDto {
   name!: string;
   userId!: string;
   isActive!: boolean;
+  trainingStrategyKey!: string | null;
   dayOfWeeks!: string[];
   days!: RoutineDayResponseDto[];
   createdAt!: Date;
