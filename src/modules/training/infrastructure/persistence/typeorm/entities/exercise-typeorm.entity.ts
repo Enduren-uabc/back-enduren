@@ -32,7 +32,6 @@ export class ExerciseTypeormEntity {
   @OneToMany(() => ExerciseSetTypeormEntity, (set) => set.exercise, {
     cascade: true,
     eager: true,
-    orphanedRowAction: 'delete',
   })
   sets!: ExerciseSetTypeormEntity[];
 }

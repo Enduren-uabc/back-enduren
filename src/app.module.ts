@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { TrainingModule } from './modules/training/training.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
+import { ObservabilityModule } from './shared/observability/observability.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.g
         migrationsRun: true,
       }),
     }),
+    ObservabilityModule,
     AuthModule,
     UsersModule,
     TrainingModule,

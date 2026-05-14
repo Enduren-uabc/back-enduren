@@ -88,17 +88,32 @@ export class SyncRoutineUseCase {
 
         const exerciseId = existingExercise?.id ?? crypto.randomUUID();
 
-        const sets =
-          exPayload.sets != null && exPayload.sets.length > 0
-            ? exPayload.sets.map((s) =>
-                RoutineExerciseSet.create(
-                  s.setNumber,
-                  s.reps,
-                  s.weight,
-                  s.restSeconds,
-                ),
-              )
-            : (existingExercise?.sets ?? []);
+        let sets: RoutineExerciseSet[];
+        if (exPayload.sets != null && exPayload.sets.length > 0) {
+          const existingSets = existingExercise?.sets ?? [];
+          sets = exPayload.sets.map((s) => {
+            const existing = existingSets.find(
+              (es) => es.setNumber === s.setNumber,
+            );
+            if (existing) {
+              return RoutineExerciseSet.reconstitute(
+                existing.id,
+                s.setNumber,
+                s.reps,
+                s.weight,
+                s.restSeconds ?? null,
+              );
+            }
+            return RoutineExerciseSet.create(
+              s.setNumber,
+              s.reps,
+              s.weight,
+              s.restSeconds,
+            );
+          });
+        } else {
+          sets = existingExercise?.sets ?? [];
+        }
 
         return Exercise.reconstitute(
           exerciseId,

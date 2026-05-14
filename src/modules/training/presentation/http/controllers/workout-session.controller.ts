@@ -5,14 +5,11 @@ import {
   Get,
   Body,
   Param,
-  Inject,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import {
   StartWorkoutSessionUseCase,
-  WORKOUT_SESSION_REPOSITORY_PORT,
-  ROUTINE_REPOSITORY_PORT_FOR_SESSION,
   StartWorkoutSessionInput,
 } from '../../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { FinishWorkoutSessionUseCase } from '../../../application/use-cases/finish-workout-session/finish-workout-session.use-case';
@@ -24,8 +21,6 @@ import { GetExerciseProgressUseCase } from '../../../application/use-cases/get-e
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
 import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
-import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
-import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.request';
 import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
@@ -50,57 +45,18 @@ import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.st
 @UseGuards(JwtAuthGuard)
 @UseFilters(WorkoutSessionDomainErrorFilter)
 export class WorkoutSessionController {
-  private readonly startWorkoutSessionUseCase: StartWorkoutSessionUseCase;
-  private readonly finishWorkoutSessionUseCase: FinishWorkoutSessionUseCase;
-  private readonly resumeWorkoutSessionUseCase: ResumeWorkoutSessionUseCase;
-  private readonly getWorkoutSessionUseCase: GetWorkoutSessionUseCase;
-  private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase;
-  private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase;
-  private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase;
-  private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase;
-  private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase;
-  private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase;
-
   constructor(
-    @Inject(WORKOUT_SESSION_REPOSITORY_PORT)
-    workoutSessionRepository: WorkoutSessionRepository,
-    @Inject(ROUTINE_REPOSITORY_PORT_FOR_SESSION)
-    routineRepository: RoutineRepository,
-  ) {
-    this.startWorkoutSessionUseCase = new StartWorkoutSessionUseCase(
-      workoutSessionRepository,
-      routineRepository,
-    );
-    this.finishWorkoutSessionUseCase = new FinishWorkoutSessionUseCase(
-      workoutSessionRepository,
-    );
-    this.resumeWorkoutSessionUseCase = new ResumeWorkoutSessionUseCase(
-      workoutSessionRepository,
-    );
-    this.getWorkoutSessionUseCase = new GetWorkoutSessionUseCase(
-      workoutSessionRepository,
-    );
-    this.getWorkoutSessionHistoryUseCase = new GetWorkoutSessionHistoryUseCase(
-      workoutSessionRepository,
-      routineRepository,
-    );
-    this.getWorkoutSessionDetailUseCase = new GetWorkoutSessionDetailUseCase(
-      workoutSessionRepository,
-      routineRepository,
-    );
-    this.getExerciseProgressUseCase = new GetExerciseProgressUseCase(
-      workoutSessionRepository,
-    );
-    this.registerSetRepsAndWeightUseCase = new RegisterSetRepsAndWeightUseCase(
-      workoutSessionRepository,
-    );
-    this.markSetAsCompletedUseCase = new MarkSetAsCompletedUseCase(
-      workoutSessionRepository,
-    );
-    this.advanceToNextExerciseUseCase = new AdvanceToNextExerciseUseCase(
-      workoutSessionRepository,
-    );
-  }
+    private readonly startWorkoutSessionUseCase: StartWorkoutSessionUseCase,
+    private readonly finishWorkoutSessionUseCase: FinishWorkoutSessionUseCase,
+    private readonly resumeWorkoutSessionUseCase: ResumeWorkoutSessionUseCase,
+    private readonly getWorkoutSessionUseCase: GetWorkoutSessionUseCase,
+    private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase,
+    private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase,
+    private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
+    private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase,
+    private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase,
+    private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase,
+  ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
     return { userId: user.sub };

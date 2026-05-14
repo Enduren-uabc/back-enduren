@@ -1,25 +1,14 @@
-import { Controller, Get, Query, Inject, UseGuards } from '@nestjs/common';
-import {
-  ListExerciseCatalogUseCase,
-  EXERCISE_CATALOG_REPOSITORY_PORT,
-} from '../../../application/use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
-import { ExerciseCatalogRepository } from '../../../domain/repositories/exercise-catalog.repository';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ListExerciseCatalogUseCase } from '../../../application/use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
 import { ExerciseCatalogEntryResponseDto } from '../dtos/exercise-catalog.response';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 
 @Controller('exercises')
 @UseGuards(JwtAuthGuard)
 export class ExerciseCatalogController {
-  private readonly listExerciseCatalogUseCase: ListExerciseCatalogUseCase;
-
   constructor(
-    @Inject(EXERCISE_CATALOG_REPOSITORY_PORT)
-    exerciseCatalogRepository: ExerciseCatalogRepository,
-  ) {
-    this.listExerciseCatalogUseCase = new ListExerciseCatalogUseCase(
-      exerciseCatalogRepository,
-    );
-  }
+    private readonly listExerciseCatalogUseCase: ListExerciseCatalogUseCase,
+  ) {}
 
   @Get('catalog')
   public async list(
@@ -52,6 +41,8 @@ export class ExerciseCatalogController {
         dto.category = item.category;
         dto.primaryMuscleGroup = item.primaryMuscleGroup;
         dto.equipment = item.equipment;
+        dto.videoUrl = item.videoUrl;
+        dto.imageUrl = item.imageUrl;
         return dto;
       }),
       total: result.total,
