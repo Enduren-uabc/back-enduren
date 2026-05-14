@@ -92,6 +92,6 @@ export class HttpLoggingInterceptor implements NestInterceptor {
 }
 
 function getActorId(request: Request): string | undefined {
-  const user = request.user;
-  return user?.sub ?? user?.id;
+  const user = request.user as Record<string, unknown> | undefined;
+  return (user?.sub as string) ?? (user?.id as string);
 }
