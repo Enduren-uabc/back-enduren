@@ -10,6 +10,7 @@ import { TrainingModule } from './modules/training/training.module';
 import { PublicationModule } from './modules/publication/publication.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
+import { ObservabilityModule } from './shared/observability/observability.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.g
         migrationsRun: true,
       }),
     }),
+    ObservabilityModule,
     AuthModule,
     UsersModule,
     TrainingModule,

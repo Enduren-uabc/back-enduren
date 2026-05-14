@@ -58,6 +58,8 @@ export class TypeormExerciseCatalogRepository implements ExerciseCatalogReposito
         e.category as ExerciseCatalogEntry['category'],
         e.primaryMuscleGroup,
         e.equipment as ExerciseCatalogEntry['equipment'],
+        e.videoUrl,
+        e.imageUrl,
       ),
     );
 

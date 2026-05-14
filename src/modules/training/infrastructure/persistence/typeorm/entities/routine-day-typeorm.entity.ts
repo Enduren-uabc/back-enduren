@@ -29,7 +29,6 @@ export class RoutineDayTypeormEntity {
   @OneToMany(() => ExerciseTypeormEntity, (exercise) => exercise.routineDay, {
     cascade: true,
     eager: true,
-    orphanedRowAction: 'delete',
   })
   exercises!: ExerciseTypeormEntity[];
 }

@@ -21,6 +21,8 @@ export interface ListExerciseCatalogOutput {
     category: string;
     primaryMuscleGroup: string;
     equipment: string;
+    videoUrl: string | null;
+    imageUrl: string | null;
   }>;
   total: number;
   page: number;
@@ -64,6 +66,8 @@ export class ListExerciseCatalogUseCase {
     category: string;
     primaryMuscleGroup: string;
     equipment: string;
+    videoUrl: string | null;
+    imageUrl: string | null;
   } {
     return {
       id: entry.id,
@@ -71,6 +75,8 @@ export class ListExerciseCatalogUseCase {
       category: entry.category,
       primaryMuscleGroup: entry.primaryMuscleGroup,
       equipment: entry.equipment,
+      videoUrl: entry.videoUrl,
+      imageUrl: entry.imageUrl,
     };
   }
 }

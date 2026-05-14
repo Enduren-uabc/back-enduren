@@ -6,14 +6,10 @@ import {
   Patch,
   Body,
   Param,
-  Inject,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import {
-  CreateRoutineUseCase,
-  ROUTINE_REPOSITORY_PORT,
-} from '../../../application/use-cases/create-routine/create-routine.use-case';
+import { CreateRoutineUseCase } from '../../../application/use-cases/create-routine/create-routine.use-case';
 import { AddExerciseToRoutineDayUseCase } from '../../../application/use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
 import { ConfigureExerciseUseCase } from '../../../application/use-cases/configure-exercise/configure-exercise.use-case';
@@ -25,10 +21,7 @@ import { DeleteRoutineUseCase } from '../../../application/use-cases/delete-rout
 import { SyncRoutineUseCase } from '../../../application/use-cases/sync-routine/sync-routine.use-case';
 import { SetRoutineTrainingStrategyUseCase } from '../../../application/use-cases/set-routine-training-strategy/set-routine-training-strategy.use-case';
 import { GenerateExerciseSetsUseCase } from '../../../application/use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
-import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../../application/use-cases/list-training-strategies/list-training-strategies.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
-import { RoutineRepository } from '../../../domain/repositories/routine.repository';
-import { TrainingStrategyRepository } from '../../../domain/repositories/training-strategy.repository';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
 import { AddExerciseRequestDto } from '../dtos/add-exercise.request';
 import { ConfigureExerciseRequestDto } from '../dtos/configure-exercise.request';
@@ -52,53 +45,20 @@ import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.st
 @UseGuards(JwtAuthGuard)
 @UseFilters(RoutineDomainErrorFilter)
 export class RoutineController {
-  private readonly createRoutineUseCase: CreateRoutineUseCase;
-  private readonly addExerciseUseCase: AddExerciseToRoutineDayUseCase;
-  private readonly removeExerciseUseCase: RemoveExerciseFromRoutineUseCase;
-  private readonly configureExerciseUseCase: ConfigureExerciseUseCase;
-  private readonly activateRoutineUseCase: ActivateRoutineUseCase;
-  private readonly deactivateRoutineUseCase: DeactivateRoutineUseCase;
-  private readonly listRoutinesUseCase: ListRoutinesUseCase;
-  private readonly getRoutineDetailUseCase: GetRoutineDetailUseCase;
-  private readonly deleteRoutineUseCase: DeleteRoutineUseCase;
-  private readonly syncRoutineUseCase: SyncRoutineUseCase;
-  private readonly setRoutineTrainingStrategyUseCase: SetRoutineTrainingStrategyUseCase;
-  private readonly generateExerciseSetsUseCase: GenerateExerciseSetsUseCase;
-
   constructor(
-    @Inject(ROUTINE_REPOSITORY_PORT) routineRepository: RoutineRepository,
-    @Inject(TRAINING_STRATEGY_REPOSITORY_PORT)
-    trainingStrategyRepository: TrainingStrategyRepository,
-  ) {
-    this.createRoutineUseCase = new CreateRoutineUseCase(routineRepository);
-    this.addExerciseUseCase = new AddExerciseToRoutineDayUseCase(
-      routineRepository,
-    );
-    this.removeExerciseUseCase = new RemoveExerciseFromRoutineUseCase(
-      routineRepository,
-    );
-    this.configureExerciseUseCase = new ConfigureExerciseUseCase(
-      routineRepository,
-    );
-    this.activateRoutineUseCase = new ActivateRoutineUseCase(routineRepository);
-    this.deactivateRoutineUseCase = new DeactivateRoutineUseCase(
-      routineRepository,
-    );
-    this.listRoutinesUseCase = new ListRoutinesUseCase(routineRepository);
-    this.getRoutineDetailUseCase = new GetRoutineDetailUseCase(
-      routineRepository,
-    );
-    this.deleteRoutineUseCase = new DeleteRoutineUseCase(routineRepository);
-    this.syncRoutineUseCase = new SyncRoutineUseCase(routineRepository);
-    this.setRoutineTrainingStrategyUseCase =
-      new SetRoutineTrainingStrategyUseCase(
-        routineRepository,
-        trainingStrategyRepository,
-      );
-    this.generateExerciseSetsUseCase = new GenerateExerciseSetsUseCase(
-      trainingStrategyRepository,
-    );
-  }
+    private readonly createRoutineUseCase: CreateRoutineUseCase,
+    private readonly addExerciseUseCase: AddExerciseToRoutineDayUseCase,
+    private readonly removeExerciseUseCase: RemoveExerciseFromRoutineUseCase,
+    private readonly configureExerciseUseCase: ConfigureExerciseUseCase,
+    private readonly activateRoutineUseCase: ActivateRoutineUseCase,
+    private readonly deactivateRoutineUseCase: DeactivateRoutineUseCase,
+    private readonly listRoutinesUseCase: ListRoutinesUseCase,
+    private readonly getRoutineDetailUseCase: GetRoutineDetailUseCase,
+    private readonly deleteRoutineUseCase: DeleteRoutineUseCase,
+    private readonly syncRoutineUseCase: SyncRoutineUseCase,
+    private readonly setRoutineTrainingStrategyUseCase: SetRoutineTrainingStrategyUseCase,
+    private readonly generateExerciseSetsUseCase: GenerateExerciseSetsUseCase,
+  ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
     return { userId: user.sub };

@@ -4,4 +4,6 @@ export class ExerciseCatalogEntryResponseDto {
   category!: string;
   primaryMuscleGroup!: string;
   equipment!: string;
+  videoUrl!: string | null;
+  imageUrl!: string | null;
 }

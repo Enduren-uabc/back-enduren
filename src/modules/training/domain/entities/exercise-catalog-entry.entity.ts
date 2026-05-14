@@ -50,6 +50,8 @@ export class ExerciseCatalogEntry {
   public readonly category: ExerciseCategory;
   public readonly primaryMuscleGroup: string;
   public readonly equipment: ExerciseEquipment;
+  public readonly videoUrl: string | null;
+  public readonly imageUrl: string | null;
 
   private constructor(
     id: string,
@@ -57,12 +59,16 @@ export class ExerciseCatalogEntry {
     category: ExerciseCategory,
     primaryMuscleGroup: string,
     equipment: ExerciseEquipment,
+    videoUrl: string | null,
+    imageUrl: string | null,
   ) {
     this.id = id;
     this.name = name;
     this.category = category;
     this.primaryMuscleGroup = primaryMuscleGroup;
     this.equipment = equipment;
+    this.videoUrl = videoUrl;
+    this.imageUrl = imageUrl;
   }
 
   /**
@@ -77,6 +83,8 @@ export class ExerciseCatalogEntry {
     category: string,
     primaryMuscleGroup: string,
     equipment: string,
+    videoUrl?: string | null,
+    imageUrl?: string | null,
   ): ExerciseCatalogEntry {
     if (!name || name.trim().length === 0) {
       throw new ExerciseCatalogDomainError(
@@ -108,6 +116,8 @@ export class ExerciseCatalogEntry {
       category as ExerciseCategory,
       primaryMuscleGroup.trim(),
       equipment as ExerciseEquipment,
+      videoUrl ?? null,
+      imageUrl ?? null,
     );
   }
 
@@ -120,6 +130,8 @@ export class ExerciseCatalogEntry {
     category: ExerciseCategory,
     primaryMuscleGroup: string,
     equipment: ExerciseEquipment,
+    videoUrl: string | null = null,
+    imageUrl: string | null = null,
   ): ExerciseCatalogEntry {
     return new ExerciseCatalogEntry(
       id,
@@ -127,6 +139,8 @@ export class ExerciseCatalogEntry {
       category,
       primaryMuscleGroup,
       equipment,
+      videoUrl,
+      imageUrl,
     );
   }
 }

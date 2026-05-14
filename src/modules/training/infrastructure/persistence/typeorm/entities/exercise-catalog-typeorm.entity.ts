@@ -16,4 +16,10 @@ export class ExerciseCatalogTypeormEntity {
 
   @Column('varchar')
   equipment!: string;
+
+  @Column('varchar', { nullable: true })
+  videoUrl!: string | null;
+
+  @Column('varchar', { nullable: true })
+  imageUrl!: string | null;
 }

@@ -75,6 +75,7 @@ export class RoutineMapper {
           const setOrm = new ExerciseSetTypeormEntity();
           setOrm.id = set.id;
           setOrm.exerciseId = exercise.id;
+          setOrm.exercise = exOrm;
           setOrm.setNumber = set.setNumber;
           setOrm.reps = set.reps;
           setOrm.weight = set.weight;
