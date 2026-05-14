@@ -1,4 +1,13 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  CreateDateColumn,
+  type ColumnType,
+} from 'typeorm';
+
+const dateTimeColumnType: ColumnType =
+  process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamp';
 
 @Entity('refresh_tokens')
 export class RefreshTokenTypeormEntity {
@@ -11,12 +20,12 @@ export class RefreshTokenTypeormEntity {
   @Column('uuid')
   userId!: string;
 
-  @Column('datetime')
+  @Column({ type: dateTimeColumnType })
   expiresAt!: Date;
 
   @CreateDateColumn()
   createdAt!: Date;
 
-  @Column('datetime', { nullable: true })
+  @Column({ type: dateTimeColumnType, nullable: true })
   usedAt!: Date | null;
 }
