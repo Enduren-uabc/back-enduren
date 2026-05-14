@@ -4,8 +4,12 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
+  type ColumnType,
 } from 'typeorm';
 import { WorkoutSessionExerciseTypeormEntity } from './workout-session-exercise-typeorm.entity';
+
+const dateTimeColumnType: ColumnType =
+  process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamp';
 
 @Entity('workout_sessions')
 export class WorkoutSessionTypeormEntity {
@@ -27,7 +31,7 @@ export class WorkoutSessionTypeormEntity {
   @CreateDateColumn()
   startedAt!: Date;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: dateTimeColumnType, nullable: true })
   finishedAt!: Date | null;
 
   @OneToMany(
