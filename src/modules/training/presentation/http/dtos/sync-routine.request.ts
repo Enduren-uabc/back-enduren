@@ -29,7 +29,7 @@ export class SyncRoutineExerciseSetDto {
 
 export class SyncRoutineExerciseDto {
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @IsString()
