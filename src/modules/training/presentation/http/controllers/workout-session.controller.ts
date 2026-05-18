@@ -7,6 +7,7 @@ import {
   Param,
   Inject,
   UseFilters,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   StartWorkoutSessionUseCase,
@@ -190,8 +191,8 @@ export class WorkoutSessionController {
   @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber')
   public async registerSetRepsAndWeight(
     @Param('sessionId') sessionId: string,
-    @Param('exerciseIndex') exerciseIndex: number,
-    @Param('setNumber') setNumber: number,
+    @Param('exerciseIndex', ParseIntPipe) exerciseIndex: number,
+    @Param('setNumber', ParseIntPipe) setNumber: number,
     @Body() dto: RegisterSetRepsAndWeightRequestDto,
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.registerSetRepsAndWeightUseCase.execute(
@@ -210,8 +211,8 @@ export class WorkoutSessionController {
   @Patch(':sessionId/exercises/:exerciseIndex/sets/:setNumber/complete')
   public async markSetAsCompleted(
     @Param('sessionId') sessionId: string,
-    @Param('exerciseIndex') exerciseIndex: number,
-    @Param('setNumber') setNumber: number,
+    @Param('exerciseIndex', ParseIntPipe) exerciseIndex: number,
+    @Param('setNumber', ParseIntPipe) setNumber: number,
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.markSetAsCompletedUseCase.execute(
       this.currentActor,
