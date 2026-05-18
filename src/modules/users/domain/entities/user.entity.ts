@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'trainer' | 'user';
 export type UserStatus = 'active' | 'inactive' | 'locked';
 
 export interface UserProps {
@@ -78,6 +78,11 @@ export class User {
 
   updatePassword(passwordHash: string): void {
     this.passwordHash = passwordHash;
+    this.updatedAt = new Date();
+  }
+
+  upgradeToTrainer(): void {
+    this.role = 'trainer';
     this.updatedAt = new Date();
   }
 }
