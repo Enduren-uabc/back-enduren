@@ -4,6 +4,10 @@ import {
 } from '../../../domain/errors/workout-session-domain.error';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  mapWorkoutSessionToOutput,
+  WorkoutSessionOutput,
+} from '../workout-session-output.mapper';
 
 export const MARK_SET_AS_COMPLETED_PORT = Symbol('MARK_SET_AS_COMPLETED_PORT');
 
@@ -13,33 +17,7 @@ export interface MarkSetAsCompletedInput {
   setNumber: number;
 }
 
-export interface MarkSetAsCompletedOutput {
-  id: string;
-  userId: string;
-  routineId: string;
-  status: string;
-  currentExerciseIndex: number;
-  exercises: Array<{
-    exerciseId: string;
-    exerciseName: string;
-    order: number;
-    targetSets: Array<{
-      setNumber: number;
-      reps: number;
-      weight: number;
-    }>;
-    workoutSets: Array<{
-      setNumber: number;
-      repsPerformed: number | null;
-      weightUsed: number | null;
-      targetReps: number | null;
-      targetWeight: number | null;
-      completed: boolean;
-    }>;
-  }>;
-  startedAt: Date;
-  finishedAt: Date | null;
-}
+export type MarkSetAsCompletedOutput = WorkoutSessionOutput;
 
 /**
  * MarkSetAsCompleted use case (RF-12.0.3).
@@ -84,32 +62,6 @@ export class MarkSetAsCompletedUseCase {
 
     const saved = await this.workoutSessionRepository.save(updatedSession);
 
-    return {
-      id: saved.id,
-      userId: saved.userId,
-      routineId: saved.routineId,
-      status: saved.status,
-      currentExerciseIndex: saved.currentExerciseIndex,
-      exercises: saved.exercises.map((ex) => ({
-        exerciseId: ex.exerciseId,
-        exerciseName: ex.exerciseName,
-        order: ex.order,
-        targetSets: ex.targetSets.map((ts) => ({
-          setNumber: ts.setNumber,
-          reps: ts.reps,
-          weight: ts.weight,
-        })),
-        workoutSets: ex.workoutSets.map((ws) => ({
-          setNumber: ws.setNumber,
-          repsPerformed: ws.repsPerformed,
-          weightUsed: ws.weightUsed,
-          targetReps: ws.targetReps,
-          targetWeight: ws.targetWeight,
-          completed: ws.completed,
-        })),
-      })),
-      startedAt: saved.startedAt,
-      finishedAt: saved.finishedAt,
-    };
+    return mapWorkoutSessionToOutput(saved);
   }
 }

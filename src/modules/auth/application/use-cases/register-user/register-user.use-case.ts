@@ -13,13 +13,14 @@ import {
   REFRESH_TOKEN_REPOSITORY_PORT,
 } from '../../../domain/repositories/refresh-token.repository';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
-import { User } from '../../../../users/domain/entities/user.entity';
+import { User, UserRole } from '../../../../users/domain/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 
 export interface RegisterInput {
   email: string;
   username: string;
   password: string;
+  role?: 'trainer' | 'user';
 }
 
 export interface RegisterOutput {
@@ -56,11 +57,13 @@ export class RegisterUserUseCase {
     }
 
     const passwordHash = await this.passwordHasher.hash(input.password);
+    const role: UserRole = input.role ?? 'user';
     const user = User.create(
       crypto.randomUUID(),
       email,
       username,
       passwordHash,
+      role,
     );
     const saved = await this.userRepository.save(user);
 

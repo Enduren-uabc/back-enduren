@@ -71,7 +71,7 @@ export class TypeormUserRepository implements UserRepository {
       email: entity.email,
       username: entity.username,
       passwordHash: entity.passwordHash,
-      role: entity.role as 'admin' | 'user',
+      role: entity.role as 'admin' | 'trainer' | 'user',
       emailVerified: entity.emailVerified,
       status: entity.status as 'active' | 'inactive' | 'locked',
       createdAt: entity.createdAt,

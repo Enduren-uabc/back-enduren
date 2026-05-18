@@ -22,6 +22,9 @@ export class WorkoutSessionTypeormEntity {
   @Column('uuid')
   routineId!: string;
 
+  @Column('varchar', { default: 'monday' })
+  dayOfWeek!: string;
+
   @Column('varchar')
   status!: string;
 

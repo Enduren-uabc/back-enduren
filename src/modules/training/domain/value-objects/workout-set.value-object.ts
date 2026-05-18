@@ -125,22 +125,25 @@ export class WorkoutSet {
 
   /**
    * Marks this set as completed.
-   * Validates: repsPerformed and weightUsed must already be set (not null).
-   * Throws domain error if required data is missing.
+   * If actual reps/weight are empty, uses the planned target values.
+   * Throws domain error only when neither actual nor target data is available.
    */
   public markAsCompleted(): WorkoutSet {
-    if (this.repsPerformed === null || this.weightUsed === null) {
+    const repsPerformed = this.repsPerformed ?? this.targetReps;
+    const weightUsed = this.weightUsed ?? this.targetWeight;
+
+    if (repsPerformed === null || weightUsed === null) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
-        'Cannot mark set as completed without registering reps and weight first',
+        'Cannot mark set as completed without actual or target reps and weight',
         { setNumber: this.setNumber },
       );
     }
 
     return new WorkoutSet(
       this.setNumber,
-      this.repsPerformed,
-      this.weightUsed,
+      repsPerformed,
+      weightUsed,
       true,
       this.targetReps,
       this.targetWeight,
