@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { User } from '../../../domain/entities/user.entity';
+import { User, UserRole } from '../../../domain/entities/user.entity';
 import {
   UserDomainError,
   UserErrorCode,
@@ -17,6 +17,7 @@ export interface CreateUserInput {
   email: string;
   username: string;
   password: string;
+  role?: 'trainer' | 'user';
 }
 
 export interface CreateUserOutput {
@@ -58,11 +59,13 @@ export class CreateUserUseCase {
     }
 
     const passwordHash = await this.passwordHasher.hash(input.password);
+    const role: UserRole = input.role ?? 'user';
     const user = User.create(
       crypto.randomUUID(),
       email,
       username,
       passwordHash,
+      role,
     );
     const saved = await this.userRepository.save(user);
 

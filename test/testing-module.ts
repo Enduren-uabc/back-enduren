@@ -14,10 +14,16 @@ import { ExerciseCatalogTypeormEntity } from '../src/modules/training/infrastruc
 import { UserTypeormEntity } from '../src/modules/users/infrastructure/persistence/typeorm/entities/user-typeorm.entity';
 import { RefreshTokenTypeormEntity } from '../src/modules/auth/infrastructure/persistence/typeorm/entities/refresh-token-typeorm.entity';
 import { ProfileTypeormEntity } from '../src/modules/profile/infrastructure/persistence/typeorm/entities/profile-typeorm.entity';
+import { SpecialtyCatalogTypeormEntity } from '../src/modules/trainer-verification/infrastructure/persistence/typeorm/entities/specialty-catalog-typeorm.entity';
+import { TrainerCertificateTypeormEntity } from '../src/modules/trainer-verification/infrastructure/persistence/typeorm/entities/trainer-certificate-typeorm.entity';
+import { TrainerIdDocumentTypeormEntity } from '../src/modules/trainer-verification/infrastructure/persistence/typeorm/entities/trainer-id-document-typeorm.entity';
+import { TrainerVerificationSpecialtyTypeormEntity } from '../src/modules/trainer-verification/infrastructure/persistence/typeorm/entities/trainer-verification-specialty-typeorm.entity';
+import { TrainerVerificationTypeormEntity } from '../src/modules/trainer-verification/infrastructure/persistence/typeorm/entities/trainer-verification-typeorm.entity';
 import { TrainingModule } from '../src/modules/training/training.module';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
 import { ProfileModule } from '../src/modules/profile/profile.module';
+import { TrainerVerificationModule } from '../src/modules/trainer-verification/trainer-verification.module';
 import * as supertest from 'supertest';
 import cookieParser from 'cookie-parser';
 
@@ -58,12 +64,18 @@ export async function createTestingApp(): Promise<{
           UserTypeormEntity,
           RefreshTokenTypeormEntity,
           ProfileTypeormEntity,
+          TrainerVerificationTypeormEntity,
+          TrainerVerificationSpecialtyTypeormEntity,
+          TrainerIdDocumentTypeormEntity,
+          TrainerCertificateTypeormEntity,
+          SpecialtyCatalogTypeormEntity,
         ],
       }),
       TrainingModule,
       AuthModule,
       UsersModule,
       ProfileModule,
+      TrainerVerificationModule,
     ],
   }).compile();
 

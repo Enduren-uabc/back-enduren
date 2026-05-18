@@ -1,5 +1,7 @@
 import {
   IsEmail,
+  IsIn,
+  IsOptional,
   IsString,
   MinLength,
   MaxLength,
@@ -25,4 +27,8 @@ export class CreateUserRequestDto {
       'Password must contain at least one uppercase letter and one number',
   })
   password!: string;
+
+  @IsOptional()
+  @IsIn(['trainer', 'user'])
+  role?: 'trainer' | 'user';
 }

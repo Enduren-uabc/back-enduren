@@ -41,12 +41,19 @@ describe('StartWorkoutSessionUseCase', () => {
     exerciseWithoutConfig,
   ]);
 
+  const tuesdayDay = RoutineDay.reconstitute('tuesday', [
+    Exercise.reconstitute('exercise-3', 'Deadlift', 1, [
+      RoutineExerciseSet.reconstitute('s-4', 1, 5, 100, null),
+    ]),
+  ]);
+
   const routine = Routine.reconstitute(
     'routine-1',
     'My Routine',
     'user-1',
-    [routineDay],
-    false,
+    [routineDay, tuesdayDay],
+    true,
+    null,
     new Date('2026-01-01'),
     new Date('2026-01-01'),
   );
@@ -85,10 +92,12 @@ describe('StartWorkoutSessionUseCase', () => {
 
       const result = await useCase.execute(actor, {
         routineId: 'routine-1',
+        dayOfWeek: 'monday',
       });
 
       expect(result.userId).toBe('user-1');
       expect(result.routineId).toBe('routine-1');
+      expect(result.dayOfWeek).toBe('monday');
       expect(result.status).toBe('in_progress');
       expect(result.exercises).toHaveLength(2);
       expect(result.startedAt).toBeInstanceOf(Date);
@@ -106,6 +115,7 @@ describe('StartWorkoutSessionUseCase', () => {
 
       const result = await useCase.execute(actor, {
         routineId: 'routine-1',
+        dayOfWeek: 'monday',
       });
 
       // Exercise with configuration
@@ -132,6 +142,25 @@ describe('StartWorkoutSessionUseCase', () => {
       expect(result.exercises[1].workoutSets[0].targetReps).toBe(10);
       expect(result.exercises[1].workoutSets[0].targetWeight).toBe(0);
     });
+
+    it('should clone only exercises from the selected routine day', async () => {
+      (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
+      (
+        workoutSessionRepository.findInProgressByUserId as jest.Mock
+      ).mockResolvedValue(null);
+      (workoutSessionRepository.save as jest.Mock).mockImplementation(
+        (session: WorkoutSession) => Promise.resolve(session),
+      );
+
+      const result = await useCase.execute(actor, {
+        routineId: 'routine-1',
+        dayOfWeek: 'tuesday',
+      });
+
+      expect(result.dayOfWeek).toBe('tuesday');
+      expect(result.exercises).toHaveLength(1);
+      expect(result.exercises[0].exerciseId).toBe('exercise-3');
+    });
   });
 
   describe('SESSION_NO_ACTIVE_ROUTINE error', () => {
@@ -139,11 +168,17 @@ describe('StartWorkoutSessionUseCase', () => {
       (routineRepository.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        useCase.execute(actor, { routineId: 'nonexistent' }),
+        useCase.execute(actor, {
+          routineId: 'nonexistent',
+          dayOfWeek: 'monday',
+        }),
       ).rejects.toThrow(WorkoutSessionDomainError);
 
       try {
-        await useCase.execute(actor, { routineId: 'nonexistent' });
+        await useCase.execute(actor, {
+          routineId: 'nonexistent',
+          dayOfWeek: 'monday',
+        });
       } catch (error) {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
@@ -158,7 +193,8 @@ describe('StartWorkoutSessionUseCase', () => {
         'Other Routine',
         'user-2',
         [routineDay],
-        false,
+        true,
+        null,
         new Date(),
         new Date(),
       );
@@ -167,7 +203,47 @@ describe('StartWorkoutSessionUseCase', () => {
       );
 
       await expect(
-        useCase.execute(actor, { routineId: 'routine-2' }),
+        useCase.execute(actor, {
+          routineId: 'routine-2',
+          dayOfWeek: 'monday',
+        }),
+      ).rejects.toThrow(WorkoutSessionDomainError);
+    });
+
+    it('should reject when routine is not active', async () => {
+      const inactiveRoutine = Routine.reconstitute(
+        'routine-1',
+        'Inactive Routine',
+        'user-1',
+        [routineDay],
+        false,
+        null,
+        new Date(),
+        new Date(),
+      );
+      (routineRepository.findById as jest.Mock).mockResolvedValue(
+        inactiveRoutine,
+      );
+
+      await expect(
+        useCase.execute(actor, {
+          routineId: 'routine-1',
+          dayOfWeek: 'monday',
+        }),
+      ).rejects.toThrow(WorkoutSessionDomainError);
+    });
+
+    it('should reject when selected day does not exist in active routine', async () => {
+      (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
+      (
+        workoutSessionRepository.findInProgressByUserId as jest.Mock
+      ).mockResolvedValue(null);
+
+      await expect(
+        useCase.execute(actor, {
+          routineId: 'routine-1',
+          dayOfWeek: 'friday',
+        }),
       ).rejects.toThrow(WorkoutSessionDomainError);
     });
   });
@@ -186,11 +262,17 @@ describe('StartWorkoutSessionUseCase', () => {
       ).mockResolvedValue(existingSession);
 
       await expect(
-        useCase.execute(actor, { routineId: 'routine-1' }),
+        useCase.execute(actor, {
+          routineId: 'routine-1',
+          dayOfWeek: 'monday',
+        }),
       ).rejects.toThrow(WorkoutSessionDomainError);
 
       try {
-        await useCase.execute(actor, { routineId: 'routine-1' });
+        await useCase.execute(actor, {
+          routineId: 'routine-1',
+          dayOfWeek: 'monday',
+        });
       } catch (error) {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(

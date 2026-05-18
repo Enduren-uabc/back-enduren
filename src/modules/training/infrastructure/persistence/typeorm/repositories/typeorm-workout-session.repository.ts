@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { WorkoutSessionRepository } from '../../../../domain/repositories/workout-session.repository.port';
 import { WorkoutSession } from '../../../../domain/entities/workout-session.entity';
 import { WorkoutSessionTypeormEntity } from '../entities/workout-session-typeorm.entity';
+import { WorkoutSessionExerciseTypeormEntity } from '../entities/workout-session-exercise-typeorm.entity';
+import { WorkoutSessionSetTypeormEntity } from '../entities/workout-session-set-typeorm.entity';
 import { WorkoutSessionMapper } from '../../../mappers/workout-session.mapper';
 
 @Injectable()
@@ -15,7 +17,34 @@ export class TypeormWorkoutSessionRepository implements WorkoutSessionRepository
 
   public async save(session: WorkoutSession): Promise<WorkoutSession> {
     const ormEntity = WorkoutSessionMapper.toOrm(session);
-    const saved = await this.ormRepo.save(ormEntity);
+    const saved = await this.ormRepo.manager.transaction(async (manager) => {
+      const existing = await manager.findOne(WorkoutSessionTypeormEntity, {
+        where: { id: session.id },
+      });
+
+      if (existing) {
+        const existingExercises = await manager.find(
+          WorkoutSessionExerciseTypeormEntity,
+          {
+            where: { sessionId: session.id },
+            select: { id: true },
+          },
+        );
+        const existingExerciseIds = existingExercises.map((ex) => ex.id);
+
+        if (existingExerciseIds.length > 0) {
+          await manager.delete(WorkoutSessionSetTypeormEntity, {
+            sessionExerciseId: In(existingExerciseIds),
+          });
+        }
+
+        await manager.delete(WorkoutSessionExerciseTypeormEntity, {
+          sessionId: session.id,
+        });
+      }
+
+      return manager.save(WorkoutSessionTypeormEntity, ormEntity);
+    });
     return WorkoutSessionMapper.toDomain(saved);
   }
 

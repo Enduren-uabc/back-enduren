@@ -14,6 +14,7 @@ export interface WorkoutSessionDetailOutput {
   id: string;
   userId: string;
   routineId: string;
+  dayOfWeek: string;
   routineName: string;
   status: string;
   currentExerciseIndex: number;
@@ -94,6 +95,7 @@ export class GetWorkoutSessionDetailUseCase {
       id: session.id,
       userId: session.userId,
       routineId: session.routineId,
+      dayOfWeek: session.dayOfWeek,
       routineName,
       status: session.status,
       currentExerciseIndex: session.currentExerciseIndex,

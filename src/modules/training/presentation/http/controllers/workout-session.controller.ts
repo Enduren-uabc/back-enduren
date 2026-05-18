@@ -5,6 +5,7 @@ import {
   Get,
   Body,
   Param,
+  ParseIntPipe,
   UseFilters,
   ParseIntPipe,
   UseGuards,
@@ -24,6 +25,7 @@ import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-s
 import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.request';
+import { AdvanceWorkoutSessionRequestDto } from '../dtos/advance-workout-session.request';
 import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
 import {
   WorkoutSessionResponseDto,
@@ -70,6 +72,7 @@ export class WorkoutSessionController {
   ): Promise<WorkoutSessionResponseDto> {
     const input: StartWorkoutSessionInput = {
       routineId: dto.routineId,
+      dayOfWeek: dto.dayOfWeek,
     };
     const result = await this.startWorkoutSessionUseCase.execute(
       this.getActor(user),
@@ -112,6 +115,7 @@ export class WorkoutSessionController {
       dto.id = r.id;
       dto.routineId = r.routineId;
       dto.routineName = r.routineName;
+      dto.dayOfWeek = r.dayOfWeek;
       dto.startedAt = r.startedAt;
       dto.finishedAt = r.finishedAt;
       dto.durationMinutes = r.durationMinutes;
@@ -199,10 +203,11 @@ export class WorkoutSessionController {
   public async advanceToNextExercise(
     @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
+    @Body() dto: AdvanceWorkoutSessionRequestDto = {},
   ): Promise<WorkoutSessionResponseDto> {
     const result = await this.advanceToNextExerciseUseCase.execute(
       this.getActor(user),
-      { sessionId },
+      { sessionId, allowIncomplete: dto.allowIncomplete === true },
     );
     return this.mapToResponse(result);
   }
@@ -211,6 +216,7 @@ export class WorkoutSessionController {
     id: string;
     userId: string;
     routineId: string;
+    dayOfWeek: string;
     status: string;
     currentExerciseIndex: number;
     exercises: Array<{
@@ -238,6 +244,7 @@ export class WorkoutSessionController {
     response.id = result.id;
     response.userId = result.userId;
     response.routineId = result.routineId;
+    response.dayOfWeek = result.dayOfWeek;
     response.status = result.status;
     response.currentExerciseIndex = result.currentExerciseIndex;
     response.exercises = result.exercises.map((ex) => {
@@ -273,6 +280,7 @@ export class WorkoutSessionController {
     id: string;
     userId: string;
     routineId: string;
+    dayOfWeek: string;
     routineName: string;
     status: string;
     currentExerciseIndex: number;
@@ -302,6 +310,7 @@ export class WorkoutSessionController {
     response.id = result.id;
     response.userId = result.userId;
     response.routineId = result.routineId;
+    response.dayOfWeek = result.dayOfWeek;
     response.routineName = result.routineName;
     response.status = result.status;
     response.currentExerciseIndex = result.currentExerciseIndex;

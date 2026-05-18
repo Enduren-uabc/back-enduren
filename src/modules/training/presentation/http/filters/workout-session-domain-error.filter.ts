@@ -39,6 +39,9 @@ export class WorkoutSessionDomainErrorFilter implements ExceptionFilter {
         throw new ConflictException(host.message);
       case WorkoutSessionErrorCode.SESSION_NOT_OWNED:
         throw new ForbiddenException(host.message);
+      case WorkoutSessionErrorCode.SESSION_DAY_NOT_FOUND:
+      case WorkoutSessionErrorCode.SESSION_DAY_HAS_NO_EXERCISES:
+        throw new BadRequestException(host.message);
       default:
         throw new BadRequestException(host.message);
     }
