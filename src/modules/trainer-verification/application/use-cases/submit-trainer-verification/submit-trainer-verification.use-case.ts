@@ -80,6 +80,7 @@ export class SubmitTrainerVerificationUseCase {
           return TrainerIdDocument.create(
             crypto.randomUUID(),
             isDocumentType(documentType) ? documentType : 'other',
+            output.containerName,
             output.blobPath,
             output.fileName,
             output.fileSize,
@@ -99,6 +100,7 @@ export class SubmitTrainerVerificationUseCase {
             crypto.randomUUID(),
             certificate.name,
             certificate.issuingOrganization,
+            output.containerName,
             output.blobPath,
             output.fileName,
             output.fileSize,
@@ -124,7 +126,9 @@ export class SubmitTrainerVerificationUseCase {
       };
     } catch (error) {
       await Promise.allSettled(
-        uploaded.map((file) => this.storageService.delete(file.blobPath)),
+        uploaded.map((file) =>
+          this.storageService.delete(file.containerName, file.blobPath),
+        ),
       );
       throw error;
     }

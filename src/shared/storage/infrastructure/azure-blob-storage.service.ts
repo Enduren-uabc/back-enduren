@@ -17,7 +17,7 @@ export class AzureBlobStorageService implements FileStoragePort {
   constructor(private readonly configService: ConfigService) {}
 
   async upload(input: UploadFileInput): Promise<UploadFileOutput> {
-    const containerClient = this.getContainerClient();
+    const containerClient = this.getContainerClient(input.containerName);
     await containerClient.createIfNotExists();
 
     const blobClient = containerClient.getBlockBlobClient(
@@ -30,6 +30,7 @@ export class AzureBlobStorageService implements FileStoragePort {
     });
 
     return {
+      containerName: input.containerName,
       blobPath: input.destinationPath,
       publicUrl: blobClient.url,
       fileName: input.originalName,
@@ -38,12 +39,12 @@ export class AzureBlobStorageService implements FileStoragePort {
   }
 
   getSignedUrl(
+    containerName: string,
     blobPath: string,
     expiresInSeconds: number = 3600,
   ): Promise<string> {
-    const containerName = this.getContainerName();
     const credential = this.getSharedKeyCredential();
-    const containerClient = this.getContainerClient();
+    const containerClient = this.getContainerClient(containerName);
     const blobClient = containerClient.getBlobClient(blobPath);
     const startsOn = new Date(Date.now() - 5 * 60 * 1000);
     const expiresOn = new Date(Date.now() + expiresInSeconds * 1000);
@@ -61,15 +62,16 @@ export class AzureBlobStorageService implements FileStoragePort {
     return Promise.resolve(`${blobClient.url}?${sas}`);
   }
 
-  async delete(blobPath: string): Promise<void> {
-    const blobClient = this.getContainerClient().getBlobClient(blobPath);
+  async delete(containerName: string, blobPath: string): Promise<void> {
+    const blobClient =
+      this.getContainerClient(containerName).getBlobClient(blobPath);
     await blobClient.deleteIfExists();
   }
 
-  private getContainerClient() {
+  private getContainerClient(containerName: string) {
     return BlobServiceClient.fromConnectionString(
       this.getConnectionString(),
-    ).getContainerClient(this.getContainerName());
+    ).getContainerClient(containerName);
   }
 
   private getConnectionString(): string {
@@ -80,13 +82,6 @@ export class AzureBlobStorageService implements FileStoragePort {
       throw new Error('AZURE_STORAGE_CONNECTION_STRING is required');
     }
     return connectionString;
-  }
-
-  private getContainerName(): string {
-    return this.configService.get<string>(
-      'AZURE_STORAGE_CONTAINER_NAME',
-      'endure-storage',
-    );
   }
 
   private getSharedKeyCredential(): StorageSharedKeyCredential {

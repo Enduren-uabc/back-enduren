@@ -72,14 +72,18 @@ export class UpdateTrainerVerificationUseCase {
       await this.assertSpecialtiesExist(input.specialtyKeys);
     }
 
-    const oldBlobPaths = [
+    const oldFiles = [
       ...(input.newIdDocumentFiles
-        ? verification.idDocuments.map((document) => document.fileUrl)
+        ? verification.idDocuments.map((document) => ({
+            containerName: document.containerName,
+            blobPath: document.fileUrl,
+          }))
         : []),
       ...(input.newCertificates
-        ? verification.certificates.map(
-            (certificate) => certificate.documentUrl,
-          )
+        ? verification.certificates.map((certificate) => ({
+            containerName: certificate.containerName,
+            blobPath: certificate.documentUrl,
+          }))
         : []),
     ];
     const uploaded: UploadFileOutput[] = [];
@@ -97,6 +101,7 @@ export class UpdateTrainerVerificationUseCase {
               return TrainerIdDocument.create(
                 crypto.randomUUID(),
                 isDocumentType(documentType) ? documentType : 'other',
+                output.containerName,
                 output.blobPath,
                 output.fileName,
                 output.fileSize,
@@ -118,6 +123,7 @@ export class UpdateTrainerVerificationUseCase {
                 crypto.randomUUID(),
                 certificate.name,
                 certificate.issuingOrganization,
+                output.containerName,
                 output.blobPath,
                 output.fileName,
                 output.fileSize,
@@ -138,7 +144,9 @@ export class UpdateTrainerVerificationUseCase {
       const saved = await this.verificationRepository.save(verification);
 
       await Promise.allSettled(
-        oldBlobPaths.map((blobPath) => this.storageService.delete(blobPath)),
+        oldFiles.map((file) =>
+          this.storageService.delete(file.containerName, file.blobPath),
+        ),
       );
 
       return {
@@ -147,7 +155,9 @@ export class UpdateTrainerVerificationUseCase {
       };
     } catch (error) {
       await Promise.allSettled(
-        uploaded.map((file) => this.storageService.delete(file.blobPath)),
+        uploaded.map((file) =>
+          this.storageService.delete(file.containerName, file.blobPath),
+        ),
       );
       throw error;
     }

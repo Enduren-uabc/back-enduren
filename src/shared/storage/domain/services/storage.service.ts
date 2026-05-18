@@ -26,6 +26,7 @@ export class StorageService {
     );
     try {
       return await this.fileStorage.upload({
+        containerName: this.strategy.containerName,
         buffer: file.buffer,
         originalName: file.originalname,
         mimeType: file.mimetype,
@@ -40,11 +41,16 @@ export class StorageService {
   }
 
   async getSignedUrl(
+    containerName: string,
     blobPath: string,
     expiresInSeconds?: number,
   ): Promise<string> {
     try {
-      return await this.fileStorage.getSignedUrl(blobPath, expiresInSeconds);
+      return await this.fileStorage.getSignedUrl(
+        containerName,
+        blobPath,
+        expiresInSeconds,
+      );
     } catch {
       throw new StorageDomainError(
         StorageErrorCode.SIGNED_URL_FAILED,
@@ -53,9 +59,9 @@ export class StorageService {
     }
   }
 
-  async delete(blobPath: string): Promise<void> {
+  async delete(containerName: string, blobPath: string): Promise<void> {
     try {
-      await this.fileStorage.delete(blobPath);
+      await this.fileStorage.delete(containerName, blobPath);
     } catch {
       throw new StorageDomainError(
         StorageErrorCode.FILE_DELETE_FAILED,

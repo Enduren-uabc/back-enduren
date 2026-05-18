@@ -70,6 +70,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         entity.id = document.id;
         entity.trainerVerificationId = verification.id;
         entity.documentType = document.documentType;
+        entity.containerName = document.containerName;
         entity.fileUrl = document.fileUrl;
         entity.fileName = document.fileName;
         entity.fileSize = document.fileSize;
@@ -89,6 +90,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           entity.trainerVerificationId = verification.id;
           entity.name = certificate.name;
           entity.issuingOrganization = certificate.issuingOrganization;
+          entity.containerName = certificate.containerName;
           entity.documentUrl = certificate.documentUrl;
           entity.fileName = certificate.fileName;
           entity.fileSize = certificate.fileSize;
@@ -213,6 +215,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       idDocuments: verification.idDocuments.map((document) => ({
         id: document.id,
         documentType: document.documentType,
+        containerName: document.containerName,
         fileUrl: document.fileUrl,
         fileName: document.fileName,
         fileSize: document.fileSize,
@@ -221,6 +224,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         id: certificate.id,
         name: certificate.name,
         issuingOrganization: certificate.issuingOrganization,
+        containerName: certificate.containerName,
         documentUrl: certificate.documentUrl,
         fileName: certificate.fileName,
         fileSize: certificate.fileSize,
@@ -268,6 +272,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         TrainerIdDocument.reconstitute({
           id: document.id,
           documentType: document.documentType as DocumentType,
+          containerName: document.containerName,
           fileUrl: document.fileUrl,
           fileName: document.fileName,
           fileSize: document.fileSize,
@@ -279,6 +284,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           id: certificate.id,
           name: certificate.name,
           issuingOrganization: certificate.issuingOrganization,
+          containerName: certificate.containerName,
           documentUrl: certificate.documentUrl,
           fileName: certificate.fileName,
           fileSize: certificate.fileSize,

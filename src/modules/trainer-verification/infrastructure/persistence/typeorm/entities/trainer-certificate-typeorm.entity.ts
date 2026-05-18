@@ -15,6 +15,9 @@ export class TrainerCertificateTypeormEntity {
   @Column('varchar', { name: 'issuing_organization', length: 255 })
   issuingOrganization!: string;
 
+  @Column('varchar', { name: 'container_name', length: 100 })
+  containerName!: string;
+
   @Column('text', { name: 'document_url' })
   documentUrl!: string;
 

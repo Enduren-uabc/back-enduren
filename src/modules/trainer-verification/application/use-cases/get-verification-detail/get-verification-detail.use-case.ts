@@ -67,7 +67,10 @@ export class GetVerificationDetailUseCase {
         documentType: document.documentType,
         fileName: document.fileName,
         fileSize: document.fileSize,
-        signedUrl: await this.storageService.getSignedUrl(document.fileUrl),
+        signedUrl: await this.storageService.getSignedUrl(
+          document.containerName,
+          document.fileUrl,
+        ),
       })),
     );
 
@@ -79,6 +82,7 @@ export class GetVerificationDetailUseCase {
         fileName: certificate.fileName,
         fileSize: certificate.fileSize,
         signedUrl: await this.storageService.getSignedUrl(
+          certificate.containerName,
           certificate.documentUrl,
         ),
       })),

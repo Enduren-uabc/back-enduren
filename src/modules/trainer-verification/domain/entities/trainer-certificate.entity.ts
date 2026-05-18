@@ -7,6 +7,7 @@ export interface TrainerCertificateProps {
   id: string;
   name: string;
   issuingOrganization: string;
+  containerName: string;
   documentUrl: string;
   fileName: string;
   fileSize: number;
@@ -17,6 +18,7 @@ export class TrainerCertificate {
   public readonly id: string;
   public readonly name: string;
   public readonly issuingOrganization: string;
+  public readonly containerName: string;
   public readonly documentUrl: string;
   public readonly fileName: string;
   public readonly fileSize: number;
@@ -37,6 +39,7 @@ export class TrainerCertificate {
     this.id = props.id;
     this.name = props.name.trim();
     this.issuingOrganization = props.issuingOrganization.trim();
+    this.containerName = props.containerName;
     this.documentUrl = props.documentUrl;
     this.fileName = props.fileName;
     this.fileSize = props.fileSize;
@@ -47,6 +50,7 @@ export class TrainerCertificate {
     id: string,
     name: string,
     issuingOrganization: string,
+    containerName: string,
     documentUrl: string,
     fileName: string,
     fileSize: number,
@@ -55,6 +59,7 @@ export class TrainerCertificate {
       id,
       name,
       issuingOrganization,
+      containerName,
       documentUrl,
       fileName,
       fileSize,
