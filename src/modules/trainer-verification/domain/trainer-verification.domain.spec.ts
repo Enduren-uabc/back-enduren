@@ -10,6 +10,7 @@ function makeDocument(): TrainerIdDocument {
   return TrainerIdDocument.create(
     crypto.randomUUID(),
     'passport',
+    'trainer-verification-docs',
     'verifications/user/id/document.pdf',
     'document.pdf',
     1200,
@@ -21,6 +22,7 @@ function makeCertificate(): TrainerCertificate {
     crypto.randomUUID(),
     'Certified Personal Trainer',
     'NASM',
+    'trainer-verification-docs',
     'verifications/user/certificates/certificate.pdf',
     'certificate.pdf',
     2400,

@@ -4,6 +4,7 @@ import { StorageModule } from '../../shared/storage/storage.module';
 import { ProfileTypeormEntity } from '../profile/infrastructure/persistence/typeorm/entities/profile-typeorm.entity';
 import { UserTypeormEntity } from '../users/infrastructure/persistence/typeorm/entities/user-typeorm.entity';
 import { UsersModule } from '../users/users.module';
+import { TRAINER_FLOW_CONFIG_PORT } from './application/ports/trainer-flow-config.port';
 import { GetMyVerificationStatusUseCase } from './application/use-cases/get-my-verification-status/get-my-verification-status.use-case';
 import { GetVerificationDetailUseCase } from './application/use-cases/get-verification-detail/get-verification-detail.use-case';
 import { ListPendingVerificationsUseCase } from './application/use-cases/list-pending-verifications/list-pending-verifications.use-case';
@@ -21,6 +22,7 @@ import { TrainerVerificationTypeormEntity } from './infrastructure/persistence/t
 import { TypeormSpecialtyCatalogRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-specialty-catalog.repository';
 import { TypeormTrainerVerificationRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-trainer-verification.repository';
 import { SpecialtyCatalogSeeder } from './infrastructure/persistence/typeorm/specialty-catalog-seeder.service';
+import { EnvTrainerFlowConfigService } from './infrastructure/config/env-trainer-flow-config.service';
 import { TrainerVerificationStorageStrategy } from './infrastructure/storage/trainer-verification-storage.strategy';
 import { TrainerVerificationController } from './presentation/http/controllers/trainer-verification.controller';
 import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verified.guard';
@@ -41,6 +43,10 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
   ],
   controllers: [TrainerVerificationController],
   providers: [
+    {
+      provide: TRAINER_FLOW_CONFIG_PORT,
+      useClass: EnvTrainerFlowConfigService,
+    },
     {
       provide: TRAINER_VERIFICATION_REPOSITORY_PORT,
       useClass: TypeormTrainerVerificationRepository,

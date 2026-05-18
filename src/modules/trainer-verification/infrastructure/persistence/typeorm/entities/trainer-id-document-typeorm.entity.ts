@@ -12,6 +12,9 @@ export class TrainerIdDocumentTypeormEntity {
   @Column('varchar', { name: 'document_type', length: 20 })
   documentType!: string;
 
+  @Column('varchar', { name: 'container_name', length: 100 })
+  containerName!: string;
+
   @Column('text', { name: 'file_url' })
   fileUrl!: string;
 

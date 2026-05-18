@@ -27,6 +27,7 @@ export interface TrainerVerificationDetail {
   idDocuments: {
     id: string;
     documentType: string;
+    containerName: string;
     fileUrl: string;
     fileName: string;
     fileSize: number;
@@ -35,6 +36,7 @@ export interface TrainerVerificationDetail {
     id: string;
     name: string;
     issuingOrganization: string;
+    containerName: string;
     documentUrl: string;
     fileName: string;
     fileSize: number;

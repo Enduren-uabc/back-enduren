@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Patch,
   Post,
@@ -25,7 +26,12 @@ import { UpdateTrainerVerificationUseCase } from '../../../application/use-cases
 import { ListPendingVerificationsUseCase } from '../../../application/use-cases/list-pending-verifications/list-pending-verifications.use-case';
 import { GetVerificationDetailUseCase } from '../../../application/use-cases/get-verification-detail/get-verification-detail.use-case';
 import { ReviewTrainerVerificationUseCase } from '../../../application/use-cases/review-trainer-verification/review-trainer-verification.use-case';
+import {
+  TRAINER_FLOW_CONFIG_PORT,
+  TrainerFlowConfigPort,
+} from '../../../application/ports/trainer-flow-config.port';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
+import { FlowConfigResponseDto } from '../dtos/flow-config.response';
 import { MAX_VERIFICATION_FILE_SIZE_BYTES } from '../../../application/use-cases/trainer-verification-use-case.helpers';
 import { SubmitVerificationRequestDto } from '../dtos/submit-verification.request';
 import { UpdateVerificationRequestDto } from '../dtos/update-verification.request';
@@ -63,7 +69,15 @@ export class TrainerVerificationController {
     private readonly listPendingUseCase: ListPendingVerificationsUseCase,
     private readonly getDetailUseCase: GetVerificationDetailUseCase,
     private readonly reviewUseCase: ReviewTrainerVerificationUseCase,
+    @Inject(TRAINER_FLOW_CONFIG_PORT)
+    private readonly flowConfig: TrainerFlowConfigPort,
   ) {}
+
+  @Public()
+  @Get('flow-config')
+  getFlowConfig(): FlowConfigResponseDto {
+    return this.flowConfig.getFlowConfig();
+  }
 
   @Public()
   @Get('specialties')

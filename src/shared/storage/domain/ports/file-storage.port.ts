@@ -1,4 +1,5 @@
 export interface UploadFileInput {
+  containerName: string;
   buffer: Buffer;
   originalName: string;
   mimeType: string;
@@ -6,6 +7,7 @@ export interface UploadFileInput {
 }
 
 export interface UploadFileOutput {
+  containerName: string;
   blobPath: string;
   publicUrl: string;
   fileName: string;
@@ -14,6 +16,10 @@ export interface UploadFileOutput {
 
 export interface FileStoragePort {
   upload(input: UploadFileInput): Promise<UploadFileOutput>;
-  getSignedUrl(blobPath: string, expiresInSeconds?: number): Promise<string>;
-  delete(blobPath: string): Promise<void>;
+  getSignedUrl(
+    containerName: string,
+    blobPath: string,
+    expiresInSeconds?: number,
+  ): Promise<string>;
+  delete(containerName: string, blobPath: string): Promise<void>;
 }

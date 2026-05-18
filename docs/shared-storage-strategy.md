@@ -57,8 +57,8 @@ Inyecta `FileStoragePort` (el adapter cloud) y `StorageStrategy` (la configuraci
 Ofrece tres métodos públicos:
 
 - `uploadFile(userId, section, file)` — valida el archivo contra la estrategia, construye la ruta y lo sube
-- `getSignedUrl(blobPath)` — genera URL temporaria de acceso
-- `delete(blobPath)` — elimina un blob
+- `getSignedUrl(containerName, blobPath)` — genera URL temporaria de acceso
+- `delete(containerName, blobPath)` — elimina un blob
 
 ### 3. `StorageModule` — registro vía Dynamic Module
 
@@ -144,7 +144,7 @@ export class SubirArchivoUseCase {
 
   async execute(userId: string, file: Express.Multer.File) {
     const result = await this.storageService.uploadFile(userId, 'documentos', file);
-    // result.blobPath, result.publicUrl, result.fileName, result.fileSize
+    // result.containerName, result.blobPath, result.publicUrl, result.fileName, result.fileSize
   }
 }
 ```
