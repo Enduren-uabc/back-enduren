@@ -28,6 +28,7 @@ import { UpdateTrainerVerificationUseCase } from '../../../application/use-cases
 import { ListPendingVerificationsUseCase } from '../../../application/use-cases/list-pending-verifications/list-pending-verifications.use-case';
 import { GetVerificationDetailUseCase } from '../../../application/use-cases/get-verification-detail/get-verification-detail.use-case';
 import { ReviewTrainerVerificationUseCase } from '../../../application/use-cases/review-trainer-verification/review-trainer-verification.use-case';
+import { StartVerificationReviewUseCase } from '../../../application/use-cases/start-verification-review/start-verification-review.use-case';
 import { UploadPowerspikeCertificateUseCase } from '../../../application/use-cases/upload-powerspike-certificate/upload-powerspike-certificate.use-case';
 import { UploadPowerspikeIdDocumentUseCase } from '../../../application/use-cases/upload-powerspike-id-document/upload-powerspike-id-document.use-case';
 import {
@@ -50,6 +51,8 @@ import { PowerspikeUploadCertificateRequestDto } from '../dtos/powerspike-upload
 import { PowerspikeUploadIdRequestDto } from '../dtos/powerspike-upload-id.request';
 import { PowerspikeSubmitRequestDto } from '../dtos/powerspike-submit.request';
 import { PowerspikeUploadResponseDto } from '../dtos/powerspike-upload.response';
+import { StartReviewResponseDto } from '../dtos/start-review.response';
+import { ReviewVerificationResponseDto } from '../dtos/review-verification.response';
 import { TrainerVerificationErrorFilter } from '../filters/trainer-verification-error.filter';
 
 const VERIFICATION_FILE_INTERCEPTOR = FileFieldsInterceptor(
@@ -79,6 +82,7 @@ export class TrainerVerificationController {
     private readonly listPendingUseCase: ListPendingVerificationsUseCase,
     private readonly getDetailUseCase: GetVerificationDetailUseCase,
     private readonly reviewUseCase: ReviewTrainerVerificationUseCase,
+    private readonly startReviewUseCase: StartVerificationReviewUseCase,
     private readonly createDraftUseCase: CreatePowerspikeDraftUseCase,
     private readonly uploadCertificateUseCase: UploadPowerspikeCertificateUseCase,
     private readonly uploadIdDocumentUseCase: UploadPowerspikeIdDocumentUseCase,
@@ -210,18 +214,33 @@ export class TrainerVerificationController {
     });
   }
 
+  @Post(':id/start-review')
+  @HttpCode(HttpStatus.OK)
+  async startReview(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ): Promise<StartReviewResponseDto> {
+    return this.startReviewUseCase.execute({
+      actor: this.toActor(user),
+      verificationId: id,
+    });
+  }
+
   @Patch(':id/review')
   @HttpCode(HttpStatus.OK)
   async review(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: ReviewVerificationRequestDto,
-  ) {
+  ): Promise<ReviewVerificationResponseDto> {
     return this.reviewUseCase.execute({
       actor: this.toActor(user),
       verificationId: id,
       decision: dto.decision,
       rejectionReason: dto.rejectionReason,
+      internalComment: dto.internalComment,
+      userVisibleMessage: dto.userVisibleMessage,
+      correctionType: dto.correctionType,
     });
   }
 

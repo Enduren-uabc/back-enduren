@@ -101,4 +101,81 @@ describe('TrainerVerification domain', () => {
       }),
     );
   });
+
+  describe('assignReviewer', () => {
+    it('assigns a reviewer to a verification', () => {
+      const verification = TrainerVerification.reconstitute({
+        id: crypto.randomUUID(),
+        userId: crypto.randomUUID(),
+        verificationStatus: 'pending',
+        specialtyKeys: ['strength'],
+        yearsOfExperience: 2,
+        shortBio: 'Bio valida',
+        idDocumentNumber: 'ID-1234',
+        idDocuments: [makeDocument()],
+        certificates: [makeCertificate()],
+        rejectionReason: null,
+        verifiedBy: null,
+        verifiedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        advancedStatus: 'manual_review_pending',
+        assignedReviewerId: null,
+      });
+
+      verification.assignReviewer('admin-1');
+      expect(verification.assignedReviewerId).toBe('admin-1');
+    });
+
+    it('allows same reviewer to be reassigned', () => {
+      const verification = TrainerVerification.reconstitute({
+        id: crypto.randomUUID(),
+        userId: crypto.randomUUID(),
+        verificationStatus: 'pending',
+        specialtyKeys: ['strength'],
+        yearsOfExperience: 2,
+        shortBio: 'Bio valida',
+        idDocumentNumber: 'ID-1234',
+        idDocuments: [makeDocument()],
+        certificates: [makeCertificate()],
+        rejectionReason: null,
+        verifiedBy: null,
+        verifiedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        advancedStatus: 'manual_review_pending',
+        assignedReviewerId: 'admin-1',
+      });
+
+      verification.assignReviewer('admin-1');
+      expect(verification.assignedReviewerId).toBe('admin-1');
+    });
+
+    it('rejects if another reviewer is already assigned', () => {
+      const verification = TrainerVerification.reconstitute({
+        id: crypto.randomUUID(),
+        userId: crypto.randomUUID(),
+        verificationStatus: 'pending',
+        specialtyKeys: ['strength'],
+        yearsOfExperience: 2,
+        shortBio: 'Bio valida',
+        idDocumentNumber: 'ID-1234',
+        idDocuments: [makeDocument()],
+        certificates: [makeCertificate()],
+        rejectionReason: null,
+        verifiedBy: null,
+        verifiedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        advancedStatus: 'manual_review_pending',
+        assignedReviewerId: 'admin-1',
+      });
+
+      expect(() => verification.assignReviewer('admin-2')).toThrow(
+        expect.objectContaining({
+          code: TrainerVerificationErrorCode.ALREADY_ASSIGNED,
+        }),
+      );
+    });
+  });
 });

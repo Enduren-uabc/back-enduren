@@ -51,6 +51,7 @@ describe('UploadPowerspikeCertificateUseCase', () => {
       findByUserId: jest.fn().mockResolvedValue(verification),
       findById: jest.fn(),
       listPending: jest.fn(),
+      listPendingAdvanced: jest.fn(),
       findDetailById: jest.fn(),
       save: jest.fn().mockResolvedValue(verification),
     };

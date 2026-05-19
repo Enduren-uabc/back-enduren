@@ -50,6 +50,9 @@ export class TrainerVerificationTypeormEntity {
   @Column({ name: 'verified_at', nullable: true })
   verifiedAt!: Date;
 
+  @Column({ name: 'assigned_reviewer_id', type: 'uuid', nullable: true })
+  assignedReviewerId!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

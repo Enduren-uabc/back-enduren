@@ -13,6 +13,7 @@ import { GetVerificationDetailUseCase } from './application/use-cases/get-verifi
 import { ListPendingVerificationsUseCase } from './application/use-cases/list-pending-verifications/list-pending-verifications.use-case';
 import { ListSpecialtyCatalogUseCase } from './application/use-cases/list-specialty-catalog/list-specialty-catalog.use-case';
 import { ReviewTrainerVerificationUseCase } from './application/use-cases/review-trainer-verification/review-trainer-verification.use-case';
+import { StartVerificationReviewUseCase } from './application/use-cases/start-verification-review/start-verification-review.use-case';
 import { CreatePowerspikeDraftUseCase } from './application/use-cases/create-powerspike-draft/create-powerspike-draft.use-case';
 import { SubmitPowerspikeVerificationUseCase } from './application/use-cases/submit-powerspike-verification/submit-powerspike-verification.use-case';
 import { SubmitTrainerVerificationUseCase } from './application/use-cases/submit-trainer-verification/submit-trainer-verification.use-case';
@@ -121,6 +122,7 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
     ListPendingVerificationsUseCase,
     GetVerificationDetailUseCase,
     ReviewTrainerVerificationUseCase,
+    StartVerificationReviewUseCase,
     ListSpecialtyCatalogUseCase,
     TrainerVerifiedGuard,
     SpecialtyCatalogSeeder,

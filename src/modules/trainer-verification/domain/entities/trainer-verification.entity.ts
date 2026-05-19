@@ -32,6 +32,7 @@ export interface TrainerVerificationProps {
   extractedCertificateData?: ExtractedCertificateData | null;
   extractedIdData?: ExtractedIdData | null;
   scoringResult?: ScoringResult | null;
+  assignedReviewerId?: string | null;
 }
 
 export class TrainerVerification {
@@ -54,6 +55,7 @@ export class TrainerVerification {
   public extractedCertificateData: ExtractedCertificateData | null;
   public extractedIdData: ExtractedIdData | null;
   public scoringResult: ScoringResult | null;
+  public assignedReviewerId: string | null;
 
   private constructor(props: TrainerVerificationProps) {
     this.id = props.id;
@@ -75,6 +77,7 @@ export class TrainerVerification {
     this.extractedCertificateData = props.extractedCertificateData ?? null;
     this.extractedIdData = props.extractedIdData ?? null;
     this.scoringResult = props.scoringResult ?? null;
+    this.assignedReviewerId = props.assignedReviewerId ?? null;
     this.validate();
   }
 
@@ -228,6 +231,16 @@ export class TrainerVerification {
 
   assignScoringResult(result: ScoringResult): void {
     this.scoringResult = result;
+  }
+
+  assignReviewer(adminUserId: string): void {
+    if (this.assignedReviewerId && this.assignedReviewerId !== adminUserId) {
+      throw new TrainerVerificationDomainError(
+        TrainerVerificationErrorCode.ALREADY_ASSIGNED,
+        'Another reviewer is already assigned to this verification',
+      );
+    }
+    this.assignedReviewerId = adminUserId;
   }
 
   applyAdvancedStatusTransition(

@@ -10,6 +10,10 @@ import {
   TrainerVerificationRepository,
   TRAINER_VERIFICATION_REPOSITORY_PORT,
 } from '../../../domain/repositories/trainer-verification.repository.port';
+import {
+  TRAINER_FLOW_CONFIG_PORT,
+  TrainerFlowConfigPort,
+} from '../../ports/trainer-flow-config.port';
 import { assertAdmin } from '../trainer-verification-use-case.helpers';
 
 export interface GetVerificationDetailInput {
@@ -26,7 +30,7 @@ export interface GetVerificationDetailOutput extends Omit<
     documentType: string;
     fileName: string;
     fileSize: number;
-    signedUrl: string;
+    signedUrl?: string;
   }[];
   certificates: {
     id: string;
@@ -44,6 +48,8 @@ export class GetVerificationDetailUseCase {
     @Inject(TRAINER_VERIFICATION_REPOSITORY_PORT)
     private readonly verificationRepository: TrainerVerificationRepository,
     private readonly storageService: StorageService,
+    @Inject(TRAINER_FLOW_CONFIG_PORT)
+    private readonly flowConfig: TrainerFlowConfigPort,
   ) {}
 
   async execute(
@@ -61,17 +67,29 @@ export class GetVerificationDetailUseCase {
       );
     }
 
+    const isPowerspike = this.flowConfig.isPowerspikeEnabled();
+
     const idDocuments = await Promise.all(
-      detail.idDocuments.map(async (document) => ({
-        id: document.id,
-        documentType: document.documentType,
-        fileName: document.fileName,
-        fileSize: document.fileSize,
-        signedUrl: await this.storageService.getSignedUrl(
-          document.containerName,
-          document.fileUrl,
-        ),
-      })),
+      detail.idDocuments.map(async (document) => {
+        const base = {
+          id: document.id,
+          documentType: document.documentType,
+          fileName: document.fileName,
+          fileSize: document.fileSize,
+        };
+
+        if (isPowerspike) {
+          return base;
+        }
+
+        return {
+          ...base,
+          signedUrl: await this.storageService.getSignedUrl(
+            document.containerName,
+            document.fileUrl,
+          ),
+        };
+      }),
     );
 
     const certificates = await Promise.all(
@@ -88,10 +106,25 @@ export class GetVerificationDetailUseCase {
       })),
     );
 
-    return {
+    const baseResult: GetVerificationDetailOutput = {
       ...detail,
       idDocuments,
       certificates,
+    };
+
+    if (!isPowerspike) {
+      return baseResult;
+    }
+
+    return {
+      ...baseResult,
+      assignedReviewerId: detail.assignedReviewerId,
+      advancedStatus: detail.advancedStatus,
+      extractedCertificateData: detail.extractedCertificateData,
+      extractedIdData: detail.extractedIdData,
+      scoringResult: detail.scoringResult,
+      statusHistory: detail.statusHistory,
+      auditEvents: detail.auditEvents,
     };
   }
 }

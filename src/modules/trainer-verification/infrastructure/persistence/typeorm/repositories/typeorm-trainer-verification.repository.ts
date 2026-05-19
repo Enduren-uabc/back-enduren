@@ -14,6 +14,9 @@ import { RiskAlert } from '../../../../domain/value-objects/risk-alert.vo';
 import { AdvancedVerificationStatus } from '../../../../domain/value-objects/advanced-verification-status.vo';
 import { DocumentType } from '../../../../domain/value-objects/document-type.vo';
 import { VerificationStatus } from '../../../../domain/value-objects/verification-status.vo';
+import { RiskLevel } from '../../../../domain/value-objects/risk-level.vo';
+import { RecommendedAction } from '../../../../domain/value-objects/scoring-result.vo';
+import { AlertCode, AlertSeverity } from '../../../../domain/value-objects/risk-alert.vo';
 import {
   TrainerVerificationDetail,
   TrainerVerificationListItem,
@@ -277,6 +280,57 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     };
   }
 
+  async listPendingAdvanced(
+    page: number,
+    limit: number,
+  ): Promise<{ verifications: TrainerVerificationListItem[]; total: number }> {
+    const [entities, total] = await this.verificationRepo.findAndCount({
+      where: { advancedStatus: { advancedStatus: 'manual_review_pending' } },
+      relations: {
+        specialties: true,
+        advancedStatus: true,
+        scoringResults: true,
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'ASC' },
+    });
+
+    const userIds = entities.map((entity) => entity.userId);
+    const [users, profiles] = await Promise.all([
+      userIds.length > 0
+        ? this.userRepo.find({ where: { id: In(userIds) } })
+        : Promise.resolve([]),
+      userIds.length > 0
+        ? this.profileRepo.find({ where: { userId: In(userIds) } })
+        : Promise.resolve([]),
+    ]);
+    const usersById = new Map(users.map((user) => [user.id, user]));
+    const profilesByUserId = new Map(
+      profiles.map((profile) => [profile.userId, profile]),
+    );
+
+    return {
+      verifications: entities.map((entity) => ({
+        id: entity.id,
+        userId: entity.userId,
+        username: usersById.get(entity.userId)?.username ?? 'unknown',
+        fullName:
+          profilesByUserId.get(entity.userId)?.fullName ??
+          usersById.get(entity.userId)?.username ??
+          'Unknown trainer',
+        submittedAt: entity.createdAt,
+        specialties: (entity.specialties ?? []).map(
+          (specialty) => specialty.specialtyKey,
+        ),
+        advancedStatus: entity.advancedStatus?.advancedStatus ?? 'pending',
+        riskLevel: entity.scoringResults?.[0]?.riskLevel ?? undefined,
+        riskScore: entity.scoringResults?.[0]?.riskScore ?? undefined,
+      })),
+      total,
+    };
+  }
+
   async findDetailById(id: string): Promise<TrainerVerificationDetail | null> {
     const verification = await this.findById(id);
     if (!verification) {
@@ -290,6 +344,98 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         where: { key: In(verification.specialtyKeys) },
       }),
     ]);
+
+    const entity = await this.verificationRepo.findOne({
+      where: { id },
+      relations: {
+        advancedStatus: true,
+        statusHistory: true,
+        auditEvents: true,
+        extractedCertificateData: true,
+        extractedIdData: true,
+        scoringResults: true,
+      },
+    });
+
+    const statusHistory =
+      entity?.statusHistory?.map((h) => ({
+        id: h.id,
+        fromStatus: h.previousStatus ?? null,
+        toStatus: h.newStatus,
+        actorId: h.actorId,
+        actorType: h.actorType,
+        reason: h.reason ?? undefined,
+        createdAt: h.createdAt.toISOString(),
+      })) ?? [];
+
+    const auditEvents =
+      entity?.auditEvents?.map((e) => ({
+        id: e.id,
+        eventType: e.eventType,
+        actorId: e.actorId,
+        actorType: e.actorType,
+        description: e.description,
+        metadata: (e.metadata as Record<string, unknown>) ?? undefined,
+        createdAt: e.createdAt.toISOString(),
+      })) ?? [];
+
+    const extractedCertData = verification.extractedCertificateData
+      ? {
+          fullName: verification.extractedCertificateData.fullName,
+          certificateName:
+            verification.extractedCertificateData.certificateName,
+          issuingOrganization:
+            verification.extractedCertificateData.issuingOrganization,
+          issueDate: verification.extractedCertificateData.issueDate
+            ? verification.extractedCertificateData.issueDate.toISOString()
+            : undefined,
+          expirationDate: verification.extractedCertificateData.expirationDate
+            ? verification.extractedCertificateData.expirationDate.toISOString()
+            : undefined,
+          folioNumber:
+            verification.extractedCertificateData.folioNumber ?? undefined,
+          qrUrl: verification.extractedCertificateData.qrUrl ?? undefined,
+          ocrConfidence: verification.extractedCertificateData.ocrConfidence,
+        }
+      : null;
+
+    const rawDocId = verification.extractedIdData?.documentIdentifier;
+    const extractedIdData = verification.extractedIdData
+      ? {
+          fullName: verification.extractedIdData.fullName,
+          documentType: verification.extractedIdData.documentType,
+          issuingCountry:
+            verification.extractedIdData.issuingCountry ?? undefined,
+          birthDate: verification.extractedIdData.birthDate
+            ? verification.extractedIdData.birthDate.toISOString()
+            : undefined,
+          expirationDate: verification.extractedIdData.expirationDate
+            ? verification.extractedIdData.expirationDate.toISOString()
+            : undefined,
+          documentIdentifier: rawDocId
+            ? (rawDocId.length > 8
+              ? rawDocId.slice(0, 4) + '****' + rawDocId.slice(-4)
+              : '****')
+            : undefined,
+          ocrConfidence: verification.extractedIdData.ocrConfidence,
+        }
+      : null;
+
+    const scoringResult = verification.scoringResult
+      ? {
+          riskScore: verification.scoringResult.riskScore,
+          riskLevel: verification.scoringResult.riskLevel,
+          recommendedAction: verification.scoringResult.recommendedAction,
+          summary: verification.scoringResult.summary,
+          positiveSignals: verification.scoringResult.positiveSignals,
+          alerts: verification.scoringResult.alerts.map((a) => ({
+            code: a.code,
+            severity: a.severity,
+            message: a.message,
+          })),
+          overrides: verification.scoringResult.overrides,
+        }
+      : null;
 
     return {
       id: verification.id,
@@ -331,6 +477,13 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       verifiedAt: verification.verifiedAt ?? null,
       createdAt: verification.createdAt,
       updatedAt: verification.updatedAt,
+      assignedReviewerId: verification.assignedReviewerId,
+      advancedStatus: verification.advancedStatus,
+      extractedCertificateData: extractedCertData,
+      extractedIdData: extractedIdData,
+      scoringResult,
+      statusHistory,
+      auditEvents,
     };
   }
 
@@ -347,6 +500,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     entity.rejectionReason = verification.rejectionReason;
     entity.verifiedBy = verification.verifiedBy;
     entity.verifiedAt = verification.verifiedAt as Date;
+    entity.assignedReviewerId = verification.assignedReviewerId ?? null;
     entity.createdAt = verification.createdAt;
     entity.updatedAt = verification.updatedAt;
     return entity;
@@ -429,11 +583,11 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       scoringResult: scoringData
         ? ScoringResult.reconstitute({
             riskScore: scoringData.riskScore,
-            riskLevel: scoringData.riskLevel as any,
-            recommendedAction: scoringData.recommendedAction as any,
+            riskLevel: scoringData.riskLevel as RiskLevel,
+            recommendedAction: scoringData.recommendedAction as RecommendedAction,
             summary: scoringData.summary,
             positiveSignals: scoringData.positiveSignals ?? [],
-            alerts: (scoringData.alerts ?? []).map((a: any) =>
+            alerts: (scoringData.alerts as { code: AlertCode; severity: AlertSeverity; message: string }[] ?? []).map((a) =>
               RiskAlert.reconstitute({
                 code: a.code,
                 severity: a.severity,
@@ -443,6 +597,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             overrides: scoringData.overrides ?? [],
           })
         : null,
+      assignedReviewerId: entity.assignedReviewerId ?? null,
     });
   }
 }

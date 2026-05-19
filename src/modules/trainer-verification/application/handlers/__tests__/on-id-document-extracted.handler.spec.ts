@@ -53,6 +53,7 @@ describe('OnIdDocumentExtractedHandler', () => {
       findById: jest.fn().mockResolvedValue(verification),
       findByUserId: jest.fn(),
       listPending: jest.fn(),
+      listPendingAdvanced: jest.fn(),
       findDetailById: jest.fn(),
       save: jest.fn().mockResolvedValue(verification),
     };
