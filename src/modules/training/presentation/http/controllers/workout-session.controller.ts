@@ -7,7 +7,6 @@ import {
   Param,
   ParseIntPipe,
   UseFilters,
-  ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
 import {
