@@ -33,21 +33,23 @@ export class DevAuthController {
   }
 
   @Post('password-recovery')
-  public passwordRecovery(
-    @Body() _dto: PasswordRecoveryRequestDto,
-  ): { message: string } {
+  public passwordRecovery(@Body() _dto: PasswordRecoveryRequestDto): {
+    message: string;
+  } {
     return { message: 'Dev password recovery accepted' };
   }
 
   @Get('password-reset/validate')
-  public validatePasswordResetToken(
-    @Query('token') token?: string,
-  ): { valid: boolean } {
+  public validatePasswordResetToken(@Query('token') token?: string): {
+    valid: boolean;
+  } {
     return { valid: Boolean(token) };
   }
 
   @Post('password-reset')
-  public passwordReset(@Body() _dto: PasswordResetRequestDto): { message: string } {
+  public passwordReset(@Body() _dto: PasswordResetRequestDto): {
+    message: string;
+  } {
     return { message: 'Dev password reset accepted' };
   }
 }

@@ -26,10 +26,7 @@ import {
   TrainerVerificationAuditRepository,
   TRAINER_VERIFICATION_AUDIT_REPOSITORY_PORT,
 } from '../../../domain/repositories/trainer-verification-audit.repository.port';
-import {
-  TrainerVerificationStateMachineService,
-  TransitionActor,
-} from '../../services/trainer-verification-state-machine.service';
+import { TrainerVerificationStateMachineService } from '../../services/trainer-verification-state-machine.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
 
 export interface SubmitTrainerCertificateInput {
@@ -104,20 +101,7 @@ export class SubmitTrainerVerificationUseCase {
         },
       );
 
-      const transitionActor: TransitionActor = {
-        actorId: input.actor.userId,
-        actorType: 'user',
-      };
-
-      const change = this.stateMachine.transition(
-        verification,
-        'draft',
-        transitionActor,
-        'Draft created via legacy endpoint (Powerspike mode)',
-      );
-
       await this.verificationRepository.save(verification);
-      await this.auditRepository.recordStatusChange(change);
 
       return {
         verificationId: verification.id,

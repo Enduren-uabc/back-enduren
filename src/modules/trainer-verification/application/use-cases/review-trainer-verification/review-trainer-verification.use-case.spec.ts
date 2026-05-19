@@ -317,7 +317,10 @@ describe('ReviewTrainerVerificationUseCase', () => {
       });
 
       expect(result.decision).toBe('rejected');
-      expect(verification.reject).toHaveBeenCalledWith('admin-1', 'Not qualified');
+      expect(verification.reject).toHaveBeenCalledWith(
+        'admin-1',
+        'Not qualified',
+      );
     });
 
     it('rejects correction_required in legacy mode', async () => {

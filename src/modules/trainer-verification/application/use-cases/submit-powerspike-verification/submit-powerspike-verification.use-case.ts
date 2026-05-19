@@ -29,7 +29,7 @@ export interface SubmitPowerspikeVerificationInput {
   specialtyKeys: string[];
   yearsOfExperience: number;
   shortBio: string;
-  idDocumentNumber: string;
+  idDocumentNumber?: string;
 }
 
 export interface SubmitPowerspikeVerificationOutput {
@@ -92,7 +92,19 @@ export class SubmitPowerspikeVerificationUseCase {
     verification.specialtyKeys = uniqueKeys;
     verification.yearsOfExperience = input.yearsOfExperience;
     verification.shortBio = input.shortBio.trim();
-    verification.idDocumentNumber = input.idDocumentNumber.trim();
+
+    const idNumber =
+      input.idDocumentNumber?.trim() ||
+      verification.extractedIdData?.documentIdentifier?.trim();
+
+    if (!idNumber) {
+      throw new TrainerVerificationDomainError(
+        TrainerVerificationErrorCode.ID_DOCUMENT_NUMBER_REQUIRED,
+        'ID document number is required when extraction fails',
+      );
+    }
+
+    verification.idDocumentNumber = idNumber;
 
     const systemActor: TransitionActor = {
       actorId: 'system',

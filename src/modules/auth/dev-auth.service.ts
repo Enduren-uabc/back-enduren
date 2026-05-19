@@ -39,7 +39,10 @@ export class DevAuthService {
     return this.toAuthResponse(user);
   }
 
-  public async login(email: string, password: string): Promise<AuthResponseDto> {
+  public async login(
+    email: string,
+    password: string,
+  ): Promise<AuthResponseDto> {
     const user = this.usersByEmail.get(email.trim().toLowerCase());
 
     if (!user || user.password !== password) {
@@ -70,7 +73,13 @@ export class DevAuthService {
           handle = EXCLUDED.handle,
           "updatedAt" = NOW()
       `,
-      [DEV_USER_ID, user.username, user.username.toLowerCase(), 'Perfil dev de Endure', null],
+      [
+        DEV_USER_ID,
+        user.username,
+        user.username.toLowerCase(),
+        'Perfil dev de Endure',
+        null,
+      ],
     );
   }
 

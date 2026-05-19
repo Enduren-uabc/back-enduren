@@ -27,7 +27,9 @@ describe('StartVerificationReviewUseCase', () => {
 
   const adminActor: CurrentActor = { userId: 'admin-1', role: 'admin' };
 
-  function createMockVerification(overrides: Partial<TrainerVerification> = {}): TrainerVerification {
+  function createMockVerification(
+    overrides: Partial<TrainerVerification> = {},
+  ): TrainerVerification {
     const base = {
       id: 'verif-1',
       userId: 'user-1',
@@ -52,7 +54,9 @@ describe('StartVerificationReviewUseCase', () => {
     };
 
     const mock = { ...base, ...overrides } as TrainerVerification;
-    mock.assignReviewer = jest.fn().mockImplementation(function (adminId: string) {
+    mock.assignReviewer = jest.fn().mockImplementation(function (
+      adminId: string,
+    ) {
       if (this.assignedReviewerId && this.assignedReviewerId !== adminId) {
         throw new TrainerVerificationDomainError(
           TrainerVerificationErrorCode.ALREADY_ASSIGNED,
@@ -70,7 +74,14 @@ describe('StartVerificationReviewUseCase', () => {
         StartVerificationReviewUseCase,
         {
           provide: TRAINER_VERIFICATION_REPOSITORY_PORT,
-          useValue: { findById: jest.fn(), save: jest.fn(), listPending: jest.fn(), findDetailById: jest.fn(), findByUserId: jest.fn(), listPendingAdvanced: jest.fn() },
+          useValue: {
+            findById: jest.fn(),
+            save: jest.fn(),
+            listPending: jest.fn(),
+            findDetailById: jest.fn(),
+            findByUserId: jest.fn(),
+            listPendingAdvanced: jest.fn(),
+          },
         },
         {
           provide: TRAINER_VERIFICATION_AUDIT_REPOSITORY_PORT,
@@ -81,7 +92,9 @@ describe('StartVerificationReviewUseCase', () => {
         },
         {
           provide: TrainerVerificationStateMachineService,
-          useValue: { transition: jest.fn().mockReturnValue({ id: 'change-1' }) },
+          useValue: {
+            transition: jest.fn().mockReturnValue({ id: 'change-1' }),
+          },
         },
       ],
     }).compile();
@@ -132,7 +145,7 @@ describe('StartVerificationReviewUseCase', () => {
 
   it('throws if advancedStatus is not manual_review_pending', async () => {
     const verification = createMockVerification({
-      advancedStatus: 'draft' as any,
+      advancedStatus: 'draft',
     });
     verificationRepository.findById.mockResolvedValue(verification);
 
@@ -141,9 +154,7 @@ describe('StartVerificationReviewUseCase', () => {
       verificationId: 'verif-1',
     };
 
-    await expect(useCase.execute(input)).rejects.toThrow(
-      'Cannot start review',
-    );
+    await expect(useCase.execute(input)).rejects.toThrow('Cannot start review');
   });
 
   it('throws if already assigned to another reviewer', async () => {

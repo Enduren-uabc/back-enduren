@@ -31,6 +31,7 @@ import { ReviewTrainerVerificationUseCase } from '../../../application/use-cases
 import { StartVerificationReviewUseCase } from '../../../application/use-cases/start-verification-review/start-verification-review.use-case';
 import { UploadPowerspikeCertificateUseCase } from '../../../application/use-cases/upload-powerspike-certificate/upload-powerspike-certificate.use-case';
 import { UploadPowerspikeIdDocumentUseCase } from '../../../application/use-cases/upload-powerspike-id-document/upload-powerspike-id-document.use-case';
+import { ConfirmCertificateDataUseCase } from '../../../application/use-cases/confirm-certificate-data/confirm-certificate-data.use-case';
 import {
   TRAINER_FLOW_CONFIG_PORT,
   TrainerFlowConfigPort,
@@ -48,6 +49,7 @@ import {
 import { PowerspikeDraftRequestDto } from '../dtos/powerspike-draft.request';
 import { PowerspikeDraftResponseDto } from '../dtos/powerspike-draft.response';
 import { PowerspikeUploadCertificateRequestDto } from '../dtos/powerspike-upload-certificate.request';
+import { ConfirmCertificateDataRequestDto } from '../dtos/confirm-certificate-data.request';
 import { PowerspikeUploadIdRequestDto } from '../dtos/powerspike-upload-id.request';
 import { PowerspikeSubmitRequestDto } from '../dtos/powerspike-submit.request';
 import { PowerspikeUploadResponseDto } from '../dtos/powerspike-upload.response';
@@ -87,6 +89,7 @@ export class TrainerVerificationController {
     private readonly uploadCertificateUseCase: UploadPowerspikeCertificateUseCase,
     private readonly uploadIdDocumentUseCase: UploadPowerspikeIdDocumentUseCase,
     private readonly submitPowerspikeUseCase: SubmitPowerspikeVerificationUseCase,
+    private readonly confirmCertificateDataUseCase: ConfirmCertificateDataUseCase,
     @Inject(TRAINER_FLOW_CONFIG_PORT)
     private readonly flowConfig: TrainerFlowConfigPort,
   ) {}
@@ -284,12 +287,31 @@ export class TrainerVerificationController {
 
     return this.uploadCertificateUseCase.execute({
       actor: this.toActor(user),
+      certificateName:
+        dto.certificateName !== undefined
+          ? this.parseOptionalString(dto.certificateName)
+          : certificateFile.originalname.replace(/\.[^/.]+$/, ''),
+      issuingOrganization:
+        dto.issuingOrganization !== undefined
+          ? this.parseOptionalString(dto.issuingOrganization)
+          : 'Pendiente',
+      file: certificateFile,
+    });
+  }
+
+  @Patch('powerspike/certificate/confirm')
+  @HttpCode(HttpStatus.OK)
+  async confirmPowerspikeCertificateData(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ConfirmCertificateDataRequestDto,
+  ): Promise<{ verificationId: string; advancedStatus: string }> {
+    return this.confirmCertificateDataUseCase.execute({
+      actor: this.toActor(user),
       certificateName: this.parseString(dto.certificateName, 'certificateName'),
       issuingOrganization: this.parseString(
         dto.issuingOrganization,
         'issuingOrganization',
       ),
-      file: certificateFile,
     });
   }
 
@@ -333,10 +355,7 @@ export class TrainerVerificationController {
       specialtyKeys: this.parseStringArray(dto.specialtyKeys, true),
       yearsOfExperience: this.parseInteger(dto.yearsOfExperience, true),
       shortBio: this.parseString(dto.shortBio, 'shortBio'),
-      idDocumentNumber: this.parseString(
-        dto.idDocumentNumber,
-        'idDocumentNumber',
-      ),
+      idDocumentNumber: this.parseOptionalString(dto.idDocumentNumber),
     });
   }
 
@@ -350,6 +369,16 @@ export class TrainerVerificationController {
   private parseString(value: unknown, fieldName: string): string {
     if (typeof value !== 'string' || !value.trim()) {
       throw new BadRequestException(`${fieldName} is required`);
+    }
+    return value.trim();
+  }
+
+  private parseOptionalString(value: unknown): string | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+    if (typeof value !== 'string') {
+      throw new BadRequestException('Value must be a string');
     }
     return value.trim();
   }

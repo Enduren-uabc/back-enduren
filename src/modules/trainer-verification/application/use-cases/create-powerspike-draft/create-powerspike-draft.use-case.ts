@@ -17,10 +17,7 @@ import {
   TrainerVerificationDomainError,
   TrainerVerificationErrorCode,
 } from '../../../domain/errors/trainer-verification.domain-error';
-import {
-  TrainerVerificationStateMachineService,
-  TransitionActor,
-} from '../../services/trainer-verification-state-machine.service';
+import { TrainerVerificationStateMachineService } from '../../services/trainer-verification-state-machine.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
 
 export interface CreatePowerspikeDraftInput {
@@ -86,20 +83,7 @@ export class CreatePowerspikeDraftUseCase {
       },
     );
 
-    const transitionActor: TransitionActor = {
-      actorId: input.actor.userId,
-      actorType: 'user',
-    };
-
-    const change = this.stateMachine.transition(
-      verification,
-      'draft',
-      transitionActor,
-      'Powerspike draft created',
-    );
-
     await this.verificationRepository.save(verification);
-    await this.auditRepository.recordStatusChange(change);
 
     return {
       verificationId: verification.id,

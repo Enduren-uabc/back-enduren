@@ -33,6 +33,7 @@ export interface TrainerVerificationProps {
   extractedIdData?: ExtractedIdData | null;
   scoringResult?: ScoringResult | null;
   assignedReviewerId?: string | null;
+  flowMode?: 'legacy' | 'powerspike';
 }
 
 export class TrainerVerification {
@@ -56,6 +57,7 @@ export class TrainerVerification {
   public extractedIdData: ExtractedIdData | null;
   public scoringResult: ScoringResult | null;
   public assignedReviewerId: string | null;
+  public flowMode: 'legacy' | 'powerspike';
 
   private constructor(props: TrainerVerificationProps) {
     this.id = props.id;
@@ -78,6 +80,7 @@ export class TrainerVerification {
     this.extractedIdData = props.extractedIdData ?? null;
     this.scoringResult = props.scoringResult ?? null;
     this.assignedReviewerId = props.assignedReviewerId ?? null;
+    this.flowMode = props.flowMode ?? 'legacy';
     this.validate();
   }
 
@@ -107,6 +110,7 @@ export class TrainerVerification {
       verifiedAt: null,
       createdAt: now,
       updatedAt: now,
+      flowMode: 'legacy',
     });
   }
 
@@ -136,6 +140,7 @@ export class TrainerVerification {
       createdAt: now,
       updatedAt: now,
       advancedStatus: 'draft',
+      flowMode: 'powerspike',
     });
   }
 
@@ -255,6 +260,9 @@ export class TrainerVerification {
 
   private validate(): void {
     if (this.advancedStatus === 'draft') {
+      return;
+    }
+    if (this.advancedStatus === undefined && this.flowMode === 'powerspike') {
       return;
     }
     if (this.specialtyKeys.length < 1) {

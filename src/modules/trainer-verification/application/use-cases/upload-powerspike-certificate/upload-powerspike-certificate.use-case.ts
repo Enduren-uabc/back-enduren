@@ -26,8 +26,8 @@ import { assertTrainer } from '../trainer-verification-use-case.helpers';
 
 export interface UploadPowerspikeCertificateInput {
   actor: CurrentActor;
-  certificateName: string;
-  issuingOrganization: string;
+  certificateName?: string;
+  issuingOrganization?: string;
   file: Express.Multer.File;
 }
 
@@ -86,8 +86,8 @@ export class UploadPowerspikeCertificateUseCase {
 
     const certificate = TrainerCertificate.create(
       crypto.randomUUID(),
-      input.certificateName,
-      input.issuingOrganization,
+      input.certificateName ?? 'Pendiente de extracción',
+      input.issuingOrganization ?? 'Pendiente',
       uploadOutput.containerName,
       uploadOutput.blobPath,
       uploadOutput.fileName,

@@ -1,6 +1,10 @@
 import { Routine } from '../../../domain/entities/routine.entity';
 import { Exercise } from '../../../domain/entities/exercise.entity';
-import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
+import {
+  RoutineDay,
+  isValidDayOfWeek,
+  type DayOfWeek,
+} from '../../../domain/value-objects/routine-day.value-object';
 import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
 import {
   RoutineDomainError,
@@ -126,25 +130,55 @@ export class SyncRoutineUseCase {
       return RoutineDay.reconstitute(day.dayOfWeek, exercises, day.id);
     });
 
-    // Validate that all payload days exist in the routine
-    for (const dayPayload of input.days) {
-      const exists = routine.days.some(
-        (d) => d.dayOfWeek === dayPayload.dayOfWeek,
-      );
-      if (!exists) {
-        throw new RoutineDomainError(
-          RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
-          `Day "${dayPayload.dayOfWeek}" not found in routine`,
-          { dayOfWeek: dayPayload.dayOfWeek },
+    // Identify payload days not yet present in the routine and create them
+    const existingDayOfWeeks = new Set(routine.days.map((d) => d.dayOfWeek));
+    const newDays = input.days
+      .filter((d) => !existingDayOfWeeks.has(d.dayOfWeek as DayOfWeek))
+      .map((dayPayload) => {
+        const dayOfWeek = dayPayload.dayOfWeek;
+        if (!isValidDayOfWeek(dayOfWeek)) {
+          throw new RoutineDomainError(
+            RoutineErrorCode.ROUTINE_DAY_INVALID_DAY_OF_WEEK,
+            `Invalid day of week: ${dayOfWeek}`,
+            { dayOfWeek },
+          );
+        }
+        const exercises = dayPayload.exercises.map((exPayload) => {
+          const exerciseId = exPayload.id ?? crypto.randomUUID();
+          let sets: RoutineExerciseSet[];
+          if (exPayload.sets != null && exPayload.sets.length > 0) {
+            sets = exPayload.sets.map((s) =>
+              RoutineExerciseSet.create(
+                s.setNumber,
+                s.reps,
+                s.weight,
+                s.restSeconds,
+              ),
+            );
+          } else {
+            sets = [];
+          }
+          return Exercise.reconstitute(
+            exerciseId,
+            exPayload.name,
+            exPayload.order,
+            sets,
+          );
+        });
+        return RoutineDay.reconstitute(
+          dayOfWeek,
+          exercises,
+          crypto.randomUUID(),
         );
-      }
-    }
+      });
+
+    const allDays = [...updatedDays, ...newDays];
 
     const updatedRoutine = Routine.reconstitute(
       routine.id,
       routine.name,
       routine.userId,
-      updatedDays,
+      allDays,
       routine.isActive,
       routine.trainingStrategyKey,
       routine.createdAt,

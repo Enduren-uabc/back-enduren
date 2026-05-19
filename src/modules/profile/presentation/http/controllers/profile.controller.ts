@@ -188,9 +188,12 @@ export class ProfileController {
     @CurrentUser() user: JwtPayload,
     @Param('userId') userId: string,
   ): Promise<FollowProfileResponseDto> {
-    const result = await this.followProfileUseCase.execute(this.getActor(user), {
-      targetUserId: userId,
-    });
+    const result = await this.followProfileUseCase.execute(
+      this.getActor(user),
+      {
+        targetUserId: userId,
+      },
+    );
 
     const response = new FollowProfileResponseDto();
     response.followerUserId = result.followerUserId;
@@ -246,11 +249,14 @@ export class ProfileController {
     @Param('userId') userId: string,
     @Query() query: ListProfilePublicationsRequestDto,
   ): Promise<ListProfilePublicationsResponseDto> {
-    const page = await this.listPublicationsUseCase.execute(this.getActor(user), {
-      userId,
-      limit: query.limit,
-      offset: query.offset,
-    });
+    const page = await this.listPublicationsUseCase.execute(
+      this.getActor(user),
+      {
+        userId,
+        limit: query.limit,
+        offset: query.offset,
+      },
+    );
     return ProfilePresenter.publicationsToHttp(page);
   }
 

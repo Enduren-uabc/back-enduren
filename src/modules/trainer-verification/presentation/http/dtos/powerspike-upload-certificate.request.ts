@@ -1,9 +1,11 @@
-import { Allow } from 'class-validator';
+import { Allow, IsOptional } from 'class-validator';
 
 export class PowerspikeUploadCertificateRequestDto {
+  @IsOptional()
   @Allow()
-  certificateName!: unknown;
+  certificateName?: unknown;
 
+  @IsOptional()
   @Allow()
-  issuingOrganization!: unknown;
+  issuingOrganization?: unknown;
 }

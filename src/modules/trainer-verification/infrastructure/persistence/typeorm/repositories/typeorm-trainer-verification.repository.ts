@@ -16,7 +16,10 @@ import { DocumentType } from '../../../../domain/value-objects/document-type.vo'
 import { VerificationStatus } from '../../../../domain/value-objects/verification-status.vo';
 import { RiskLevel } from '../../../../domain/value-objects/risk-level.vo';
 import { RecommendedAction } from '../../../../domain/value-objects/scoring-result.vo';
-import { AlertCode, AlertSeverity } from '../../../../domain/value-objects/risk-alert.vo';
+import {
+  AlertCode,
+  AlertSeverity,
+} from '../../../../domain/value-objects/risk-alert.vo';
 import {
   TrainerVerificationDetail,
   TrainerVerificationListItem,
@@ -29,6 +32,7 @@ import { SpecialtyCatalogTypeormEntity } from '../entities/specialty-catalog-typ
 import { TrainerCertificateTypeormEntity } from '../entities/trainer-certificate-typeorm.entity';
 import { TrainerIdDocumentTypeormEntity } from '../entities/trainer-id-document-typeorm.entity';
 import { TrainerVerificationSpecialtyTypeormEntity } from '../entities/trainer-verification-specialty-typeorm.entity';
+import { TrainerVerificationAdvancedStatusTypeormEntity } from '../entities/trainer-verification-advanced-status-typeorm.entity';
 import { TrainerVerificationTypeormEntity } from '../entities/trainer-verification-typeorm.entity';
 
 @Injectable()
@@ -69,6 +73,9 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       await manager
         .getRepository(ScoringResultTypeormEntity)
         .delete({ verificationId: verification.id });
+      await manager
+        .getRepository(TrainerVerificationAdvancedStatusTypeormEntity)
+        .delete({ trainerVerificationId: verification.id });
 
       const specialtyEntities = verification.specialtyKeys.map(
         (specialtyKey) => {
@@ -194,6 +201,17 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         await manager
           .getRepository(ScoringResultTypeormEntity)
           .save(scoringEntity);
+      }
+
+      if (verification.advancedStatus) {
+        const advancedStatusEntity =
+          new TrainerVerificationAdvancedStatusTypeormEntity();
+        advancedStatusEntity.id = crypto.randomUUID();
+        advancedStatusEntity.trainerVerificationId = verification.id;
+        advancedStatusEntity.advancedStatus = verification.advancedStatus;
+        await manager
+          .getRepository(TrainerVerificationAdvancedStatusTypeormEntity)
+          .save(advancedStatusEntity);
       }
     });
 
@@ -413,9 +431,9 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             ? verification.extractedIdData.expirationDate.toISOString()
             : undefined,
           documentIdentifier: rawDocId
-            ? (rawDocId.length > 8
+            ? rawDocId.length > 8
               ? rawDocId.slice(0, 4) + '****' + rawDocId.slice(-4)
-              : '****')
+              : '****'
             : undefined,
           ocrConfidence: verification.extractedIdData.ocrConfidence,
         }
@@ -501,6 +519,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     entity.verifiedBy = verification.verifiedBy;
     entity.verifiedAt = verification.verifiedAt as Date;
     entity.assignedReviewerId = verification.assignedReviewerId ?? null;
+    entity.flowMode = verification.flowMode;
     entity.createdAt = verification.createdAt;
     entity.updatedAt = verification.updatedAt;
     return entity;
@@ -584,10 +603,17 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         ? ScoringResult.reconstitute({
             riskScore: scoringData.riskScore,
             riskLevel: scoringData.riskLevel as RiskLevel,
-            recommendedAction: scoringData.recommendedAction as RecommendedAction,
+            recommendedAction:
+              scoringData.recommendedAction as RecommendedAction,
             summary: scoringData.summary,
             positiveSignals: scoringData.positiveSignals ?? [],
-            alerts: (scoringData.alerts as { code: AlertCode; severity: AlertSeverity; message: string }[] ?? []).map((a) =>
+            alerts: (
+              (scoringData.alerts as {
+                code: AlertCode;
+                severity: AlertSeverity;
+                message: string;
+              }[]) ?? []
+            ).map((a) =>
               RiskAlert.reconstitute({
                 code: a.code,
                 severity: a.severity,
@@ -598,6 +624,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           })
         : null,
       assignedReviewerId: entity.assignedReviewerId ?? null,
+      flowMode: (entity.flowMode as 'legacy' | 'powerspike') ?? 'legacy',
     });
   }
 }

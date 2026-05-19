@@ -53,6 +53,9 @@ export class TrainerVerificationTypeormEntity {
   @Column({ name: 'assigned_reviewer_id', type: 'uuid', nullable: true })
   assignedReviewerId!: string | null;
 
+  @Column('varchar', { name: 'flow_mode', length: 20, default: 'legacy' })
+  flowMode!: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

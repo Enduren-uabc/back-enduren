@@ -10,7 +10,8 @@ export interface TrainerVerificationAuditEventProps {
     | 'correction_requested'
     | 'user_cancelled'
     | 'extraction_not_configured'
-    | 'document_extracted';
+    | 'document_extracted'
+    | 'certificate_data_confirmed';
   actorId: string;
   actorType: 'user' | 'system' | 'admin' | 'external_service';
   description: string;

@@ -20,6 +20,7 @@ import { SubmitTrainerVerificationUseCase } from './application/use-cases/submit
 import { UpdateTrainerVerificationUseCase } from './application/use-cases/update-trainer-verification/update-trainer-verification.use-case';
 import { UploadPowerspikeCertificateUseCase } from './application/use-cases/upload-powerspike-certificate/upload-powerspike-certificate.use-case';
 import { UploadPowerspikeIdDocumentUseCase } from './application/use-cases/upload-powerspike-id-document/upload-powerspike-id-document.use-case';
+import { ConfirmCertificateDataUseCase } from './application/use-cases/confirm-certificate-data/confirm-certificate-data.use-case';
 import { ExtractCertificateHandler } from './application/handlers/extract-certificate.handler';
 import { ExtractIdDocumentHandler } from './application/handlers/extract-id-document.handler';
 import { OnCertificateExtractedHandler } from './application/handlers/on-certificate-extracted.handler';
@@ -129,6 +130,7 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
     CreatePowerspikeDraftUseCase,
     UploadPowerspikeCertificateUseCase,
     UploadPowerspikeIdDocumentUseCase,
+    ConfirmCertificateDataUseCase,
     SubmitPowerspikeVerificationUseCase,
     ExtractCertificateHandler,
     ExtractIdDocumentHandler,
