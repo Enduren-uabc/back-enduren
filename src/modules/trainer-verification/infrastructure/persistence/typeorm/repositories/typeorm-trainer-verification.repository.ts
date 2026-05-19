@@ -7,6 +7,9 @@ import { SpecialtyCatalogEntry } from '../../../../domain/entities/specialty-cat
 import { TrainerCertificate } from '../../../../domain/entities/trainer-certificate.entity';
 import { TrainerIdDocument } from '../../../../domain/entities/trainer-id-document.entity';
 import { TrainerVerification } from '../../../../domain/entities/trainer-verification.entity';
+import { ExtractedCertificateData } from '../../../../domain/value-objects/extracted-certificate-data.vo';
+import { ExtractedIdData } from '../../../../domain/value-objects/extracted-id-data.vo';
+import { AdvancedVerificationStatus } from '../../../../domain/value-objects/advanced-verification-status.vo';
 import { DocumentType } from '../../../../domain/value-objects/document-type.vo';
 import { VerificationStatus } from '../../../../domain/value-objects/verification-status.vo';
 import {
@@ -14,6 +17,8 @@ import {
   TrainerVerificationListItem,
   TrainerVerificationRepository,
 } from '../../../../domain/repositories/trainer-verification.repository.port';
+import { ExtractedCertificateDataTypeormEntity } from '../entities/extracted-certificate-data-typeorm.entity';
+import { ExtractedIdDataTypeormEntity } from '../entities/extracted-id-data-typeorm.entity';
 import { SpecialtyCatalogTypeormEntity } from '../entities/specialty-catalog-typeorm.entity';
 import { TrainerCertificateTypeormEntity } from '../entities/trainer-certificate-typeorm.entity';
 import { TrainerIdDocumentTypeormEntity } from '../entities/trainer-id-document-typeorm.entity';
@@ -49,6 +54,12 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       await manager
         .getRepository(TrainerCertificateTypeormEntity)
         .delete({ trainerVerificationId: verification.id });
+      await manager
+        .getRepository(ExtractedCertificateDataTypeormEntity)
+        .delete({ verificationId: verification.id });
+      await manager
+        .getRepository(ExtractedIdDataTypeormEntity)
+        .delete({ verificationId: verification.id });
 
       const specialtyEntities = verification.specialtyKeys.map(
         (specialtyKey) => {
@@ -103,6 +114,55 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           .getRepository(TrainerCertificateTypeormEntity)
           .save(certificateEntities);
       }
+
+      if (verification.extractedCertificateData) {
+        const extractedEntity = new ExtractedCertificateDataTypeormEntity();
+        extractedEntity.id = crypto.randomUUID();
+        extractedEntity.verificationId = verification.id;
+        extractedEntity.fullName =
+          verification.extractedCertificateData.fullName;
+        extractedEntity.certificateName =
+          verification.extractedCertificateData.certificateName;
+        extractedEntity.issuingOrganization =
+          verification.extractedCertificateData.issuingOrganization;
+        extractedEntity.issueDate =
+          verification.extractedCertificateData.issueDate ?? null;
+        extractedEntity.expirationDate =
+          verification.extractedCertificateData.expirationDate ?? null;
+        extractedEntity.folioNumber =
+          verification.extractedCertificateData.folioNumber ?? null;
+        extractedEntity.qrUrl =
+          verification.extractedCertificateData.qrUrl ?? null;
+        extractedEntity.ocrConfidence =
+          verification.extractedCertificateData.ocrConfidence;
+        extractedEntity.createdAt = new Date();
+        await manager
+          .getRepository(ExtractedCertificateDataTypeormEntity)
+          .save(extractedEntity);
+      }
+
+      if (verification.extractedIdData) {
+        const extractedEntity = new ExtractedIdDataTypeormEntity();
+        extractedEntity.id = crypto.randomUUID();
+        extractedEntity.verificationId = verification.id;
+        extractedEntity.fullName = verification.extractedIdData.fullName;
+        extractedEntity.documentType =
+          verification.extractedIdData.documentType;
+        extractedEntity.issuingCountry =
+          verification.extractedIdData.issuingCountry ?? null;
+        extractedEntity.birthDate =
+          verification.extractedIdData.birthDate ?? null;
+        extractedEntity.expirationDate =
+          verification.extractedIdData.expirationDate ?? null;
+        extractedEntity.documentIdentifier =
+          verification.extractedIdData.documentIdentifier ?? null;
+        extractedEntity.ocrConfidence =
+          verification.extractedIdData.ocrConfidence;
+        extractedEntity.createdAt = new Date();
+        await manager
+          .getRepository(ExtractedIdDataTypeormEntity)
+          .save(extractedEntity);
+      }
     });
 
     const saved = await this.findById(verification.id);
@@ -119,6 +179,9 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         specialties: true,
         idDocuments: true,
         certificates: true,
+        advancedStatus: true,
+        extractedCertificateData: true,
+        extractedIdData: true,
       },
     });
     return entity ? this.toDomain(entity) : null;
@@ -131,6 +194,9 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         specialties: true,
         idDocuments: true,
         certificates: true,
+        advancedStatus: true,
+        extractedCertificateData: true,
+        extractedIdData: true,
       },
     });
     return entity ? this.toDomain(entity) : null;
@@ -258,6 +324,13 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
   private toDomain(
     entity: TrainerVerificationTypeormEntity,
   ): TrainerVerification {
+    const advancedStatus = entity.advancedStatus?.advancedStatus
+      ? (entity.advancedStatus.advancedStatus as AdvancedVerificationStatus)
+      : undefined;
+
+    const extractedCertData = entity.extractedCertificateData?.[0];
+    const extractedId = entity.extractedIdData?.[0];
+
     return TrainerVerification.reconstitute({
       id: entity.id,
       userId: entity.userId,
@@ -296,6 +369,31 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       verifiedAt: entity.verifiedAt ?? null,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      advancedStatus,
+      statusHistory: [],
+      extractedCertificateData: extractedCertData
+        ? ExtractedCertificateData.reconstitute({
+            fullName: extractedCertData.fullName,
+            certificateName: extractedCertData.certificateName,
+            issuingOrganization: extractedCertData.issuingOrganization,
+            issueDate: extractedCertData.issueDate ?? undefined,
+            expirationDate: extractedCertData.expirationDate ?? undefined,
+            folioNumber: extractedCertData.folioNumber ?? undefined,
+            qrUrl: extractedCertData.qrUrl ?? undefined,
+            ocrConfidence: extractedCertData.ocrConfidence,
+          })
+        : null,
+      extractedIdData: extractedId
+        ? ExtractedIdData.reconstitute({
+            fullName: extractedId.fullName,
+            documentType: extractedId.documentType,
+            issuingCountry: extractedId.issuingCountry ?? undefined,
+            birthDate: extractedId.birthDate ?? undefined,
+            expirationDate: extractedId.expirationDate ?? undefined,
+            documentIdentifier: extractedId.documentIdentifier ?? undefined,
+            ocrConfidence: extractedId.ocrConfidence,
+          })
+        : null,
     });
   }
 }
