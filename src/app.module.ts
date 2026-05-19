@@ -11,6 +11,7 @@ import { TrainingModule } from './modules/training/training.module';
 import { PublicationModule } from './modules/publication/publication.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TrainerVerificationModule } from './modules/trainer-verification/trainer-verification.module';
+import { StorageSmokeTestModule } from './modules/storage-smoke-test/storage-smoke-test.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
 import { ObservabilityModule } from './shared/observability/observability.module';
 
@@ -44,6 +45,7 @@ import { ObservabilityModule } from './shared/observability/observability.module
     PublicationModule,
     ProfileModule,
     TrainerVerificationModule,
+    StorageSmokeTestModule,
   ],
   controllers: [AppController],
   providers: [
