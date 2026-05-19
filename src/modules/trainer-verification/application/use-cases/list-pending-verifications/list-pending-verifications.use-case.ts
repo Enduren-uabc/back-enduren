@@ -14,6 +14,8 @@ export interface ListPendingVerificationsInput {
   actor: CurrentActor;
   page?: number;
   limit?: number;
+  riskLevel?: string;
+  sort?: 'ASC' | 'DESC';
 }
 
 export interface ListPendingVerificationsOutput {
@@ -51,7 +53,10 @@ export class ListPendingVerificationsUseCase {
     const isPowerspike = this.flowConfig.isPowerspikeEnabled();
 
     if (isPowerspike) {
-      return this.verificationRepository.listPendingAdvanced(page, limit);
+      return this.verificationRepository.listPendingAdvanced(page, limit, {
+        riskLevel: input.riskLevel,
+        order: input.sort,
+      });
     }
 
     return this.verificationRepository.listPending(page, limit);

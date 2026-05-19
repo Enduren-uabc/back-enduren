@@ -68,34 +68,29 @@ export class GetMyVerificationStatusUseCase {
     };
 
     const advStatus = verification.advancedStatus;
-    if (advStatus) {
-      if (
-        advStatus === 'certificate_extraction_pending' ||
-        advStatus === 'certificate_extracted' ||
-        advStatus === 'certificate_extraction_failed'
-      ) {
-        if (advStatus === 'certificate_extraction_pending') {
-          result.certificateExtractionStatus = 'pending';
-        } else if (advStatus === 'certificate_extracted') {
-          result.certificateExtractionStatus = 'extracted';
-        } else {
-          result.certificateExtractionStatus = 'failed';
-        }
-      }
 
-      if (
-        advStatus === 'id_extraction_pending' ||
-        advStatus === 'id_extracted' ||
-        advStatus === 'id_extraction_failed'
-      ) {
-        if (advStatus === 'id_extraction_pending') {
-          result.idExtractionStatus = 'pending';
-        } else if (advStatus === 'id_extracted') {
-          result.idExtractionStatus = 'extracted';
-        } else {
-          result.idExtractionStatus = 'failed';
-        }
-      }
+    if (verification.extractedCertificateData) {
+      result.certificateExtractionStatus = 'extracted';
+    } else if (
+      advStatus === 'certificate_extraction_pending' ||
+      advStatus === 'certificate_extraction_failed'
+    ) {
+      result.certificateExtractionStatus =
+        advStatus === 'certificate_extraction_pending' ? 'pending' : 'failed';
+    } else if (verification.certificates.length > 0) {
+      result.certificateExtractionStatus = 'pending';
+    }
+
+    if (verification.extractedIdData) {
+      result.idExtractionStatus = 'extracted';
+    } else if (
+      advStatus === 'id_extraction_pending' ||
+      advStatus === 'id_extraction_failed'
+    ) {
+      result.idExtractionStatus =
+        advStatus === 'id_extraction_pending' ? 'pending' : 'failed';
+    } else if (verification.idDocuments.length > 0) {
+      result.idExtractionStatus = 'pending';
     }
 
     if (verification.extractedCertificateData) {

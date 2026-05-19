@@ -23,6 +23,7 @@ import {
 import { InMemoryCommandBus } from '../../../infrastructure/cqrs/in-memory-command-bus';
 import { ExtractCertificateCommand } from '../../commands/extract-certificate.command';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
+import { SYSTEM_ACTOR } from '../../constants/system-actor';
 
 export interface UploadPowerspikeCertificateInput {
   actor: CurrentActor;
@@ -111,7 +112,7 @@ export class UploadPowerspikeCertificateUseCase {
     const extractionPendingChange = this.stateMachine.transition(
       verification,
       'certificate_extraction_pending',
-      { actorId: 'system', actorType: 'system' },
+      SYSTEM_ACTOR,
       'Certificate extraction queued',
     );
 

@@ -22,7 +22,7 @@ export class TrainerVerificationStatusHistoryTypeormEntity {
   @Column('varchar', { name: 'new_status', length: 40 })
   newStatus!: string;
 
-  @Column('uuid', { name: 'actor_id' })
+  @Column('varchar', { name: 'actor_id', length: 36 })
   actorId!: string;
 
   @Column('varchar', { name: 'actor_type', length: 20, default: 'system' })

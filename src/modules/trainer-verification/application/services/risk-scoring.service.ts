@@ -61,6 +61,30 @@ export class RiskScoringService {
     'kinesiologia',
     'anatomia',
     'anatomy',
+    // Certificaciones CONOCER México - EC = Estándar de Competencia
+    'ec',
+    'ec0474',
+    'estandar de competencia',
+    'conocer',
+    'icemi',
+    'instituto de certificacion',
+    'mantenimiento de la salud',
+    'jovenes y adultos',
+    // Términos adicionales de fitness
+    'fisico',
+    'physical',
+    'entrenamiento',
+    'training',
+    'gimnasio',
+    'gym',
+    'deportivo',
+    'atletico',
+    'athletic',
+    'rendimiento',
+    'performance',
+    'capacitacion',
+    'preparador',
+    'instructor',
   ];
 
   constructor(
@@ -475,11 +499,12 @@ export class RiskScoringService {
     return this.fitnessKeywords.some((keyword) => searchText.includes(keyword));
   }
 
-  private calculateAge(birthDate: Date): number {
+  private calculateAge(birthDate: Date | string): number {
+    const bd = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
     const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    let age = today.getFullYear() - bd.getFullYear();
+    const m = today.getMonth() - bd.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) {
       age--;
     }
     return age;

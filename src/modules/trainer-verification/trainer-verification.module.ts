@@ -34,7 +34,6 @@ import { TrainerVerificationStateMachineService } from './application/services/t
 import { RiskScoringService } from './application/services/risk-scoring.service';
 import { InMemoryCommandBus } from './infrastructure/cqrs/in-memory-command-bus';
 import { InMemoryEventBus } from './infrastructure/cqrs/in-memory-event-bus';
-import { FakeDocumentExtractionService } from './infrastructure/document-extraction/fake-document-extraction.service';
 import { AzureDocumentIntelligenceService } from './infrastructure/document-extraction/azure-document-intelligence.service';
 import { SimpleNameComparisonService } from './infrastructure/name-comparison/simple-name-comparison.service';
 import { SpecialtyCatalogTypeormEntity } from './infrastructure/persistence/typeorm/entities/specialty-catalog-typeorm.entity';
@@ -97,17 +96,7 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
     },
     {
       provide: DOCUMENT_EXTRACTION_PORT,
-      useFactory: (configService: ConfigService) => {
-        const enabled = configService.get<string>(
-          'AZURE_DOCUMENT_INTELLIGENCE_ENABLED',
-          'false',
-        );
-        if (enabled.toLowerCase() === 'true') {
-          return new AzureDocumentIntelligenceService(configService);
-        }
-        return new FakeDocumentExtractionService();
-      },
-      inject: [ConfigService],
+      useClass: AzureDocumentIntelligenceService,
     },
     TrainerVerificationStateMachineService,
     RiskScoringService,

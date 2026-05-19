@@ -19,7 +19,7 @@ export class TrainerVerificationAuditEventTypeormEntity {
   @Column('varchar', { name: 'event_type', length: 40 })
   eventType!: string;
 
-  @Column('uuid', { name: 'actor_id' })
+  @Column('varchar', { name: 'actor_id', length: 36 })
   actorId!: string;
 
   @Column('varchar', { name: 'actor_type', length: 20, default: 'system' })

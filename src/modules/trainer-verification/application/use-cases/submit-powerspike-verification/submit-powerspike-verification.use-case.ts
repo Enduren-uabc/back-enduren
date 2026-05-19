@@ -23,6 +23,7 @@ import {
 } from '../../services/trainer-verification-state-machine.service';
 import { RiskScoringService } from '../../services/risk-scoring.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
+import { SYSTEM_ACTOR, SYSTEM_ACTOR_ID } from '../../constants/system-actor';
 
 export interface SubmitPowerspikeVerificationInput {
   actor: CurrentActor;
@@ -106,10 +107,7 @@ export class SubmitPowerspikeVerificationUseCase {
 
     verification.idDocumentNumber = idNumber;
 
-    const systemActor: TransitionActor = {
-      actorId: 'system',
-      actorType: 'system',
-    };
+    const systemActor: TransitionActor = SYSTEM_ACTOR;
 
     const userActor: TransitionActor = {
       actorId: input.actor.userId,
@@ -170,7 +168,7 @@ export class SubmitPowerspikeVerificationUseCase {
       id: crypto.randomUUID(),
       verificationId: verification.id,
       eventType: 'risk_calculated',
-      actorId: 'system',
+      actorId: SYSTEM_ACTOR_ID,
       actorType: 'system',
       description: `Risk scoring: ${scoringResult.riskLevel} (${scoringResult.riskScore}/100) — ${scoringResult.alerts.length} alerts`,
       metadata: {

@@ -201,11 +201,23 @@ export class TrainerVerificationController {
     @CurrentUser() user: JwtPayload,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('riskLevel') riskLevel?: string,
+    @Query('sort') sort?: string,
   ) {
+    const validRiskLevels = ['low', 'medium', 'high', 'critical'];
+    const validSorts = ['ASC', 'DESC'];
     return this.listPendingUseCase.execute({
       actor: this.toActor(user),
       page: page ? this.parsePositiveQueryInt(page, 'page') : undefined,
       limit: limit ? this.parsePositiveQueryInt(limit, 'limit') : undefined,
+      riskLevel:
+        riskLevel && validRiskLevels.includes(riskLevel)
+          ? riskLevel
+          : undefined,
+      sort:
+        sort && validSorts.includes(sort)
+          ? (sort as 'ASC' | 'DESC')
+          : undefined,
     });
   }
 

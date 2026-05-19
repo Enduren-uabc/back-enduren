@@ -10,6 +10,7 @@ import {
   TrainerVerificationAuditRepository,
 } from '../../domain/repositories/trainer-verification-audit.repository.port';
 import { TrainerVerificationStateMachineService } from '../services/trainer-verification-state-machine.service';
+import { SYSTEM_ACTOR } from '../constants/system-actor';
 
 @Injectable()
 export class OnIdDocumentExtractionFailedHandler {
@@ -30,7 +31,7 @@ export class OnIdDocumentExtractionFailedHandler {
     const change = this.stateMachine.transition(
       verification,
       'id_extraction_failed',
-      { actorId: 'system', actorType: 'system' },
+      SYSTEM_ACTOR,
       `ID document extraction failed: ${event.errorMessage}`,
     );
 

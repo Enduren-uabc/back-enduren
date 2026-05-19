@@ -10,6 +10,7 @@ import {
   TrainerVerificationAuditRepository,
 } from '../../domain/repositories/trainer-verification-audit.repository.port';
 import { TrainerVerificationStateMachineService } from '../services/trainer-verification-state-machine.service';
+import { SYSTEM_ACTOR } from '../constants/system-actor';
 
 @Injectable()
 export class OnCertificateExtractedHandler {
@@ -32,7 +33,7 @@ export class OnCertificateExtractedHandler {
     const change = this.stateMachine.transition(
       verification,
       'certificate_extracted',
-      { actorId: 'system', actorType: 'system' },
+      SYSTEM_ACTOR,
       'Document extraction completed for certificate',
     );
 

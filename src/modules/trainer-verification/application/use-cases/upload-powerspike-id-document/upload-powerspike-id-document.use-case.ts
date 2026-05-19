@@ -24,6 +24,7 @@ import { InMemoryCommandBus } from '../../../infrastructure/cqrs/in-memory-comma
 import { ExtractIdDocumentCommand } from '../../commands/extract-id-document.command';
 import { isDocumentType } from '../../../domain/value-objects/document-type.vo';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
+import { SYSTEM_ACTOR } from '../../constants/system-actor';
 
 export interface UploadPowerspikeIdDocumentInput {
   actor: CurrentActor;
@@ -114,7 +115,7 @@ export class UploadPowerspikeIdDocumentUseCase {
     const extractionPendingChange = this.stateMachine.transition(
       verification,
       'id_extraction_pending',
-      { actorId: 'system', actorType: 'system' },
+      SYSTEM_ACTOR,
       'ID document extraction queued',
     );
 

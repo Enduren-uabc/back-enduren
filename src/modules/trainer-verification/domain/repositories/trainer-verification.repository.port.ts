@@ -111,5 +111,9 @@ export interface TrainerVerificationRepository {
   listPendingAdvanced(
     page: number,
     limit: number,
+    filter?: {
+      riskLevel?: string;
+      order?: 'ASC' | 'DESC';
+    },
   ): Promise<{ verifications: TrainerVerificationListItem[]; total: number }>;
 }

@@ -301,9 +301,21 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
   async listPendingAdvanced(
     page: number,
     limit: number,
+    filter?: {
+      riskLevel?: string;
+      order?: 'ASC' | 'DESC';
+    },
   ): Promise<{ verifications: TrainerVerificationListItem[]; total: number }> {
+    const where: any = {
+      advancedStatus: { advancedStatus: 'manual_review_pending' },
+    };
+    if (filter?.riskLevel) {
+      where.scoringResults = {
+        riskLevel: filter.riskLevel,
+      };
+    }
     const [entities, total] = await this.verificationRepo.findAndCount({
-      where: { advancedStatus: { advancedStatus: 'manual_review_pending' } },
+      where,
       relations: {
         specialties: true,
         advancedStatus: true,
@@ -311,7 +323,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       },
       skip: (page - 1) * limit,
       take: limit,
-      order: { createdAt: 'ASC' },
+      order: { createdAt: filter?.order ?? 'ASC' },
     });
 
     const userIds = entities.map((entity) => entity.userId);
@@ -581,8 +593,12 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             fullName: extractedCertData.fullName,
             certificateName: extractedCertData.certificateName,
             issuingOrganization: extractedCertData.issuingOrganization,
-            issueDate: extractedCertData.issueDate ?? undefined,
-            expirationDate: extractedCertData.expirationDate ?? undefined,
+            issueDate: extractedCertData.issueDate
+              ? new Date(extractedCertData.issueDate)
+              : undefined,
+            expirationDate: extractedCertData.expirationDate
+              ? new Date(extractedCertData.expirationDate)
+              : undefined,
             folioNumber: extractedCertData.folioNumber ?? undefined,
             qrUrl: extractedCertData.qrUrl ?? undefined,
             ocrConfidence: extractedCertData.ocrConfidence,
@@ -593,8 +609,12 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             fullName: extractedId.fullName,
             documentType: extractedId.documentType,
             issuingCountry: extractedId.issuingCountry ?? undefined,
-            birthDate: extractedId.birthDate ?? undefined,
-            expirationDate: extractedId.expirationDate ?? undefined,
+            birthDate: extractedId.birthDate
+              ? new Date(extractedId.birthDate)
+              : undefined,
+            expirationDate: extractedId.expirationDate
+              ? new Date(extractedId.expirationDate)
+              : undefined,
             documentIdentifier: extractedId.documentIdentifier ?? undefined,
             ocrConfidence: extractedId.ocrConfidence,
           })

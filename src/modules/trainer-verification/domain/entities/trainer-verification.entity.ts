@@ -265,6 +265,8 @@ export class TrainerVerification {
     if (this.advancedStatus === undefined && this.flowMode === 'powerspike') {
       return;
     }
+    const skipRequiredDocumentValidation = this.flowMode === 'powerspike';
+
     if (this.specialtyKeys.length < 1) {
       throw new TrainerVerificationDomainError(
         TrainerVerificationErrorCode.TOO_FEW_SPECIALTIES,
@@ -293,13 +295,18 @@ export class TrainerVerification {
         'Professional bio is required and must be 500 characters or fewer',
       );
     }
-    if (!this.idDocumentNumber || this.idDocumentNumber.trim().length > 100) {
+    // Powerspike valida los documentos por estado/use case; el aggregate no
+    // debe exigir expediente completo mientras OCR y cargas siguen en curso.
+    if (
+      (!skipRequiredDocumentValidation && !this.idDocumentNumber) ||
+      this.idDocumentNumber.trim().length > 100
+    ) {
       throw new TrainerVerificationDomainError(
         TrainerVerificationErrorCode.ID_DOCUMENT_NUMBER_REQUIRED,
         'ID document number is required and must be 100 characters or fewer',
       );
     }
-    if (this.idDocuments.length < 1) {
+    if (!skipRequiredDocumentValidation && this.idDocuments.length < 1) {
       throw new TrainerVerificationDomainError(
         TrainerVerificationErrorCode.TOO_FEW_ID_DOCUMENTS,
         'At least one ID document is required',
@@ -311,7 +318,7 @@ export class TrainerVerification {
         'No more than three ID documents are allowed',
       );
     }
-    if (this.certificates.length < 1) {
+    if (!skipRequiredDocumentValidation && this.certificates.length < 1) {
       throw new TrainerVerificationDomainError(
         TrainerVerificationErrorCode.TOO_FEW_CERTIFICATES,
         'At least one certificate is required',
