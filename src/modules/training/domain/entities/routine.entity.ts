@@ -3,6 +3,7 @@ import {
   RoutineErrorCode,
 } from '../errors/routine-domain.error';
 import { RoutineDay } from '../value-objects/routine-day.value-object';
+import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-object';
 import { Exercise } from './exercise.entity';
 
 export class Routine {
@@ -11,6 +12,7 @@ export class Routine {
   public readonly userId: string;
   public readonly days: RoutineDay[];
   public readonly isActive: boolean;
+  public readonly trainingStrategyKey: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -20,6 +22,7 @@ export class Routine {
     userId: string,
     days: RoutineDay[],
     isActive: boolean,
+    trainingStrategyKey: string | null,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -28,6 +31,7 @@ export class Routine {
     this.userId = userId;
     this.days = days;
     this.isActive = isActive;
+    this.trainingStrategyKey = trainingStrategyKey;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -44,6 +48,7 @@ export class Routine {
     userId: string,
     days: RoutineDay[],
     isActive: boolean = false,
+    trainingStrategyKey: string | null = null,
   ): Routine {
     if (!name || name.trim().length === 0) {
       throw new RoutineDomainError(
@@ -62,7 +67,16 @@ export class Routine {
     }
 
     const now = new Date();
-    return new Routine(id, name.trim(), userId, [...days], isActive, now, now);
+    return new Routine(
+      id,
+      name.trim(),
+      userId,
+      [...days],
+      isActive,
+      trainingStrategyKey,
+      now,
+      now,
+    );
   }
 
   /**
@@ -74,6 +88,7 @@ export class Routine {
     userId: string,
     days: RoutineDay[],
     isActive: boolean,
+    trainingStrategyKey: string | null,
     createdAt: Date,
     updatedAt: Date,
   ): Routine {
@@ -83,6 +98,7 @@ export class Routine {
       userId,
       [...days],
       isActive,
+      trainingStrategyKey,
       createdAt,
       updatedAt,
     );
@@ -99,6 +115,7 @@ export class Routine {
       this.userId,
       this.days,
       true,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );
@@ -115,6 +132,24 @@ export class Routine {
       this.userId,
       this.days,
       false,
+      this.trainingStrategyKey,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Sets or clears the training strategy for this routine.
+   * Returns a new Routine with the updated strategy key.
+   */
+  public setTrainingStrategy(key: string | null): Routine {
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      this.days,
+      this.isActive,
+      key,
       this.createdAt,
       new Date(),
     );
@@ -145,6 +180,7 @@ export class Routine {
       this.userId,
       updatedDays,
       this.isActive,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );
@@ -175,6 +211,7 @@ export class Routine {
       this.userId,
       updatedDays,
       this.isActive,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );
@@ -183,15 +220,12 @@ export class Routine {
   /**
    * Configures an exercise within a specific day of the routine.
    * Enforces: day must exist, exercise must exist in day (RF-11.0.5).
-   * Delegates configuration validation to Exercise.configure() (RF-11.0.1, RF-11.0.2, RF-11.0.3, RF-11.0.4).
    * Returns a new Routine with the configured exercise.
    */
   public configureExercise(
     dayOfWeek: string,
     exerciseId: string,
-    sets: number,
-    repsPerSet: number,
-    weight: number,
+    sets: RoutineExerciseSet[],
   ): Routine {
     const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
     if (dayIndex === -1) {
@@ -202,12 +236,7 @@ export class Routine {
       );
     }
 
-    const updatedDay = this.days[dayIndex].configureExercise(
-      exerciseId,
-      sets,
-      repsPerSet,
-      weight,
-    );
+    const updatedDay = this.days[dayIndex].configureExercise(exerciseId, sets);
     const updatedDays = [...this.days];
     updatedDays[dayIndex] = updatedDay;
 
@@ -217,6 +246,7 @@ export class Routine {
       this.userId,
       updatedDays,
       this.isActive,
+      this.trainingStrategyKey,
       this.createdAt,
       new Date(),
     );

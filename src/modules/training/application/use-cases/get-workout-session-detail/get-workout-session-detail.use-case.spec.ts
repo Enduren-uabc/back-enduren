@@ -17,14 +17,11 @@ describe('GetWorkoutSessionDetailUseCase', () => {
   let routineRepository: RoutineRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
-  const exercise = WorkoutExercise.create(
-    'exercise-1',
-    'Bench Press',
-    1,
-    3,
-    10,
-    50,
-  );
+  const exercise = WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+    { setNumber: 3, reps: 8, weight: 55 },
+  ]);
 
   beforeEach(() => {
     workoutSessionRepository = {
@@ -40,6 +37,8 @@ describe('GetWorkoutSessionDetailUseCase', () => {
       existsByNameForUser: jest.fn(),
       countByUserId: jest.fn(),
       findActiveByUserId: jest.fn(),
+      findByIdAndUserId: jest.fn(),
+      delete: jest.fn(),
     };
     useCase = new GetWorkoutSessionDetailUseCase(
       workoutSessionRepository,
@@ -68,16 +67,7 @@ describe('GetWorkoutSessionDetailUseCase', () => {
         'routine-1',
         'My Routine',
         'user-1',
-        [
-          RoutineDay.reconstitute('monday', [
-            {
-              id: 'exercise-1',
-              name: 'Bench Press',
-              order: 1,
-              configuration: null,
-            },
-          ]),
-        ],
+        [RoutineDay.reconstitute('monday', [])],
         true,
         new Date(),
         new Date(),
@@ -96,6 +86,7 @@ describe('GetWorkoutSessionDetailUseCase', () => {
       expect(result.exercises).toHaveLength(1);
       expect(result.exercises[0].exerciseId).toBe('exercise-1');
       expect(result.exercises[0].exerciseName).toBe('Bench Press');
+      expect(result.exercises[0].targetSets).toHaveLength(3);
       expect(result.exercises[0].workoutSets).toHaveLength(3);
       expect(result.durationMinutes).toBe(60);
       expect(result.startedAt).toEqual(new Date('2026-04-20T10:00:00Z'));

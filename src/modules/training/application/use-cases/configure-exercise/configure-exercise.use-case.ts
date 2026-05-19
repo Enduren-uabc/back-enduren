@@ -1,4 +1,5 @@
 import { Routine } from '../../../domain/entities/routine.entity';
+import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
 import {
   RoutineDomainError,
   RoutineErrorCode,
@@ -6,13 +7,18 @@ import {
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
 
+export interface ConfigureExerciseSetInput {
+  setNumber: number;
+  reps: number;
+  weight: number;
+  restSeconds?: number;
+}
+
 export interface ConfigureExerciseInput {
   routineId: string;
   dayOfWeek: string;
   exerciseId: string;
-  sets: number;
-  repsPerSet: number;
-  weight: number;
+  sets: ConfigureExerciseSetInput[];
 }
 
 export interface ConfigureExerciseOutput {
@@ -26,9 +32,13 @@ export interface ConfigureExerciseOutput {
       id: string;
       name: string;
       order: number;
-      sets: number | null;
-      repsPerSet: number | null;
-      weight: number | null;
+      sets: Array<{
+        id: string;
+        setNumber: number;
+        reps: number;
+        weight: number;
+        restSeconds: number | null;
+      }>;
     }>;
   }>;
   createdAt: Date;
@@ -52,13 +62,15 @@ export class ConfigureExerciseUseCase {
       );
     }
 
+    const sets = input.sets.map((s) =>
+      RoutineExerciseSet.create(s.setNumber, s.reps, s.weight, s.restSeconds),
+    );
+
     // Delegate configuration to domain — enforces day exists, exercise exists, and configuration invariants
     const updatedRoutine = routine.configureExercise(
       input.dayOfWeek,
       input.exerciseId,
-      input.sets,
-      input.repsPerSet,
-      input.weight,
+      sets,
     );
 
     const saved = await this.routineRepository.save(updatedRoutine);
@@ -77,9 +89,13 @@ export class ConfigureExerciseUseCase {
           id: e.id,
           name: e.name,
           order: e.order,
-          sets: e.configuration?.sets ?? null,
-          repsPerSet: e.configuration?.repsPerSet ?? null,
-          weight: e.configuration?.weight ?? null,
+          sets: e.sets.map((s) => ({
+            id: s.id,
+            setNumber: s.setNumber,
+            reps: s.reps,
+            weight: s.weight,
+            restSeconds: s.restSeconds,
+          })),
         })),
       })),
       isActive: routine.isActive,

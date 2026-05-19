@@ -1,6 +1,10 @@
 import { WorkoutSessionStatus } from '../value-objects/workout-session-status.value-object';
 import { WorkoutExercise } from '../value-objects/workout-exercise.value-object';
 import {
+  isValidDayOfWeek,
+  type DayOfWeek,
+} from '../value-objects/routine-day.value-object';
+import {
   WorkoutSessionDomainError,
   WorkoutSessionErrorCode,
 } from '../errors/workout-session-domain.error';
@@ -16,6 +20,7 @@ export class WorkoutSession {
   public readonly id: string;
   public readonly userId: string;
   public readonly routineId: string;
+  public readonly dayOfWeek: DayOfWeek;
   public readonly status: WorkoutSessionStatus;
   public readonly exercises: WorkoutExercise[];
   public readonly currentExerciseIndex: number;
@@ -26,6 +31,7 @@ export class WorkoutSession {
     id: string,
     userId: string,
     routineId: string,
+    dayOfWeek: DayOfWeek,
     status: WorkoutSessionStatus,
     exercises: WorkoutExercise[],
     currentExerciseIndex: number,
@@ -35,6 +41,7 @@ export class WorkoutSession {
     this.id = id;
     this.userId = userId;
     this.routineId = routineId;
+    this.dayOfWeek = dayOfWeek;
     this.status = status;
     this.exercises = exercises;
     this.currentExerciseIndex = currentExerciseIndex;
@@ -52,6 +59,7 @@ export class WorkoutSession {
     userId: string,
     routineId: string,
     exercises: WorkoutExercise[],
+    dayOfWeek: DayOfWeek = 'monday',
   ): WorkoutSession {
     if (!userId || userId.trim().length === 0) {
       throw new WorkoutSessionDomainError(
@@ -69,11 +77,20 @@ export class WorkoutSession {
       );
     }
 
+    if (!isValidDayOfWeek(dayOfWeek)) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_DAY_NOT_FOUND,
+        `Invalid workout day: ${dayOfWeek}`,
+        { dayOfWeek },
+      );
+    }
+
     const now = new Date();
     return new WorkoutSession(
       id,
       userId,
       routineId,
+      dayOfWeek,
       WorkoutSessionStatus.IN_PROGRESS,
       [...exercises],
       0,
@@ -94,11 +111,13 @@ export class WorkoutSession {
     currentExerciseIndex: number,
     startedAt: Date,
     finishedAt: Date | null,
+    dayOfWeek: DayOfWeek = 'monday',
   ): WorkoutSession {
     return new WorkoutSession(
       id,
       userId,
       routineId,
+      dayOfWeek,
       status,
       [...exercises],
       currentExerciseIndex,
@@ -125,6 +144,7 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.dayOfWeek,
       WorkoutSessionStatus.FINISHED,
       [...this.exercises],
       this.currentExerciseIndex,
@@ -190,6 +210,7 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.dayOfWeek,
       this.status,
       updatedExercises,
       this.currentExerciseIndex,
@@ -238,6 +259,7 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.dayOfWeek,
       this.status,
       updatedExercises,
       this.currentExerciseIndex,
@@ -253,7 +275,7 @@ export class WorkoutSession {
    * Validates not already at the last exercise.
    * Returns a new WorkoutSession with incremented currentExerciseIndex.
    */
-  public advanceToNextExercise(): WorkoutSession {
+  public advanceToNextExercise(allowIncomplete = false): WorkoutSession {
     if (this.status === WorkoutSessionStatus.FINISHED) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
@@ -282,7 +304,7 @@ export class WorkoutSession {
     }
 
     const currentExercise = this.exercises[this.currentExerciseIndex];
-    if (!currentExercise.areAllSetsCompleted()) {
+    if (!allowIncomplete && !currentExercise.areAllSetsCompleted()) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_EXERCISE_SETS_INCOMPLETE,
         'Cannot advance to next exercise: not all sets of the current exercise are completed',
@@ -297,6 +319,7 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.dayOfWeek,
       this.status,
       [...this.exercises],
       this.currentExerciseIndex + 1,

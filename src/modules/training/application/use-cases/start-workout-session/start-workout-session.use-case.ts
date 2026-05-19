@@ -1,4 +1,6 @@
 import { WorkoutSession } from '../../../domain/entities/workout-session.entity';
+import { WorkoutExercise } from '../../../domain/value-objects/workout-exercise.value-object';
+import type { DayOfWeek } from '../../../domain/value-objects/routine-day.value-object';
 import {
   WorkoutSessionDomainError,
   WorkoutSessionErrorCode,
@@ -6,6 +8,10 @@ import {
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  mapWorkoutSessionToOutput,
+  WorkoutSessionOutput,
+} from '../workout-session-output.mapper';
 
 export const WORKOUT_SESSION_REPOSITORY_PORT = Symbol(
   'WORKOUT_SESSION_REPOSITORY_PORT',
@@ -16,31 +22,10 @@ export const ROUTINE_REPOSITORY_PORT_FOR_SESSION = Symbol(
 
 export interface StartWorkoutSessionInput {
   routineId: string;
+  dayOfWeek: DayOfWeek;
 }
 
-export interface StartWorkoutSessionOutput {
-  id: string;
-  userId: string;
-  routineId: string;
-  status: string;
-  currentExerciseIndex: number;
-  exercises: Array<{
-    exerciseId: string;
-    exerciseName: string;
-    order: number;
-    sets: number;
-    repsPerSet: number;
-    weight: number;
-    workoutSets: Array<{
-      setNumber: number;
-      repsPerformed: number | null;
-      weightUsed: number | null;
-      completed: boolean;
-    }>;
-  }>;
-  startedAt: Date;
-  finishedAt: Date | null;
-}
+export type StartWorkoutSessionOutput = WorkoutSessionOutput;
 
 /**
  * StartWorkoutSession use case (RF-12, RF-12.0.1).
@@ -69,6 +54,14 @@ export class StartWorkoutSessionUseCase {
       );
     }
 
+    if (!routine.isActive) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
+        'Routine is not active for this user',
+        { routineId: input.routineId, userId: actor.userId },
+      );
+    }
+
     // Validate that no other session is in progress for the user (RF-12)
     const existingSession =
       await this.workoutSessionRepository.findInProgressByUserId(actor.userId);
@@ -80,22 +73,52 @@ export class StartWorkoutSessionUseCase {
       );
     }
 
-    // Load exercises from the routine configuration (RF-12.0.1)
-    const { WorkoutExercise } =
-      await import('../../../domain/value-objects/workout-exercise.value-object');
-    const workoutExercises = routine.days.flatMap((day) =>
-      day.exercises.map((exercise) => {
-        const config = exercise.configuration;
+    const selectedDay = routine.days.find(
+      (day) => day.dayOfWeek === input.dayOfWeek,
+    );
+
+    if (!selectedDay) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_DAY_NOT_FOUND,
+        `Routine does not have training day "${input.dayOfWeek}"`,
+        { routineId: routine.id, dayOfWeek: input.dayOfWeek },
+      );
+    }
+
+    if (selectedDay.exercises.length === 0) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_DAY_HAS_NO_EXERCISES,
+        `Routine day "${input.dayOfWeek}" has no exercises`,
+        { routineId: routine.id, dayOfWeek: input.dayOfWeek },
+      );
+    }
+
+    // Load only the selected routine day into the session snapshot.
+    const workoutExercises = [...selectedDay.exercises]
+      .sort((a, b) => a.order - b.order)
+      .map((exercise) => {
+        const targetSets =
+          exercise.sets.length > 0
+            ? [...exercise.sets]
+                .sort((a, b) => a.setNumber - b.setNumber)
+                .map((s) => ({
+                  setNumber: s.setNumber,
+                  reps: s.reps,
+                  weight: s.weight,
+                }))
+            : [
+                { setNumber: 1, reps: 10, weight: 0 },
+                { setNumber: 2, reps: 10, weight: 0 },
+                { setNumber: 3, reps: 10, weight: 0 },
+              ];
+
         return WorkoutExercise.create(
           exercise.id,
           exercise.name,
-          exercise.order,
-          config ? config.sets : 3,
-          config ? config.repsPerSet : 10,
-          config ? config.weight : 0,
+          exercise.order + 1,
+          targetSets,
         );
-      }),
-    );
+      });
 
     const sessionId = crypto.randomUUID();
     const session = WorkoutSession.create(
@@ -103,32 +126,11 @@ export class StartWorkoutSessionUseCase {
       actor.userId,
       input.routineId,
       workoutExercises,
+      input.dayOfWeek,
     );
 
     const saved = await this.workoutSessionRepository.save(session);
 
-    return {
-      id: saved.id,
-      userId: saved.userId,
-      routineId: saved.routineId,
-      status: saved.status,
-      currentExerciseIndex: saved.currentExerciseIndex,
-      exercises: saved.exercises.map((ex) => ({
-        exerciseId: ex.exerciseId,
-        exerciseName: ex.exerciseName,
-        order: ex.order,
-        sets: ex.sets,
-        repsPerSet: ex.repsPerSet,
-        weight: ex.weight,
-        workoutSets: ex.workoutSets.map((ws) => ({
-          setNumber: ws.setNumber,
-          repsPerformed: ws.repsPerformed,
-          weightUsed: ws.weightUsed,
-          completed: ws.completed,
-        })),
-      })),
-      startedAt: saved.startedAt,
-      finishedAt: saved.finishedAt,
-    };
+    return mapWorkoutSessionToOutput(saved);
   }
 }

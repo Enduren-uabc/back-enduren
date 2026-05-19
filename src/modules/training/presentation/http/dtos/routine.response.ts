@@ -1,10 +1,16 @@
+export class ExerciseSetResponseDto {
+  id!: string;
+  setNumber!: number;
+  reps!: number;
+  weight!: number;
+  restSeconds!: number | null;
+}
+
 export class ExerciseResponseDto {
   id!: string;
   name!: string;
   order!: number;
-  sets!: number | null;
-  repsPerSet!: number | null;
-  weight!: number | null;
+  sets!: ExerciseSetResponseDto[];
 }
 
 export class RoutineDayResponseDto {
@@ -17,6 +23,8 @@ export class RoutineResponseDto {
   name!: string;
   userId!: string;
   isActive!: boolean;
+  trainingStrategyKey!: string | null;
+  dayOfWeeks!: string[];
   days!: RoutineDayResponseDto[];
   createdAt!: Date;
   updatedAt!: Date;

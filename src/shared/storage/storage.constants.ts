@@ -1,0 +1,2 @@
+export const FILE_STORAGE_PORT = Symbol('FILE_STORAGE_PORT');
+export const STORAGE_STRATEGY = Symbol('STORAGE_STRATEGY');

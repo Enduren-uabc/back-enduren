@@ -13,16 +13,16 @@ describe('AdvanceToNextExerciseUseCase', () => {
   let workoutSessionRepository: WorkoutSessionRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
-  const exercise1 = WorkoutExercise.create(
-    'exercise-1',
-    'Bench Press',
-    1,
-    2,
-    10,
-    50,
-  );
+  const exercise1 = WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+  ]);
 
-  const exercise2 = WorkoutExercise.create('exercise-2', 'Squat', 2, 3, 8, 80);
+  const exercise2 = WorkoutExercise.create('exercise-2', 'Squat', 2, [
+    { setNumber: 1, reps: 8, weight: 80 },
+    { setNumber: 2, reps: 8, weight: 80 },
+    { setNumber: 3, reps: 6, weight: 85 },
+  ]);
 
   beforeEach(() => {
     workoutSessionRepository = {

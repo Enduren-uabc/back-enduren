@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common';
 import { RoutineController } from './controllers/routine.controller';
 import { WorkoutSessionController } from './controllers/workout-session.controller';
-import { TrainingInfrastructureModule } from '../../infrastructure/providers/training-infrastructure.module';
+import { ExerciseCatalogController } from './controllers/exercise-catalog.controller';
+import { TrainingStrategyController } from './controllers/training-strategy.controller';
+import { TrainingApplicationModule } from '../../application/training-application.module';
 
 @Module({
-  imports: [TrainingInfrastructureModule],
-  controllers: [RoutineController, WorkoutSessionController],
+  imports: [TrainingApplicationModule],
+  controllers: [
+    RoutineController,
+    WorkoutSessionController,
+    ExerciseCatalogController,
+    TrainingStrategyController,
+  ],
 })
 export class TrainingPresentationModule {}

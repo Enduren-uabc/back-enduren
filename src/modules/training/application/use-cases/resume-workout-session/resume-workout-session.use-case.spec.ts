@@ -13,14 +13,11 @@ describe('ResumeWorkoutSessionUseCase', () => {
   let workoutSessionRepository: WorkoutSessionRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
-  const exercise = WorkoutExercise.create(
-    'exercise-1',
-    'Bench Press',
-    1,
-    3,
-    10,
-    50,
-  );
+  const exercise = WorkoutExercise.create('exercise-1', 'Bench Press', 1, [
+    { setNumber: 1, reps: 10, weight: 50 },
+    { setNumber: 2, reps: 10, weight: 50 },
+    { setNumber: 3, reps: 10, weight: 50 },
+  ]);
 
   beforeEach(() => {
     workoutSessionRepository = {

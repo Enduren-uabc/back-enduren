@@ -2,6 +2,7 @@ import { WorkoutSession } from '../../domain/entities/workout-session.entity';
 import { WorkoutSessionStatus } from '../../domain/value-objects/workout-session-status.value-object';
 import { WorkoutExercise } from '../../domain/value-objects/workout-exercise.value-object';
 import { WorkoutSet } from '../../domain/value-objects/workout-set.value-object';
+import type { DayOfWeek } from '../../domain/value-objects/routine-day.value-object';
 import { WorkoutSessionTypeormEntity } from '../persistence/typeorm/entities/workout-session-typeorm.entity';
 import { WorkoutSessionExerciseTypeormEntity } from '../persistence/typeorm/entities/workout-session-exercise-typeorm.entity';
 import { WorkoutSessionSetTypeormEntity } from '../persistence/typeorm/entities/workout-session-set-typeorm.entity';
@@ -10,26 +11,38 @@ export class WorkoutSessionMapper {
   public static toDomain(
     ormEntity: WorkoutSessionTypeormEntity,
   ): WorkoutSession {
-    const exercises = (ormEntity.exercises ?? []).map((ex) => {
-      const workoutSets = (ex.workoutSets ?? []).map((ws) =>
-        WorkoutSet.reconstitute(
-          ws.setNumber,
-          ws.repsPerformed,
-          ws.weightUsed,
-          ws.completed,
-        ),
-      );
+    const exercises = [...(ormEntity.exercises ?? [])]
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((ex) => {
+        const workoutSets = [...(ex.workoutSets ?? [])]
+          .sort((a, b) => a.setNumber - b.setNumber)
+          .map((ws) =>
+            WorkoutSet.reconstitute(
+              ws.setNumber,
+              ws.repsPerformed,
+              ws.weightUsed,
+              ws.completed,
+              ws.targetReps,
+              ws.targetWeight,
+            ),
+          );
 
-      return WorkoutExercise.reconstitute(
-        ex.exerciseId,
-        ex.exerciseName,
-        ex.orderIndex,
-        ex.sets,
-        ex.repsPerSet,
-        ex.weight,
-        workoutSets,
-      );
-    });
+        const targetSets = [...(ex.targetSets ?? [])]
+          .sort((a, b) => a.setNumber - b.setNumber)
+          .map((ts) => ({
+            setNumber: ts.setNumber,
+            reps: ts.reps,
+            weight: ts.weight,
+          }));
+
+        return WorkoutExercise.reconstitute(
+          ex.exerciseId,
+          ex.exerciseName,
+          ex.orderIndex,
+          targetSets,
+          workoutSets,
+        );
+      });
 
     return WorkoutSession.reconstitute(
       ormEntity.id,
@@ -40,6 +53,7 @@ export class WorkoutSessionMapper {
       ormEntity.currentExerciseIndex ?? 0,
       ormEntity.startedAt,
       ormEntity.finishedAt,
+      (ormEntity.dayOfWeek ?? 'monday') as DayOfWeek,
     );
   }
 
@@ -48,6 +62,7 @@ export class WorkoutSessionMapper {
     ormEntity.id = domain.id;
     ormEntity.userId = domain.userId;
     ormEntity.routineId = domain.routineId;
+    ormEntity.dayOfWeek = domain.dayOfWeek;
     ormEntity.status = domain.status;
     ormEntity.currentExerciseIndex = domain.currentExerciseIndex;
     ormEntity.startedAt = domain.startedAt;
@@ -60,9 +75,11 @@ export class WorkoutSessionMapper {
       exOrm.exerciseId = ex.exerciseId;
       exOrm.exerciseName = ex.exerciseName;
       exOrm.orderIndex = ex.order;
-      exOrm.sets = ex.sets;
-      exOrm.repsPerSet = ex.repsPerSet;
-      exOrm.weight = ex.weight;
+      exOrm.targetSets = ex.targetSets.map((ts) => ({
+        setNumber: ts.setNumber,
+        reps: ts.reps,
+        weight: ts.weight,
+      }));
 
       exOrm.workoutSets = ex.workoutSets.map((ws) => {
         const wsOrm = new WorkoutSessionSetTypeormEntity();
@@ -71,6 +88,8 @@ export class WorkoutSessionMapper {
         wsOrm.setNumber = ws.setNumber;
         wsOrm.repsPerformed = ws.repsPerformed;
         wsOrm.weightUsed = ws.weightUsed;
+        wsOrm.targetReps = ws.targetReps;
+        wsOrm.targetWeight = ws.targetWeight;
         wsOrm.completed = ws.completed;
         return wsOrm;
       });

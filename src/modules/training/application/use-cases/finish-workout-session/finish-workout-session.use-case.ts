@@ -4,34 +4,16 @@ import {
 } from '../../../domain/errors/workout-session-domain.error';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  mapWorkoutSessionToOutput,
+  WorkoutSessionOutput,
+} from '../workout-session-output.mapper';
 
 export interface FinishWorkoutSessionInput {
   sessionId: string;
 }
 
-export interface FinishWorkoutSessionOutput {
-  id: string;
-  userId: string;
-  routineId: string;
-  status: string;
-  currentExerciseIndex: number;
-  exercises: Array<{
-    exerciseId: string;
-    exerciseName: string;
-    order: number;
-    sets: number;
-    repsPerSet: number;
-    weight: number;
-    workoutSets: Array<{
-      setNumber: number;
-      repsPerformed: number | null;
-      weightUsed: number | null;
-      completed: boolean;
-    }>;
-  }>;
-  startedAt: Date;
-  finishedAt: Date;
-}
+export type FinishWorkoutSessionOutput = WorkoutSessionOutput;
 
 /**
  * FinishWorkoutSession use case (RF-12.0.5, RF-12.0.6).
@@ -80,28 +62,6 @@ export class FinishWorkoutSessionUseCase {
 
     const saved = await this.workoutSessionRepository.save(finishedSession);
 
-    return {
-      id: saved.id,
-      userId: saved.userId,
-      routineId: saved.routineId,
-      status: saved.status,
-      currentExerciseIndex: saved.currentExerciseIndex,
-      exercises: saved.exercises.map((ex) => ({
-        exerciseId: ex.exerciseId,
-        exerciseName: ex.exerciseName,
-        order: ex.order,
-        sets: ex.sets,
-        repsPerSet: ex.repsPerSet,
-        weight: ex.weight,
-        workoutSets: ex.workoutSets.map((ws) => ({
-          setNumber: ws.setNumber,
-          repsPerformed: ws.repsPerformed,
-          weightUsed: ws.weightUsed,
-          completed: ws.completed,
-        })),
-      })),
-      startedAt: saved.startedAt,
-      finishedAt: saved.finishedAt!,
-    };
+    return mapWorkoutSessionToOutput(saved);
   }
 }

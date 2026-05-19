@@ -14,30 +14,48 @@ export class WorkoutSet {
   public readonly repsPerformed: number | null;
   public readonly weightUsed: number | null;
   public readonly completed: boolean;
+  public readonly targetReps: number | null;
+  public readonly targetWeight: number | null;
 
   private constructor(
     setNumber: number,
     repsPerformed: number | null,
     weightUsed: number | null,
     completed: boolean,
+    targetReps: number | null,
+    targetWeight: number | null,
   ) {
     this.setNumber = setNumber;
     this.repsPerformed = repsPerformed;
     this.weightUsed = weightUsed;
     this.completed = completed;
+    this.targetReps = targetReps;
+    this.targetWeight = targetWeight;
   }
 
   /**
    * Creates a new WorkoutSet with default values (pending/empty).
    * setNumber must be a positive integer.
+   * targetReps and targetWeight are cloned from the routine's ExerciseSet.
    */
-  public static create(setNumber: number): WorkoutSet {
+  public static create(
+    setNumber: number,
+    targetReps?: number,
+    targetWeight?: number,
+  ): WorkoutSet {
     if (!Number.isInteger(setNumber) || setNumber < 1) {
       throw new Error(
         `WorkoutSet setNumber must be a positive integer, got: ${setNumber}`,
       );
     }
-    return new WorkoutSet(setNumber, null, null, false);
+    return new WorkoutSet(
+      setNumber,
+      null,
+      null,
+      false,
+      targetReps ?? null,
+      targetWeight ?? null,
+    );
   }
 
   /**
@@ -48,8 +66,17 @@ export class WorkoutSet {
     repsPerformed: number | null,
     weightUsed: number | null,
     completed: boolean,
+    targetReps?: number | null,
+    targetWeight?: number | null,
   ): WorkoutSet {
-    return new WorkoutSet(setNumber, repsPerformed, weightUsed, completed);
+    return new WorkoutSet(
+      setNumber,
+      repsPerformed,
+      weightUsed,
+      completed,
+      targetReps ?? null,
+      targetWeight ?? null,
+    );
   }
 
   /**
@@ -91,28 +118,35 @@ export class WorkoutSet {
       repsPerformed,
       weightUsed,
       this.completed,
+      this.targetReps,
+      this.targetWeight,
     );
   }
 
   /**
    * Marks this set as completed.
-   * Validates: repsPerformed and weightUsed must already be set (not null).
-   * Throws domain error if required data is missing.
+   * If actual reps/weight are empty, uses the planned target values.
+   * Throws domain error only when neither actual nor target data is available.
    */
   public markAsCompleted(): WorkoutSet {
-    if (this.repsPerformed === null || this.weightUsed === null) {
+    const repsPerformed = this.repsPerformed ?? this.targetReps;
+    const weightUsed = this.weightUsed ?? this.targetWeight;
+
+    if (repsPerformed === null || weightUsed === null) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
-        'Cannot mark set as completed without registering reps and weight first',
+        'Cannot mark set as completed without actual or target reps and weight',
         { setNumber: this.setNumber },
       );
     }
 
     return new WorkoutSet(
       this.setNumber,
-      this.repsPerformed,
-      this.weightUsed,
+      repsPerformed,
+      weightUsed,
       true,
+      this.targetReps,
+      this.targetWeight,
     );
   }
 
@@ -121,7 +155,9 @@ export class WorkoutSet {
       this.setNumber === other.setNumber &&
       this.repsPerformed === other.repsPerformed &&
       this.weightUsed === other.weightUsed &&
-      this.completed === other.completed
+      this.completed === other.completed &&
+      this.targetReps === other.targetReps &&
+      this.targetWeight === other.targetWeight
     );
   }
 }

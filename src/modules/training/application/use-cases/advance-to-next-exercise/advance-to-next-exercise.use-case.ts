@@ -4,6 +4,10 @@ import {
 } from '../../../domain/errors/workout-session-domain.error';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  mapWorkoutSessionToOutput,
+  WorkoutSessionOutput,
+} from '../workout-session-output.mapper';
 
 export const ADVANCE_TO_NEXT_EXERCISE_PORT = Symbol(
   'ADVANCE_TO_NEXT_EXERCISE_PORT',
@@ -11,31 +15,10 @@ export const ADVANCE_TO_NEXT_EXERCISE_PORT = Symbol(
 
 export interface AdvanceToNextExerciseInput {
   sessionId: string;
+  allowIncomplete?: boolean;
 }
 
-export interface AdvanceToNextExerciseOutput {
-  id: string;
-  userId: string;
-  routineId: string;
-  status: string;
-  currentExerciseIndex: number;
-  exercises: Array<{
-    exerciseId: string;
-    exerciseName: string;
-    order: number;
-    sets: number;
-    repsPerSet: number;
-    weight: number;
-    workoutSets: Array<{
-      setNumber: number;
-      repsPerformed: number | null;
-      weightUsed: number | null;
-      completed: boolean;
-    }>;
-  }>;
-  startedAt: Date;
-  finishedAt: Date | null;
-}
+export type AdvanceToNextExerciseOutput = WorkoutSessionOutput;
 
 /**
  * AdvanceToNextExercise use case (RF-12.0.4).
@@ -73,32 +56,12 @@ export class AdvanceToNextExerciseUseCase {
       );
     }
 
-    const updatedSession = session.advanceToNextExercise();
+    const updatedSession = session.advanceToNextExercise(
+      input.allowIncomplete === true,
+    );
 
     const saved = await this.workoutSessionRepository.save(updatedSession);
 
-    return {
-      id: saved.id,
-      userId: saved.userId,
-      routineId: saved.routineId,
-      status: saved.status,
-      currentExerciseIndex: saved.currentExerciseIndex,
-      exercises: saved.exercises.map((ex) => ({
-        exerciseId: ex.exerciseId,
-        exerciseName: ex.exerciseName,
-        order: ex.order,
-        sets: ex.sets,
-        repsPerSet: ex.repsPerSet,
-        weight: ex.weight,
-        workoutSets: ex.workoutSets.map((ws) => ({
-          setNumber: ws.setNumber,
-          repsPerformed: ws.repsPerformed,
-          weightUsed: ws.weightUsed,
-          completed: ws.completed,
-        })),
-      })),
-      startedAt: saved.startedAt,
-      finishedAt: saved.finishedAt,
-    };
+    return mapWorkoutSessionToOutput(saved);
   }
 }

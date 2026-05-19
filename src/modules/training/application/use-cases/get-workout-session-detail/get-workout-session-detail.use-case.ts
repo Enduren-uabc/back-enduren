@@ -14,6 +14,7 @@ export interface WorkoutSessionDetailOutput {
   id: string;
   userId: string;
   routineId: string;
+  dayOfWeek: string;
   routineName: string;
   status: string;
   currentExerciseIndex: number;
@@ -21,13 +22,17 @@ export interface WorkoutSessionDetailOutput {
     exerciseId: string;
     exerciseName: string;
     order: number;
-    sets: number;
-    repsPerSet: number;
-    weight: number;
+    targetSets: Array<{
+      setNumber: number;
+      reps: number;
+      weight: number;
+    }>;
     workoutSets: Array<{
       setNumber: number;
       repsPerformed: number | null;
       weightUsed: number | null;
+      targetReps: number | null;
+      targetWeight: number | null;
       completed: boolean;
     }>;
   }>;
@@ -90,6 +95,7 @@ export class GetWorkoutSessionDetailUseCase {
       id: session.id,
       userId: session.userId,
       routineId: session.routineId,
+      dayOfWeek: session.dayOfWeek,
       routineName,
       status: session.status,
       currentExerciseIndex: session.currentExerciseIndex,
@@ -97,13 +103,17 @@ export class GetWorkoutSessionDetailUseCase {
         exerciseId: ex.exerciseId,
         exerciseName: ex.exerciseName,
         order: ex.order,
-        sets: ex.sets,
-        repsPerSet: ex.repsPerSet,
-        weight: ex.weight,
+        targetSets: ex.targetSets.map((ts) => ({
+          setNumber: ts.setNumber,
+          reps: ts.reps,
+          weight: ts.weight,
+        })),
         workoutSets: ex.workoutSets.map((ws) => ({
           setNumber: ws.setNumber,
           repsPerformed: ws.repsPerformed,
           weightUsed: ws.weightUsed,
+          targetReps: ws.targetReps,
+          targetWeight: ws.targetWeight,
           completed: ws.completed,
         })),
       })),
