@@ -19,6 +19,8 @@ import { memoryStorage } from 'multer';
 import { Public } from '../../../../auth/presentation/http/decorators/public.decorator';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
 import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
+import { CreatePowerspikeDraftUseCase } from '../../../application/use-cases/create-powerspike-draft/create-powerspike-draft.use-case';
+import { SubmitPowerspikeVerificationUseCase } from '../../../application/use-cases/submit-powerspike-verification/submit-powerspike-verification.use-case';
 import { SubmitTrainerVerificationUseCase } from '../../../application/use-cases/submit-trainer-verification/submit-trainer-verification.use-case';
 import { GetMyVerificationStatusUseCase } from '../../../application/use-cases/get-my-verification-status/get-my-verification-status.use-case';
 import { ListSpecialtyCatalogUseCase } from '../../../application/use-cases/list-specialty-catalog/list-specialty-catalog.use-case';
@@ -26,6 +28,8 @@ import { UpdateTrainerVerificationUseCase } from '../../../application/use-cases
 import { ListPendingVerificationsUseCase } from '../../../application/use-cases/list-pending-verifications/list-pending-verifications.use-case';
 import { GetVerificationDetailUseCase } from '../../../application/use-cases/get-verification-detail/get-verification-detail.use-case';
 import { ReviewTrainerVerificationUseCase } from '../../../application/use-cases/review-trainer-verification/review-trainer-verification.use-case';
+import { UploadPowerspikeCertificateUseCase } from '../../../application/use-cases/upload-powerspike-certificate/upload-powerspike-certificate.use-case';
+import { UploadPowerspikeIdDocumentUseCase } from '../../../application/use-cases/upload-powerspike-id-document/upload-powerspike-id-document.use-case';
 import {
   TRAINER_FLOW_CONFIG_PORT,
   TrainerFlowConfigPort,
@@ -40,6 +44,12 @@ import {
   TrainerVerificationFiles,
   VerificationStatusResponseDto,
 } from '../dtos/verification.response';
+import { PowerspikeDraftRequestDto } from '../dtos/powerspike-draft.request';
+import { PowerspikeDraftResponseDto } from '../dtos/powerspike-draft.response';
+import { PowerspikeUploadCertificateRequestDto } from '../dtos/powerspike-upload-certificate.request';
+import { PowerspikeUploadIdRequestDto } from '../dtos/powerspike-upload-id.request';
+import { PowerspikeSubmitRequestDto } from '../dtos/powerspike-submit.request';
+import { PowerspikeUploadResponseDto } from '../dtos/powerspike-upload.response';
 import { TrainerVerificationErrorFilter } from '../filters/trainer-verification-error.filter';
 
 const VERIFICATION_FILE_INTERCEPTOR = FileFieldsInterceptor(
@@ -69,6 +79,10 @@ export class TrainerVerificationController {
     private readonly listPendingUseCase: ListPendingVerificationsUseCase,
     private readonly getDetailUseCase: GetVerificationDetailUseCase,
     private readonly reviewUseCase: ReviewTrainerVerificationUseCase,
+    private readonly createDraftUseCase: CreatePowerspikeDraftUseCase,
+    private readonly uploadCertificateUseCase: UploadPowerspikeCertificateUseCase,
+    private readonly uploadIdDocumentUseCase: UploadPowerspikeIdDocumentUseCase,
+    private readonly submitPowerspikeUseCase: SubmitPowerspikeVerificationUseCase,
     @Inject(TRAINER_FLOW_CONFIG_PORT)
     private readonly flowConfig: TrainerFlowConfigPort,
   ) {}
@@ -211,6 +225,102 @@ export class TrainerVerificationController {
     });
   }
 
+  @Post('powerspike/draft')
+  @HttpCode(HttpStatus.CREATED)
+  async createPowerspikeDraft(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: PowerspikeDraftRequestDto,
+  ): Promise<PowerspikeDraftResponseDto> {
+    return this.createDraftUseCase.execute({
+      actor: this.toActor(user),
+      specialtyKeys: this.parseOptionalStringArray(dto.specialtyKeys),
+      yearsOfExperience:
+        dto.yearsOfExperience !== undefined
+          ? this.parseInteger(dto.yearsOfExperience)
+          : undefined,
+      shortBio:
+        dto.shortBio !== undefined
+          ? this.parseString(dto.shortBio, 'shortBio')
+          : undefined,
+    });
+  }
+
+  @Post('powerspike/certificate')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'certificateDocument', maxCount: 1 }], {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES },
+    }),
+  )
+  async uploadPowerspikeCertificate(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: PowerspikeUploadCertificateRequestDto,
+    @UploadedFiles() files: { certificateDocument?: Express.Multer.File[] },
+  ): Promise<PowerspikeUploadResponseDto> {
+    const certificateFile = files?.certificateDocument?.[0];
+    if (!certificateFile) {
+      throw new BadRequestException('certificateDocument file is required');
+    }
+
+    return this.uploadCertificateUseCase.execute({
+      actor: this.toActor(user),
+      certificateName: this.parseString(dto.certificateName, 'certificateName'),
+      issuingOrganization: this.parseString(
+        dto.issuingOrganization,
+        'issuingOrganization',
+      ),
+      file: certificateFile,
+    });
+  }
+
+  @Post('powerspike/id-document')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'idDocument', maxCount: 1 }], {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES },
+    }),
+  )
+  async uploadPowerspikeIdDocument(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: PowerspikeUploadIdRequestDto,
+    @UploadedFiles() files: { idDocument?: Express.Multer.File[] },
+  ): Promise<PowerspikeUploadResponseDto> {
+    const idFile = files?.idDocument?.[0];
+    if (!idFile) {
+      throw new BadRequestException('idDocument file is required');
+    }
+
+    return this.uploadIdDocumentUseCase.execute({
+      actor: this.toActor(user),
+      idDocumentType: this.parseString(dto.idDocumentType, 'idDocumentType'),
+      file: idFile,
+    });
+  }
+
+  @Post('powerspike/submit')
+  @HttpCode(HttpStatus.OK)
+  async submitPowerspikeVerification(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: PowerspikeSubmitRequestDto,
+  ): Promise<{
+    verificationId: string;
+    advancedStatus: string;
+    legacyStatus: string;
+  }> {
+    return this.submitPowerspikeUseCase.execute({
+      actor: this.toActor(user),
+      specialtyKeys: this.parseStringArray(dto.specialtyKeys, true),
+      yearsOfExperience: this.parseInteger(dto.yearsOfExperience, true),
+      shortBio: this.parseString(dto.shortBio, 'shortBio'),
+      idDocumentNumber: this.parseString(
+        dto.idDocumentNumber,
+        'idDocumentNumber',
+      ),
+    });
+  }
+
   private toActor(user: JwtPayload): CurrentActor {
     return {
       userId: user.sub,
@@ -223,6 +333,13 @@ export class TrainerVerificationController {
       throw new BadRequestException(`${fieldName} is required`);
     }
     return value.trim();
+  }
+
+  private parseOptionalStringArray(value: unknown): string[] | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+    return this.parseStringArray(value, false);
   }
 
   private parseStringArray(value: unknown, required = false): string[] {

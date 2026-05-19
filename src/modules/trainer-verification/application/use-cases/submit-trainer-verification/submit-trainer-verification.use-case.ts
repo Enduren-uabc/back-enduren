@@ -2,6 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { StorageService } from '../../../../../shared/storage/domain/services/storage.service';
 import { UploadFileOutput } from '../../../../../shared/storage/domain/ports/file-storage.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  TRAINER_FLOW_CONFIG_PORT,
+  TrainerFlowConfigPort,
+} from '../../ports/trainer-flow-config.port';
 import { TrainerCertificate } from '../../../domain/entities/trainer-certificate.entity';
 import { TrainerIdDocument } from '../../../domain/entities/trainer-id-document.entity';
 import { TrainerVerification } from '../../../domain/entities/trainer-verification.entity';
@@ -18,6 +22,14 @@ import {
   TrainerVerificationRepository,
   TRAINER_VERIFICATION_REPOSITORY_PORT,
 } from '../../../domain/repositories/trainer-verification.repository.port';
+import {
+  TrainerVerificationAuditRepository,
+  TRAINER_VERIFICATION_AUDIT_REPOSITORY_PORT,
+} from '../../../domain/repositories/trainer-verification-audit.repository.port';
+import {
+  TrainerVerificationStateMachineService,
+  TransitionActor,
+} from '../../services/trainer-verification-state-machine.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
 
 export interface SubmitTrainerCertificateInput {
@@ -49,9 +61,14 @@ export class SubmitTrainerVerificationUseCase {
   constructor(
     @Inject(TRAINER_VERIFICATION_REPOSITORY_PORT)
     private readonly verificationRepository: TrainerVerificationRepository,
+    @Inject(TRAINER_VERIFICATION_AUDIT_REPOSITORY_PORT)
+    private readonly auditRepository: TrainerVerificationAuditRepository,
     @Inject(SPECIALTY_CATALOG_REPOSITORY_PORT)
     private readonly specialtyCatalogRepository: SpecialtyCatalogRepository,
     private readonly storageService: StorageService,
+    @Inject(TRAINER_FLOW_CONFIG_PORT)
+    private readonly flowConfig: TrainerFlowConfigPort,
+    private readonly stateMachine: TrainerVerificationStateMachineService,
   ) {}
 
   async execute(
@@ -62,6 +79,52 @@ export class SubmitTrainerVerificationUseCase {
     const existing = await this.verificationRepository.findByUserId(
       input.actor.userId,
     );
+
+    if (this.flowConfig.isPowerspikeEnabled()) {
+      if (existing) {
+        if (existing.advancedStatus === 'draft') {
+          return {
+            verificationId: existing.id,
+            status: 'pending',
+          };
+        }
+        throw new TrainerVerificationDomainError(
+          TrainerVerificationErrorCode.VERIFICATION_ALREADY_EXISTS,
+          'Trainer verification already exists. Use update when it has been rejected.',
+        );
+      }
+
+      const verification = TrainerVerification.createDraft(
+        crypto.randomUUID(),
+        input.actor.userId,
+        {
+          specialtyKeys: input.specialtyKeys,
+          yearsOfExperience: input.yearsOfExperience,
+          shortBio: input.shortBio,
+        },
+      );
+
+      const transitionActor: TransitionActor = {
+        actorId: input.actor.userId,
+        actorType: 'user',
+      };
+
+      const change = this.stateMachine.transition(
+        verification,
+        'draft',
+        transitionActor,
+        'Draft created via legacy endpoint (Powerspike mode)',
+      );
+
+      await this.verificationRepository.save(verification);
+      await this.auditRepository.recordStatusChange(change);
+
+      return {
+        verificationId: verification.id,
+        status: 'pending',
+      };
+    }
+
     if (existing) {
       throw new TrainerVerificationDomainError(
         TrainerVerificationErrorCode.VERIFICATION_ALREADY_EXISTS,

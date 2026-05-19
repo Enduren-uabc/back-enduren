@@ -3,12 +3,18 @@ import {
   CreateDateColumn,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { TrainerCertificateTypeormEntity } from './trainer-certificate-typeorm.entity';
 import { TrainerIdDocumentTypeormEntity } from './trainer-id-document-typeorm.entity';
+import { TrainerVerificationAdvancedStatusTypeormEntity } from './trainer-verification-advanced-status-typeorm.entity';
+import { TrainerVerificationAuditEventTypeormEntity } from './trainer-verification-audit-event-typeorm.entity';
+import { TrainerVerificationStatusHistoryTypeormEntity } from './trainer-verification-status-history-typeorm.entity';
 import { TrainerVerificationSpecialtyTypeormEntity } from './trainer-verification-specialty-typeorm.entity';
+import { ExtractedCertificateDataTypeormEntity } from './extracted-certificate-data-typeorm.entity';
+import { ExtractedIdDataTypeormEntity } from './extracted-id-data-typeorm.entity';
 
 @Entity('trainer_verifications')
 export class TrainerVerificationTypeormEntity {
@@ -66,4 +72,34 @@ export class TrainerVerificationTypeormEntity {
     (certificate) => certificate.verification,
   )
   certificates!: TrainerCertificateTypeormEntity[];
+
+  @OneToOne(
+    () => TrainerVerificationAdvancedStatusTypeormEntity,
+    (status) => status.verification,
+  )
+  advancedStatus!: TrainerVerificationAdvancedStatusTypeormEntity | null;
+
+  @OneToMany(
+    () => TrainerVerificationStatusHistoryTypeormEntity,
+    (history) => history.verification,
+  )
+  statusHistory!: TrainerVerificationStatusHistoryTypeormEntity[];
+
+  @OneToMany(
+    () => TrainerVerificationAuditEventTypeormEntity,
+    (event) => event.verification,
+  )
+  auditEvents!: TrainerVerificationAuditEventTypeormEntity[];
+
+  @OneToMany(
+    () => ExtractedCertificateDataTypeormEntity,
+    (extracted) => extracted.verification,
+  )
+  extractedCertificateData!: ExtractedCertificateDataTypeormEntity[];
+
+  @OneToMany(
+    () => ExtractedIdDataTypeormEntity,
+    (extracted) => extracted.verification,
+  )
+  extractedIdData!: ExtractedIdDataTypeormEntity[];
 }
