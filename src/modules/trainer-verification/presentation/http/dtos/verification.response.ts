@@ -18,6 +18,9 @@ export interface VerificationStatusResponseDto {
     documentType: string;
     ocrConfidence: number;
   };
+  riskLevel?: string;
+  riskScore?: number;
+  riskAlerts?: { code: string; severity: string; message: string }[];
 }
 
 export interface TrainerVerificationFiles {

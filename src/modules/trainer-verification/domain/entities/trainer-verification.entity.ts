@@ -6,6 +6,7 @@ import { advancedToLegacy } from '../value-objects/advanced-to-legacy-mapper';
 import { VerificationStatus } from '../value-objects/verification-status.vo';
 import { ExtractedCertificateData } from '../value-objects/extracted-certificate-data.vo';
 import { ExtractedIdData } from '../value-objects/extracted-id-data.vo';
+import { ScoringResult } from '../value-objects/scoring-result.vo';
 import {
   TrainerVerificationDomainError,
   TrainerVerificationErrorCode,
@@ -30,6 +31,7 @@ export interface TrainerVerificationProps {
   statusHistory?: TrainerVerificationStatusChange[];
   extractedCertificateData?: ExtractedCertificateData | null;
   extractedIdData?: ExtractedIdData | null;
+  scoringResult?: ScoringResult | null;
 }
 
 export class TrainerVerification {
@@ -51,6 +53,7 @@ export class TrainerVerification {
   public statusHistory: TrainerVerificationStatusChange[];
   public extractedCertificateData: ExtractedCertificateData | null;
   public extractedIdData: ExtractedIdData | null;
+  public scoringResult: ScoringResult | null;
 
   private constructor(props: TrainerVerificationProps) {
     this.id = props.id;
@@ -71,6 +74,7 @@ export class TrainerVerification {
     this.statusHistory = props.statusHistory ?? [];
     this.extractedCertificateData = props.extractedCertificateData ?? null;
     this.extractedIdData = props.extractedIdData ?? null;
+    this.scoringResult = props.scoringResult ?? null;
     this.validate();
   }
 
@@ -220,6 +224,10 @@ export class TrainerVerification {
 
   assignExtractedIdData(data: ExtractedIdData): void {
     this.extractedIdData = data;
+  }
+
+  assignScoringResult(result: ScoringResult): void {
+    this.scoringResult = result;
   }
 
   applyAdvancedStatusTransition(

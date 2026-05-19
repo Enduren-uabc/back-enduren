@@ -15,6 +15,7 @@ import { TrainerVerificationStatusHistoryTypeormEntity } from './trainer-verific
 import { TrainerVerificationSpecialtyTypeormEntity } from './trainer-verification-specialty-typeorm.entity';
 import { ExtractedCertificateDataTypeormEntity } from './extracted-certificate-data-typeorm.entity';
 import { ExtractedIdDataTypeormEntity } from './extracted-id-data-typeorm.entity';
+import { ScoringResultTypeormEntity } from './scoring-result-typeorm.entity';
 
 @Entity('trainer_verifications')
 export class TrainerVerificationTypeormEntity {
@@ -102,4 +103,10 @@ export class TrainerVerificationTypeormEntity {
     (extracted) => extracted.verification,
   )
   extractedIdData!: ExtractedIdDataTypeormEntity[];
+
+  @OneToMany(
+    () => ScoringResultTypeormEntity,
+    (scoring) => scoring.verification,
+  )
+  scoringResults!: ScoringResultTypeormEntity[];
 }

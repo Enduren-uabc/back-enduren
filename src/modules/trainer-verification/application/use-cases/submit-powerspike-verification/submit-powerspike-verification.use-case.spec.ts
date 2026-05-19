@@ -1,10 +1,23 @@
 import { SubmitPowerspikeVerificationUseCase } from './submit-powerspike-verification.use-case';
 import { TrainerVerification } from '../../../domain/entities/trainer-verification.entity';
 import { TrainerVerificationStateMachineService } from '../../services/trainer-verification-state-machine.service';
+import { RiskScoringService } from '../../services/risk-scoring.service';
 import { AdvancedVerificationStatus } from '../../../domain/value-objects/advanced-verification-status.vo';
 import { TrainerVerificationDomainError } from '../../../domain/errors/trainer-verification.domain-error';
+import { ScoringResult } from '../../../domain/value-objects/scoring-result.vo';
 
 describe('SubmitPowerspikeVerificationUseCase', () => {
+  const makeScoringResult = () =>
+    ScoringResult.create({
+      riskScore: 85,
+      riskLevel: 'low',
+      recommendedAction: 'quick_review',
+      summary: 'Test',
+      positiveSignals: ['ID vigente'],
+      alerts: [],
+      overrides: [],
+    });
+
   const makeVerification = (status: AdvancedVerificationStatus) => {
     return TrainerVerification.reconstitute({
       id: crypto.randomUUID(),
@@ -46,7 +59,7 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
     });
   };
 
-  it('accepts id_extracted status', async () => {
+  it('accepts id_extracted status and runs scoring', async () => {
     const verification = makeVerification('id_extracted');
     const repository = {
       findByUserId: jest.fn().mockResolvedValue(verification),
@@ -74,12 +87,16 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       findAll: jest.fn(),
     };
     const stateMachine = new TrainerVerificationStateMachineService();
+    const riskScoring = {
+      calculate: jest.fn().mockReturnValue(makeScoringResult()),
+    };
 
     const useCase = new SubmitPowerspikeVerificationUseCase(
       repository,
       auditRepo,
       specialtyRepo,
       stateMachine,
+      riskScoring as any,
     );
 
     const result = await useCase.execute({
@@ -90,7 +107,9 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       idDocumentNumber: 'ID-456',
     });
 
-    expect(result.advancedStatus).toBe('manual_review_pending');
+    expect(riskScoring.calculate).toHaveBeenCalledTimes(1);
+    expect(result.riskLevel).toBe('low');
+    expect(verification.scoringResult).toBeDefined();
   });
 
   it('accepts id_extraction_failed status with audit alert', async () => {
@@ -121,12 +140,16 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       findAll: jest.fn(),
     };
     const stateMachine = new TrainerVerificationStateMachineService();
+    const riskScoring = {
+      calculate: jest.fn().mockReturnValue(makeScoringResult()),
+    };
 
     const useCase = new SubmitPowerspikeVerificationUseCase(
       repository,
       auditRepo,
       specialtyRepo,
       stateMachine,
+      riskScoring as any,
     );
 
     const result = await useCase.execute({
@@ -137,7 +160,7 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       idDocumentNumber: 'ID-456',
     });
 
-    expect(result.advancedStatus).toBe('manual_review_pending');
+    expect(result.riskLevel).toBe('low');
     const alertCall = auditRepo.recordAuditEvent.mock.calls.find(
       (call: any[]) => call[0]?.metadata?.idExtractionFailed === true,
     );
@@ -172,12 +195,14 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       findAll: jest.fn(),
     };
     const stateMachine = new TrainerVerificationStateMachineService();
+    const riskScoring = { calculate: jest.fn() };
 
     const useCase = new SubmitPowerspikeVerificationUseCase(
       repository,
       auditRepo,
       specialtyRepo,
       stateMachine,
+      riskScoring as any,
     );
 
     await expect(

@@ -7,6 +7,7 @@ import { UserTypeormEntity } from '../users/infrastructure/persistence/typeorm/e
 import { UsersModule } from '../users/users.module';
 import { TRAINER_FLOW_CONFIG_PORT } from './application/ports/trainer-flow-config.port';
 import { DOCUMENT_EXTRACTION_PORT } from './application/ports/document-extraction.port';
+import { NAME_COMPARISON_PORT } from './application/ports/name-comparison.port';
 import { GetMyVerificationStatusUseCase } from './application/use-cases/get-my-verification-status/get-my-verification-status.use-case';
 import { GetVerificationDetailUseCase } from './application/use-cases/get-verification-detail/get-verification-detail.use-case';
 import { ListPendingVerificationsUseCase } from './application/use-cases/list-pending-verifications/list-pending-verifications.use-case';
@@ -28,10 +29,12 @@ import { SPECIALTY_CATALOG_REPOSITORY_PORT } from './domain/repositories/special
 import { TRAINER_VERIFICATION_AUDIT_REPOSITORY_PORT } from './domain/repositories/trainer-verification-audit.repository.port';
 import { TRAINER_VERIFICATION_REPOSITORY_PORT } from './domain/repositories/trainer-verification.repository.port';
 import { TrainerVerificationStateMachineService } from './application/services/trainer-verification-state-machine.service';
+import { RiskScoringService } from './application/services/risk-scoring.service';
 import { InMemoryCommandBus } from './infrastructure/cqrs/in-memory-command-bus';
 import { InMemoryEventBus } from './infrastructure/cqrs/in-memory-event-bus';
 import { FakeDocumentExtractionService } from './infrastructure/document-extraction/fake-document-extraction.service';
 import { AzureDocumentIntelligenceService } from './infrastructure/document-extraction/azure-document-intelligence.service';
+import { SimpleNameComparisonService } from './infrastructure/name-comparison/simple-name-comparison.service';
 import { SpecialtyCatalogTypeormEntity } from './infrastructure/persistence/typeorm/entities/specialty-catalog-typeorm.entity';
 import { TrainerCertificateTypeormEntity } from './infrastructure/persistence/typeorm/entities/trainer-certificate-typeorm.entity';
 import { TrainerIdDocumentTypeormEntity } from './infrastructure/persistence/typeorm/entities/trainer-id-document-typeorm.entity';
@@ -42,6 +45,7 @@ import { TrainerVerificationSpecialtyTypeormEntity } from './infrastructure/pers
 import { TrainerVerificationTypeormEntity } from './infrastructure/persistence/typeorm/entities/trainer-verification-typeorm.entity';
 import { ExtractedCertificateDataTypeormEntity } from './infrastructure/persistence/typeorm/entities/extracted-certificate-data-typeorm.entity';
 import { ExtractedIdDataTypeormEntity } from './infrastructure/persistence/typeorm/entities/extracted-id-data-typeorm.entity';
+import { ScoringResultTypeormEntity } from './infrastructure/persistence/typeorm/entities/scoring-result-typeorm.entity';
 import { TypeormSpecialtyCatalogRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-specialty-catalog.repository';
 import { TypeormTrainerVerificationRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-trainer-verification.repository';
 import { TypeormTrainerVerificationAuditRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-trainer-verification-audit.repository';
@@ -68,6 +72,7 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
       ProfileTypeormEntity,
       ExtractedCertificateDataTypeormEntity,
       ExtractedIdDataTypeormEntity,
+      ScoringResultTypeormEntity,
     ]),
   ],
   controllers: [TrainerVerificationController],
@@ -103,6 +108,11 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
       inject: [ConfigService],
     },
     TrainerVerificationStateMachineService,
+    RiskScoringService,
+    {
+      provide: NAME_COMPARISON_PORT,
+      useClass: SimpleNameComparisonService,
+    },
     InMemoryCommandBus,
     InMemoryEventBus,
     SubmitTrainerVerificationUseCase,

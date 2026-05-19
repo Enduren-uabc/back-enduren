@@ -39,7 +39,11 @@ export class TrainerVerificationStateMachineService {
     ],
     id_extraction_pending: ['id_extracted', 'id_extraction_failed'],
     id_extracted: ['identity_compared', 'manual_review_pending'],
-    id_extraction_failed: ['id_uploaded', 'manual_review_pending'],
+    id_extraction_failed: [
+      'id_uploaded',
+      'manual_review_pending',
+      'risk_calculated',
+    ],
     identity_compared: ['risk_calculated', 'manual_review_pending'],
     risk_calculated: ['manual_review_pending', 'blocked_for_risk'],
     manual_review_pending: ['manual_review_in_progress'],

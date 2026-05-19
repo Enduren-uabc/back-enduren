@@ -21,6 +21,7 @@ import {
   TrainerVerificationStateMachineService,
   TransitionActor,
 } from '../../services/trainer-verification-state-machine.service';
+import { RiskScoringService } from '../../services/risk-scoring.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
 
 export interface SubmitPowerspikeVerificationInput {
@@ -33,8 +34,10 @@ export interface SubmitPowerspikeVerificationInput {
 
 export interface SubmitPowerspikeVerificationOutput {
   verificationId: string;
-  advancedStatus: 'manual_review_pending';
+  advancedStatus: string;
   legacyStatus: 'pending';
+  riskLevel?: string;
+  riskScore?: number;
 }
 
 @Injectable()
@@ -47,6 +50,7 @@ export class SubmitPowerspikeVerificationUseCase {
     @Inject(SPECIALTY_CATALOG_REPOSITORY_PORT)
     private readonly specialtyCatalogRepository: SpecialtyCatalogRepository,
     private readonly stateMachine: TrainerVerificationStateMachineService,
+    private readonly riskScoring: RiskScoringService,
   ) {}
 
   async execute(
@@ -90,16 +94,49 @@ export class SubmitPowerspikeVerificationUseCase {
     verification.shortBio = input.shortBio.trim();
     verification.idDocumentNumber = input.idDocumentNumber.trim();
 
-    const transitionActor: TransitionActor = {
+    const systemActor: TransitionActor = {
+      actorId: 'system',
+      actorType: 'system',
+    };
+
+    const userActor: TransitionActor = {
       actorId: input.actor.userId,
       actorType: 'user',
     };
 
-    const change = this.stateMachine.transition(
+    let comparisonChange;
+    if (verification.advancedStatus === 'id_extracted') {
+      comparisonChange = this.stateMachine.transition(
+        verification,
+        'identity_compared',
+        systemActor,
+        'Identity comparison computed via scoring',
+      );
+    }
+
+    const scoringResult = this.riskScoring.calculate({
+      certificateData: verification.extractedCertificateData,
+      idData: verification.extractedIdData,
+      idExtractionFailed: wasIdExtractionFailed,
+    });
+
+    verification.assignScoringResult(scoringResult);
+
+    this.stateMachine.transition(
       verification,
-      'manual_review_pending',
-      transitionActor,
-      'Powerspike verification submitted for manual review',
+      'risk_calculated',
+      systemActor,
+      `Risk scoring completed: ${scoringResult.riskLevel} (${scoringResult.riskScore}/100)`,
+    );
+
+    const isCritical = scoringResult.riskLevel === 'critical';
+    const finalChange = this.stateMachine.transition(
+      verification,
+      isCritical ? 'blocked_for_risk' : 'manual_review_pending',
+      userActor,
+      isCritical
+        ? 'Blocked due to critical risk level'
+        : 'Powerspike verification submitted for manual review',
     );
 
     if (wasIdExtractionFailed) {
@@ -117,6 +154,22 @@ export class SubmitPowerspikeVerificationUseCase {
       await this.auditRepository.recordAuditEvent(extractionFailedAlert);
     }
 
+    const scoringAuditEvent = TrainerVerificationAuditEvent.create({
+      id: crypto.randomUUID(),
+      verificationId: verification.id,
+      eventType: 'risk_calculated',
+      actorId: 'system',
+      actorType: 'system',
+      description: `Risk scoring: ${scoringResult.riskLevel} (${scoringResult.riskScore}/100) — ${scoringResult.alerts.length} alerts`,
+      metadata: {
+        riskScore: scoringResult.riskScore,
+        riskLevel: scoringResult.riskLevel,
+        alertCount: scoringResult.alerts.length,
+        alerts: scoringResult.alerts.map((a) => a.code),
+      },
+      createdAt: new Date(),
+    });
+
     const submitAuditEvent = TrainerVerificationAuditEvent.create({
       id: crypto.randomUUID(),
       verificationId: verification.id,
@@ -132,13 +185,19 @@ export class SubmitPowerspikeVerificationUseCase {
     });
 
     await this.verificationRepository.save(verification);
-    await this.auditRepository.recordStatusChange(change);
+    if (comparisonChange) {
+      await this.auditRepository.recordStatusChange(comparisonChange);
+    }
+    await this.auditRepository.recordStatusChange(finalChange);
+    await this.auditRepository.recordAuditEvent(scoringAuditEvent);
     await this.auditRepository.recordAuditEvent(submitAuditEvent);
 
     return {
       verificationId: verification.id,
-      advancedStatus: 'manual_review_pending',
+      advancedStatus: verification.advancedStatus ?? 'manual_review_pending',
       legacyStatus: 'pending',
+      riskLevel: scoringResult.riskLevel,
+      riskScore: scoringResult.riskScore,
     };
   }
 }

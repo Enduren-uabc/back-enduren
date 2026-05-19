@@ -9,6 +9,8 @@ import { TrainerIdDocument } from '../../../../domain/entities/trainer-id-docume
 import { TrainerVerification } from '../../../../domain/entities/trainer-verification.entity';
 import { ExtractedCertificateData } from '../../../../domain/value-objects/extracted-certificate-data.vo';
 import { ExtractedIdData } from '../../../../domain/value-objects/extracted-id-data.vo';
+import { ScoringResult } from '../../../../domain/value-objects/scoring-result.vo';
+import { RiskAlert } from '../../../../domain/value-objects/risk-alert.vo';
 import { AdvancedVerificationStatus } from '../../../../domain/value-objects/advanced-verification-status.vo';
 import { DocumentType } from '../../../../domain/value-objects/document-type.vo';
 import { VerificationStatus } from '../../../../domain/value-objects/verification-status.vo';
@@ -19,6 +21,7 @@ import {
 } from '../../../../domain/repositories/trainer-verification.repository.port';
 import { ExtractedCertificateDataTypeormEntity } from '../entities/extracted-certificate-data-typeorm.entity';
 import { ExtractedIdDataTypeormEntity } from '../entities/extracted-id-data-typeorm.entity';
+import { ScoringResultTypeormEntity } from '../entities/scoring-result-typeorm.entity';
 import { SpecialtyCatalogTypeormEntity } from '../entities/specialty-catalog-typeorm.entity';
 import { TrainerCertificateTypeormEntity } from '../entities/trainer-certificate-typeorm.entity';
 import { TrainerIdDocumentTypeormEntity } from '../entities/trainer-id-document-typeorm.entity';
@@ -59,6 +62,9 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         .delete({ verificationId: verification.id });
       await manager
         .getRepository(ExtractedIdDataTypeormEntity)
+        .delete({ verificationId: verification.id });
+      await manager
+        .getRepository(ScoringResultTypeormEntity)
         .delete({ verificationId: verification.id });
 
       const specialtyEntities = verification.specialtyKeys.map(
@@ -163,6 +169,29 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           .getRepository(ExtractedIdDataTypeormEntity)
           .save(extractedEntity);
       }
+
+      if (verification.scoringResult) {
+        const scoringEntity = new ScoringResultTypeormEntity();
+        scoringEntity.id = crypto.randomUUID();
+        scoringEntity.verificationId = verification.id;
+        scoringEntity.riskScore = verification.scoringResult.riskScore;
+        scoringEntity.riskLevel = verification.scoringResult.riskLevel;
+        scoringEntity.recommendedAction =
+          verification.scoringResult.recommendedAction;
+        scoringEntity.summary = verification.scoringResult.summary;
+        scoringEntity.positiveSignals =
+          verification.scoringResult.positiveSignals;
+        scoringEntity.alerts = verification.scoringResult.alerts.map((a) => ({
+          code: a.code,
+          severity: a.severity,
+          message: a.message,
+        }));
+        scoringEntity.overrides = verification.scoringResult.overrides;
+        scoringEntity.createdAt = new Date();
+        await manager
+          .getRepository(ScoringResultTypeormEntity)
+          .save(scoringEntity);
+      }
     });
 
     const saved = await this.findById(verification.id);
@@ -182,6 +211,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         advancedStatus: true,
         extractedCertificateData: true,
         extractedIdData: true,
+        scoringResults: true,
       },
     });
     return entity ? this.toDomain(entity) : null;
@@ -197,6 +227,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
         advancedStatus: true,
         extractedCertificateData: true,
         extractedIdData: true,
+        scoringResults: true,
       },
     });
     return entity ? this.toDomain(entity) : null;
@@ -330,6 +361,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
 
     const extractedCertData = entity.extractedCertificateData?.[0];
     const extractedId = entity.extractedIdData?.[0];
+    const scoringData = entity.scoringResults?.[0];
 
     return TrainerVerification.reconstitute({
       id: entity.id,
@@ -392,6 +424,23 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             expirationDate: extractedId.expirationDate ?? undefined,
             documentIdentifier: extractedId.documentIdentifier ?? undefined,
             ocrConfidence: extractedId.ocrConfidence,
+          })
+        : null,
+      scoringResult: scoringData
+        ? ScoringResult.reconstitute({
+            riskScore: scoringData.riskScore,
+            riskLevel: scoringData.riskLevel as any,
+            recommendedAction: scoringData.recommendedAction as any,
+            summary: scoringData.summary,
+            positiveSignals: scoringData.positiveSignals ?? [],
+            alerts: (scoringData.alerts ?? []).map((a: any) =>
+              RiskAlert.reconstitute({
+                code: a.code,
+                severity: a.severity,
+                message: a.message,
+              }),
+            ),
+            overrides: scoringData.overrides ?? [],
           })
         : null,
     });

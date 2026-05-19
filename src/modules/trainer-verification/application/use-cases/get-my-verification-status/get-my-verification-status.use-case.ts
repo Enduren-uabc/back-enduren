@@ -30,6 +30,9 @@ export interface GetMyVerificationStatusOutput {
     documentType: string;
     ocrConfidence: number;
   };
+  riskLevel?: string;
+  riskScore?: number;
+  riskAlerts?: { code: string; severity: string; message: string }[];
 }
 
 @Injectable()
@@ -109,6 +112,16 @@ export class GetMyVerificationStatusUseCase {
         documentType: verification.extractedIdData.documentType,
         ocrConfidence: verification.extractedIdData.ocrConfidence,
       };
+    }
+
+    if (verification.scoringResult) {
+      result.riskLevel = verification.scoringResult.riskLevel;
+      result.riskScore = verification.scoringResult.riskScore;
+      result.riskAlerts = verification.scoringResult.alerts.map((a) => ({
+        code: a.code,
+        severity: a.severity,
+        message: a.message,
+      }));
     }
 
     return result;
