@@ -21,6 +21,7 @@ import { LoginUserUseCase } from './application/use-cases/login-user/login-user.
 import { LogoutUserUseCase } from './application/use-cases/logout-user/logout-user.use-case';
 import { RefreshTokenUseCase } from './application/use-cases/refresh-token/refresh-token.use-case';
 import { CheckTokenUseCase } from './application/use-cases/check-token/check-token.use-case';
+import { AdminSeeder } from './infrastructure/providers/admin-seeder.service';
 import { AuthController } from './presentation/http/controllers/auth.controller';
 import { UsersModule } from '../users/users.module';
 
@@ -63,6 +64,7 @@ import { UsersModule } from '../users/users.module';
     LogoutUserUseCase,
     RefreshTokenUseCase,
     CheckTokenUseCase,
+    AdminSeeder,
   ],
   controllers: [AuthController],
   exports: [JwtAuthGuard, PassportModule, JwtModule, PASSWORD_HASHER_PORT],

@@ -140,26 +140,30 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
 
       // Mejorar extracción de fecha de expiración para INE mexicana
       let extractedExpirationDate = this.extractDateValue(expirationDate);
-      
+
       // Si no hay fecha de expiración estructurada, buscar en el contenido
       if (!extractedExpirationDate) {
         // Buscar patrones de vigencia mexicanos: "VIGENCIA 2020-2030" o "VIGENCIA 2020 - 2030" o "VIGENCIA 2020 2030"
-        const vigenciaMatch = content.match(/VIGENCIA[:\s]*(\d{4})\s*[-–\s]+\s*(\d{4})/i);
+        const vigenciaMatch = content.match(
+          /VIGENCIA[:\s]*(\d{4})\s*[-–\s]+\s*(\d{4})/i,
+        );
         if (vigenciaMatch && vigenciaMatch[2]) {
           const yearEnd = parseInt(vigenciaMatch[2], 10);
           // La INE mexicana típicamente expira el 31 de diciembre del año final
           extractedExpirationDate = new Date(yearEnd, 11, 31);
         }
-        
+
         // Buscar formato "VIGENCIA AÑO INICIO - AÑO FIN" con más flexibilidad
         if (!extractedExpirationDate) {
-          const vigenciaAltMatch = content.match(/VIGENCIA[:\s]+(\d{4})\s+(?:A\s+)?[:\s]*(\d{4})/i);
+          const vigenciaAltMatch = content.match(
+            /VIGENCIA[:\s]+(\d{4})\s+(?:A\s+)?[:\s]*(\d{4})/i,
+          );
           if (vigenciaAltMatch && vigenciaAltMatch[2]) {
             const yearEnd = parseInt(vigenciaAltMatch[2], 10);
             extractedExpirationDate = new Date(yearEnd, 11, 31);
           }
         }
-        
+
         // También buscar fechas completas en formato DD/MM/YYYY o DD-MM-YYYY
         if (!extractedExpirationDate) {
           const dateMatch = content.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
@@ -168,14 +172,20 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
             // Validar que sea una fecha futura razonable (después de 2024)
             const yearNum = parseInt(year);
             if (yearNum > 2024) {
-              extractedExpirationDate = new Date(yearNum, parseInt(month) - 1, parseInt(day));
+              extractedExpirationDate = new Date(
+                yearNum,
+                parseInt(month) - 1,
+                parseInt(day),
+              );
             }
           }
         }
-        
+
         // Buscar solo año de expiración si aparece después de "VIGENCIA" o "HASTA"
         if (!extractedExpirationDate) {
-          const yearMatch = content.match(/(?:VIGENCIA|HASTA|VENCE)[:\s]+\d{4}[-\s]+(\d{4})/i);
+          const yearMatch = content.match(
+            /(?:VIGENCIA|HASTA|VENCE)[:\s]+\d{4}[-\s]+(\d{4})/i,
+          );
           if (yearMatch && yearMatch[1]) {
             const yearEnd = parseInt(yearMatch[1], 10);
             extractedExpirationDate = new Date(yearEnd, 11, 31);
@@ -385,7 +395,14 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         'folio conocer',
         'numero de certificado',
       ],
-      qrUrl: ['qr', 'url', 'verify at', 'verification url', 'qr url', 'conocer.gob.mx'],
+      qrUrl: [
+        'qr',
+        'url',
+        'verify at',
+        'verification url',
+        'qr url',
+        'conocer.gob.mx',
+      ],
     };
 
     for (const pair of pairs) {
