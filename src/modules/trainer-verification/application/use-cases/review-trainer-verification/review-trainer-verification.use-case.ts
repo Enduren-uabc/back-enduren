@@ -25,6 +25,7 @@ import {
 import { assertAdmin } from '../trainer-verification-use-case.helpers';
 import { TrainerVerification } from '../../../domain/entities/trainer-verification.entity';
 import { AdvancedVerificationStatus } from '../../../domain/value-objects/advanced-verification-status.vo';
+import { generateTrainerCode } from '../../../../trainer-link/application/constants/trainer-code-generator';
 
 export interface ReviewTrainerVerificationInput {
   actor: CurrentActor;
@@ -144,8 +145,13 @@ export class ReviewTrainerVerificationUseCase {
 
     if (input.decision === 'approved') {
       const trainer = await this.userRepository.findById(verification.userId);
-      if (trainer && trainer.role !== 'trainer') {
-        trainer.upgradeToTrainer();
+      if (trainer) {
+        if (trainer.role !== 'trainer') {
+          trainer.upgradeToTrainer();
+        }
+        if (!trainer.trainerCode) {
+          trainer.setTrainerCode(generateTrainerCode());
+        }
         await this.userRepository.save(trainer);
       }
     }
@@ -180,8 +186,11 @@ export class ReviewTrainerVerificationUseCase {
     if (input.decision === 'approved') {
       if (trainer.role !== 'trainer') {
         trainer.upgradeToTrainer();
-        await this.userRepository.save(trainer);
       }
+      if (!trainer.trainerCode) {
+        trainer.setTrainerCode(generateTrainerCode());
+      }
+      await this.userRepository.save(trainer);
       verification.approve(input.actor.userId);
     } else {
       verification.reject(input.actor.userId, input.rejectionReason ?? '');

@@ -29,6 +29,9 @@ export class UserTypeormEntity {
   @Column('varchar', { default: 'active' })
   status!: string;
 
+  @Column('varchar', { unique: true, nullable: true })
+  trainerCode!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

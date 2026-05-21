@@ -9,6 +9,7 @@ export interface UserProps {
   role: UserRole;
   emailVerified: boolean;
   status: UserStatus;
+  trainerCode: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +22,7 @@ export class User {
   public role: UserRole;
   public emailVerified: boolean;
   public status: UserStatus;
+  public trainerCode: string | null;
   public readonly createdAt: Date;
   public updatedAt: Date;
 
@@ -32,6 +34,7 @@ export class User {
     this.role = props.role;
     this.emailVerified = props.emailVerified;
     this.status = props.status;
+    this.trainerCode = props.trainerCode;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -52,6 +55,7 @@ export class User {
       role,
       emailVerified: false,
       status: 'active',
+      trainerCode: null,
       createdAt: now,
       updatedAt: now,
     });
@@ -83,6 +87,11 @@ export class User {
 
   upgradeToTrainer(): void {
     this.role = 'trainer';
+    this.updatedAt = new Date();
+  }
+
+  setTrainerCode(code: string): void {
+    this.trainerCode = code;
     this.updatedAt = new Date();
   }
 }
