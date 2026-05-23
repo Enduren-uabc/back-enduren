@@ -33,6 +33,12 @@ import { ResendVerificationUseCase } from './application/use-cases/resend-verifi
 import { PasswordRecoveryUseCase } from './application/use-cases/password-recovery/password-recovery.use-case';
 import { ResetPasswordUseCase } from './application/use-cases/reset-password/reset-password.use-case';
 import { ValidateResetTokenUseCase } from './application/use-cases/validate-reset-token/validate-reset-token.use-case';
+import { SocialLoginUseCase } from './application/use-cases/social-login/social-login.use-case';
+import { SocialAuthVerifierPort, SOCIAL_AUTH_VERIFIER_PORT } from './application/ports/social-auth-verifier.port';
+import { SocialVerifierFactory } from './infrastructure/providers/social-verifier-factory.provider';
+import { GoogleVerifier } from './infrastructure/providers/google-verifier.provider';
+import { AppleVerifier } from './infrastructure/providers/apple-verifier.provider';
+import { DevSocialVerifier } from './infrastructure/providers/dev-social-verifier.provider';
 import { AdminSeeder } from './infrastructure/providers/admin-seeder.service';
 import { AuthController } from './presentation/http/controllers/auth.controller';
 import { UsersModule } from '../users/users.module';
@@ -94,6 +100,27 @@ import { UsersModule } from '../users/users.module';
     PasswordRecoveryUseCase,
     ResetPasswordUseCase,
     ValidateResetTokenUseCase,
+    SocialLoginUseCase,
+    GoogleVerifier,
+    AppleVerifier,
+    SocialVerifierFactory,
+    DevSocialVerifier,
+    {
+      provide: SOCIAL_AUTH_VERIFIER_PORT,
+      useFactory: (
+        configService: ConfigService,
+        googleVerifier: GoogleVerifier,
+        appleVerifier: AppleVerifier,
+        devSocialVerifier: DevSocialVerifier,
+      ) => {
+        const useMock = configService.get<string>('SOCIAL_AUTH_MOCK', 'false') === 'true';
+        if (useMock) {
+          return devSocialVerifier;
+        }
+        return new SocialVerifierFactory(googleVerifier, appleVerifier);
+      },
+      inject: [ConfigService, GoogleVerifier, AppleVerifier, DevSocialVerifier],
+    },
     AdminSeeder,
   ],
   controllers: [AuthController],

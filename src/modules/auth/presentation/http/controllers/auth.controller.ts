@@ -28,10 +28,12 @@ import { ResendVerificationUseCase } from '../../../application/use-cases/resend
 import { PasswordRecoveryUseCase } from '../../../application/use-cases/password-recovery/password-recovery.use-case';
 import { ResetPasswordUseCase } from '../../../application/use-cases/reset-password/reset-password.use-case';
 import { ValidateResetTokenUseCase } from '../../../application/use-cases/validate-reset-token/validate-reset-token.use-case';
+import { SocialLoginUseCase } from '../../../application/use-cases/social-login/social-login.use-case';
 import { RegisterDto } from '../dtos/register.dto';
 import { LoginDto } from '../dtos/login.dto';
 import { PasswordRecoveryDto } from '../dtos/password-recovery.dto';
 import { PasswordResetDto } from '../dtos/password-reset.dto';
+import { SocialLoginDto } from '../dtos/social-login.dto';
 import { AuthResponseDto } from '../dtos/auth.response';
 
 @Controller('auth')
@@ -47,6 +49,7 @@ export class AuthController {
     private readonly passwordRecoveryUseCase: PasswordRecoveryUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly validateResetTokenUseCase: ValidateResetTokenUseCase,
+    private readonly socialLoginUseCase: SocialLoginUseCase,
     @Inject(COOKIE_HELPER_PORT)
     private readonly cookieHelper: CookieHelper,
   ) {}
@@ -206,6 +209,23 @@ export class AuthController {
     @Query('token') token: string,
   ): Promise<{ valid: boolean }> {
     return this.validateResetTokenUseCase.execute({ token });
+  }
+
+  @Public()
+  @Post('social-login')
+  @HttpCode(HttpStatus.OK)
+  async socialLogin(
+    @Body() dto: SocialLoginDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
+  ): Promise<AuthResponseDto> {
+    const result = await this.socialLoginUseCase.execute(dto);
+    this.cookieHelper.setAuthCookies(
+      res,
+      result.accessToken,
+      result.refreshToken,
+    );
+    return this.buildAuthResponse(result, this.isMobileClient(req));
   }
 
   @Public()
