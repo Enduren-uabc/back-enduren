@@ -306,12 +306,19 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       order?: 'ASC' | 'DESC';
     },
   ): Promise<{ verifications: TrainerVerificationListItem[]; total: number }> {
-    const where: any = {
-      advancedStatus: { advancedStatus: 'manual_review_pending' },
-    };
+    const where: any[] = [
+      { verificationStatus: 'pending', flowMode: 'legacy' },
+      { advancedStatus: { advancedStatus: 'manual_review_pending' } },
+      { advancedStatus: { advancedStatus: 'manual_review_in_progress' } },
+    ];
     if (filter?.riskLevel) {
-      where.scoringResults = {
-        riskLevel: filter.riskLevel,
+      where[1] = {
+        advancedStatus: { advancedStatus: 'manual_review_pending' },
+        scoringResults: { riskLevel: filter.riskLevel },
+      };
+      where[2] = {
+        advancedStatus: { advancedStatus: 'manual_review_in_progress' },
+        scoringResults: { riskLevel: filter.riskLevel },
       };
     }
     const [entities, total] = await this.verificationRepo.findAndCount({

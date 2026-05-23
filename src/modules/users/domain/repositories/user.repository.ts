@@ -9,4 +9,6 @@ export interface UserRepository {
   findByUsername(username: string): Promise<User | null>;
   existsByEmail(email: string): Promise<boolean>;
   existsByUsername(username: string): Promise<boolean>;
+  findByTrainerCode(trainerCode: string): Promise<User | null>;
+  findBySocialId(provider: string, socialId: string): Promise<User | null>;
 }

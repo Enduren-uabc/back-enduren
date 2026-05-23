@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StorageModule } from './shared/storage/storage.module';
+import { SharedEmailModule } from './modules/shared/email/email.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TrainingModule } from './modules/training/training.module';
 import { PublicationModule } from './modules/publication/publication.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TrainerVerificationModule } from './modules/trainer-verification/trainer-verification.module';
+import { TrainerLinkModule } from './modules/trainer-link/trainer-link.module';
 import { StorageSmokeTestModule } from './modules/storage-smoke-test/storage-smoke-test.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
 import { ObservabilityModule } from './shared/observability/observability.module';
@@ -21,6 +24,7 @@ import { ObservabilityModule } from './shared/observability/observability.module
       isGlobal: true,
       envFilePath: '.env',
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -39,12 +43,14 @@ import { ObservabilityModule } from './shared/observability/observability.module
     }),
     ObservabilityModule,
     StorageModule,
+    SharedEmailModule,
     AuthModule,
     UsersModule,
     TrainingModule,
     PublicationModule,
     ProfileModule,
     TrainerVerificationModule,
+    TrainerLinkModule,
     StorageSmokeTestModule,
   ],
   controllers: [AppController],

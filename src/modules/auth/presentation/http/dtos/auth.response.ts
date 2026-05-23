@@ -3,6 +3,7 @@ export class AuthResponseDto {
   email!: string;
   username!: string;
   role!: string;
+  emailVerified!: boolean;
   accessToken?: string;
   refreshToken?: string;
 }

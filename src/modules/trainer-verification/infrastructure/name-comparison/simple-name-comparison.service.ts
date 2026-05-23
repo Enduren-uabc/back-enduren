@@ -26,13 +26,17 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     // Esto maneja casos como "CASTRO BARRIOS EDUARDO" vs "EDUARDO CASTRO BARRIOS"
     const certSet = new Set(certTokens);
     const idSet = new Set(idTokens);
-    
+
     // Calcular intersección y unión
-    const intersection = new Set([...certSet].filter(t => idSet.has(t)));
+    const intersection = new Set([...certSet].filter((t) => idSet.has(t)));
     const union = new Set([...certSet, ...idSet]);
-    
+
     // Si todos los tokens coinciden (solo diferente orden), es una coincidencia fuerte
-    if (intersection.size === certSet.size && intersection.size === idSet.size && certSet.size > 0) {
+    if (
+      intersection.size === certSet.size &&
+      intersection.size === idSet.size &&
+      certSet.size > 0
+    ) {
       return {
         level: 'strong',
         score: 20,

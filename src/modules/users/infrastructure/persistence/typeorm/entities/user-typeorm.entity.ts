@@ -29,6 +29,21 @@ export class UserTypeormEntity {
   @Column('varchar', { default: 'active' })
   status!: string;
 
+  @Column('varchar', { name: 'trainer_code', unique: true, nullable: true })
+  trainerCode!: string | null;
+
+  @Column('varchar', { nullable: true })
+  authProvider!: string | null;
+
+  @Column('varchar', { nullable: true })
+  socialId!: string | null;
+
+  @Column('boolean', { default: false })
+  privacyAccepted!: boolean;
+
+  @Column('varchar', { nullable: true })
+  avatarUrl!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

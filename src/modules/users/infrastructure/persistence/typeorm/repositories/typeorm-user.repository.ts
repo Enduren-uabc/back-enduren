@@ -51,6 +51,20 @@ export class TypeormUserRepository implements UserRepository {
     return count > 0;
   }
 
+  async findByTrainerCode(trainerCode: string): Promise<User | null> {
+    const entity = await this.ormRepo.findOne({
+      where: { trainerCode },
+    });
+    return entity ? this.toDomain(entity) : null;
+  }
+
+  async findBySocialId(provider: string, socialId: string): Promise<User | null> {
+    const entity = await this.ormRepo.findOne({
+      where: { authProvider: provider, socialId },
+    });
+    return entity ? this.toDomain(entity) : null;
+  }
+
   private toOrm(user: User): UserTypeormEntity {
     const entity = new UserTypeormEntity();
     entity.id = user.id;
@@ -60,6 +74,11 @@ export class TypeormUserRepository implements UserRepository {
     entity.role = user.role;
     entity.emailVerified = user.emailVerified;
     entity.status = user.status;
+    entity.trainerCode = user.trainerCode;
+    entity.authProvider = user.authProvider;
+    entity.socialId = user.socialId;
+    entity.privacyAccepted = user.privacyAccepted;
+    entity.avatarUrl = user.avatarUrl;
     entity.createdAt = user.createdAt;
     entity.updatedAt = user.updatedAt;
     return entity;
@@ -74,6 +93,11 @@ export class TypeormUserRepository implements UserRepository {
       role: entity.role as 'admin' | 'trainer' | 'user',
       emailVerified: entity.emailVerified,
       status: entity.status as 'active' | 'inactive' | 'locked',
+      trainerCode: entity.trainerCode,
+      authProvider: entity.authProvider as 'email' | 'google' | 'apple' | null,
+      socialId: entity.socialId,
+      privacyAccepted: entity.privacyAccepted,
+      avatarUrl: entity.avatarUrl,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
