@@ -23,6 +23,7 @@ import { TypeormTrainerLinkRepository } from './infrastructure/persistence/typeo
 import { TypeormTrainerSearchRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-trainer-search.repository';
 import { TrainerLinkRequestTypeormEntity } from './infrastructure/persistence/typeorm/entities/trainer-link-request-typeorm.entity';
 import { TrainerLinkTypeormEntity } from './infrastructure/persistence/typeorm/entities/trainer-link-typeorm.entity';
+import { UserTypeormEntity } from '../users/infrastructure/persistence/typeorm/entities/user-typeorm.entity';
 import { TrainerLinkRequestController } from './presentation/http/controllers/trainer-link-request.controller';
 import {
   TrainerLinkController,
@@ -39,6 +40,7 @@ import { TrainerLinkErrorFilter } from './presentation/http/filters/trainer-link
     TypeOrmModule.forFeature([
       TrainerLinkRequestTypeormEntity,
       TrainerLinkTypeormEntity,
+      UserTypeormEntity,
     ]),
   ],
   controllers: [

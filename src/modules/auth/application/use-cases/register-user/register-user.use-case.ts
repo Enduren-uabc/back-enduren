@@ -1,5 +1,6 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   UserRepository,
   USER_REPOSITORY_PORT,
@@ -15,6 +16,12 @@ import {
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 import { User, UserRole } from '../../../../users/domain/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
+import {
+  EmailVerificationTokenRepository,
+  EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT,
+} from '../../../domain/repositories/email-verification-token.repository';
+import { EmailVerificationToken } from '../../../domain/entities/email-verification-token.entity';
+import { UserRegisteredEvent } from '../../../../shared/email/domain/events/user-registered.event';
 
 export interface RegisterInput {
   email: string;
@@ -24,7 +31,7 @@ export interface RegisterInput {
 }
 
 export interface RegisterOutput {
-  user: { id: string; email: string; username: string; role: string };
+  user: { id: string; email: string; username: string; role: string; emailVerified: boolean };
   accessToken: string;
   refreshToken: string;
 }
@@ -38,8 +45,11 @@ export class RegisterUserUseCase {
     private readonly passwordHasher: PasswordHasher,
     @Inject(REFRESH_TOKEN_REPOSITORY_PORT)
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    @Inject(EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT)
+    private readonly emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(input: RegisterInput): Promise<RegisterOutput> {
@@ -67,6 +77,25 @@ export class RegisterUserUseCase {
     );
     const saved = await this.userRepository.save(user);
 
+    const tokenValue = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const verificationToken = EmailVerificationToken.create(
+      saved.id,
+      tokenValue,
+      expiresAt,
+    );
+    await this.emailVerificationTokenRepository.save(verificationToken);
+
+    this.eventEmitter.emit(
+      'user.registered',
+      new UserRegisteredEvent(
+        saved.id,
+        saved.email,
+        saved.username,
+        tokenValue,
+      ),
+    );
+
     const tokens = await this.generateTokens(saved);
     return {
       user: {
@@ -74,6 +103,7 @@ export class RegisterUserUseCase {
         email: saved.email,
         username: saved.username,
         role: saved.role,
+        emailVerified: saved.emailVerified,
       },
       ...tokens,
     };
@@ -82,7 +112,7 @@ export class RegisterUserUseCase {
   private async generateTokens(
     user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: this.configService.get<string>(

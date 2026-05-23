@@ -9,6 +9,7 @@ export interface CheckTokenOutput {
   email: string;
   username: string;
   role: string;
+  emailVerified: boolean;
 }
 
 @Injectable()
@@ -28,6 +29,7 @@ export class CheckTokenUseCase {
       email: user.email,
       username: user.username,
       role: user.role,
+      emailVerified: user.emailVerified,
     };
   }
 }
