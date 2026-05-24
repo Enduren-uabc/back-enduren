@@ -6,8 +6,12 @@ import {
   IsArray,
   ValidateNested,
   IsUUID,
+  Length,
+  Matches,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { VALID_DAYS } from './create-routine.request';
 
 export class SyncRoutineExerciseSetDto {
   @IsInt()
@@ -29,10 +33,14 @@ export class SyncRoutineExerciseSetDto {
 
 export class SyncRoutineExerciseDto {
   @IsOptional()
-  @IsString()
+  @IsUUID()
   id?: string;
 
   @IsString()
+  @Length(1, 100)
+  @Matches(/[a-zA-Z]/, {
+    message: 'El nombre debe contener al menos una letra',
+  })
   name!: string;
 
   @IsInt()
@@ -48,6 +56,7 @@ export class SyncRoutineExerciseDto {
 
 export class SyncRoutineDayDto {
   @IsString()
+  @IsIn(VALID_DAYS)
   dayOfWeek!: string;
 
   @IsArray()

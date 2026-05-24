@@ -8,10 +8,12 @@ import {
   Min,
   Max,
   IsIn,
+  Length,
 } from 'class-validator';
 
 export class CreateProfileRequestDto {
   @IsString()
+  @Length(2, 100)
   fullName!: string;
 
   @IsDateString()

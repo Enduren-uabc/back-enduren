@@ -18,16 +18,22 @@ export class CreateSocialAuthCodesTable1749000000000 implements MigrationInterfa
       true,
     );
 
-    await queryRunner.createIndex('social_auth_codes', new TableIndex({
-      name: 'IDX_SOCIAL_AUTH_CODE',
-      columnNames: ['code'],
-      isUnique: true,
-    }));
+    await queryRunner.createIndex(
+      'social_auth_codes',
+      new TableIndex({
+        name: 'IDX_SOCIAL_AUTH_CODE',
+        columnNames: ['code'],
+        isUnique: true,
+      }),
+    );
 
-    await queryRunner.createIndex('social_auth_codes', new TableIndex({
-      name: 'IDX_SOCIAL_AUTH_CODE_USER_ID',
-      columnNames: ['userId'],
-    }));
+    await queryRunner.createIndex(
+      'social_auth_codes',
+      new TableIndex({
+        name: 'IDX_SOCIAL_AUTH_CODE_USER_ID',
+        columnNames: ['userId'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

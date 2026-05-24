@@ -1,6 +1,8 @@
 import { SocialAuthCode } from '../entities/social-auth-code.entity';
 
-export const SOCIAL_AUTH_CODE_REPOSITORY_PORT = Symbol('SOCIAL_AUTH_CODE_REPOSITORY_PORT');
+export const SOCIAL_AUTH_CODE_REPOSITORY_PORT = Symbol(
+  'SOCIAL_AUTH_CODE_REPOSITORY_PORT',
+);
 
 export interface SocialAuthCodeRepository {
   save(code: SocialAuthCode): Promise<SocialAuthCode>;

@@ -1,6 +1,6 @@
-import { IsString, IsArray, ArrayMinSize, IsIn } from 'class-validator';
+import { IsString, IsArray, ArrayMinSize, IsIn, Length } from 'class-validator';
 
-const VALID_DAYS = [
+export const VALID_DAYS = [
   'monday',
   'tuesday',
   'wednesday',
@@ -12,6 +12,7 @@ const VALID_DAYS = [
 
 export class CreateRoutineRequestDto {
   @IsString()
+  @Length(1, 50)
   name!: string;
 
   @IsArray()

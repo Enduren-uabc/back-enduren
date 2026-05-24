@@ -1,6 +1,8 @@
 import { IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 import { MAX_PROFILE_BIO_LENGTH } from '../../../domain/entities/social-profile.entity';
 
+const MAX_AVATAR_URL_LENGTH = 2048;
+
 export class UpdateOwnProfileRequestDto {
   @IsOptional()
   @IsString()
@@ -9,5 +11,6 @@ export class UpdateOwnProfileRequestDto {
 
   @IsOptional()
   @IsUrl({ require_protocol: true })
+  @MaxLength(MAX_AVATAR_URL_LENGTH)
   avatarUrl?: string | null;
 }

@@ -40,16 +40,28 @@ import { PasswordResetDto } from '../dtos/password-reset.dto';
 import { SocialLoginDto } from '../dtos/social-login.dto';
 import { ExchangeSocialCodeDto } from '../dtos/exchange-social-code.dto';
 import { AuthResponseDto } from '../dtos/auth.response';
-import { UserRepository, USER_REPOSITORY_PORT } from '../../../../users/domain/repositories/user.repository';
+import {
+  UserRepository,
+  USER_REPOSITORY_PORT,
+} from '../../../../users/domain/repositories/user.repository';
 import { User } from '../../../../users/domain/entities/user.entity';
-import { SocialAuthCodeRepository, SOCIAL_AUTH_CODE_REPOSITORY_PORT } from '../../../domain/repositories/social-auth-code.repository';
+import {
+  SocialAuthCodeRepository,
+  SOCIAL_AUTH_CODE_REPOSITORY_PORT,
+} from '../../../domain/repositories/social-auth-code.repository';
 import { SocialAuthCode } from '../../../domain/entities/social-auth-code.entity';
 import { ConfigService } from '@nestjs/config';
 
-const ALLOWED_RETURN_SCHEMES = ['com.endure.app://', 'exp://', 'http://localhost', 'https://localhost'];
+const ALLOWED_RETURN_SCHEMES = [
+  'com.endure.app://',
+  'exp://',
+  'http://localhost',
+  'https://localhost',
+];
 
 function generateTempCode(length = 32): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   const bytes = crypto.getRandomValues(new Uint8Array(length));
   for (let i = 0; i < length; i++) {
@@ -92,7 +104,13 @@ export class AuthController {
 
   private buildAuthResponse(
     result: {
-      user: { id: string; email: string; username: string; role: string; emailVerified: boolean };
+      user: {
+        id: string;
+        email: string;
+        username: string;
+        role: string;
+        emailVerified: boolean;
+      };
       accessToken: string;
       refreshToken: string;
     },
@@ -284,13 +302,19 @@ export class AuthController {
     const allowed = ALLOWED_RETURN_SCHEMES.some((s) => returnTo.startsWith(s));
     if (!allowed) {
       this.logger.warn(`returnTo inválido rechazado: ${returnTo}`);
-      res.status(400).json({ message: 'returnTo inválido. Esquema no permitido.' });
+      res
+        .status(400)
+        .json({ message: 'returnTo inválido. Esquema no permitido.' });
       return;
     }
 
     if (!this.googleOAuthService.configured) {
-      this.logger.error('Google OAuth no está configurado. Faltan GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET');
-      res.status(500).json({ message: 'La autenticación con Google no está configurada.' });
+      this.logger.error(
+        'Google OAuth no está configurado. Faltan GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET',
+      );
+      res
+        .status(500)
+        .json({ message: 'La autenticación con Google no está configurada.' });
       return;
     }
 
@@ -298,7 +322,9 @@ export class AuthController {
     this.oauthStateStore.set(state, returnTo);
 
     const authUrl = this.googleOAuthService.generateAuthUrl(state);
-    this.logger.log(`Iniciando OAuth Google, state=${state.substring(0, 8)}..., returnTo=${returnTo}`);
+    this.logger.log(
+      `Iniciando OAuth Google, state=${state.substring(0, 8)}..., returnTo=${returnTo}`,
+    );
 
     res.redirect(authUrl);
   }
@@ -326,15 +352,21 @@ export class AuthController {
 
     const returnTo = this.oauthStateStore.getAndDelete(state);
     if (!returnTo) {
-      this.logger.warn(`State inválido o expirado: ${state.substring(0, 8)}...`);
+      this.logger.warn(
+        `State inválido o expirado: ${state.substring(0, 8)}...`,
+      );
       res.redirect('com.endure.app://?error=state_invalido');
       return;
     }
 
     try {
-      this.logger.log('Callback Google recibido, intercambiando code por perfil...');
+      this.logger.log(
+        'Callback Google recibido, intercambiando code por perfil...',
+      );
       const profile = await this.googleOAuthService.getProfileFromCode(code);
-      this.logger.log(`Perfil Google obtenido: ${profile.email} (${profile.id})`);
+      this.logger.log(
+        `Perfil Google obtenido: ${profile.email} (${profile.id})`,
+      );
 
       const provider = 'google';
 
@@ -345,7 +377,9 @@ export class AuthController {
         await this.userRepository.save(user);
         this.logger.log(`Usuario existente actualizado: ${user.id}`);
       } else {
-        const existingByEmail = await this.userRepository.findByEmail(profile.email);
+        const existingByEmail = await this.userRepository.findByEmail(
+          profile.email,
+        );
         if (existingByEmail) {
           existingByEmail.authProvider = provider;
           existingByEmail.socialId = profile.id;
@@ -356,10 +390,16 @@ export class AuthController {
           user = existingByEmail;
           this.logger.log(`Cuenta email vinculada a Google: ${user.id}`);
         } else {
-          const base = profile.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 30);
+          const base = profile.email
+            .split('@')[0]
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .substring(0, 30);
           let username = base;
           let attempts = 0;
-          while (attempts < 20 && (await this.userRepository.existsByUsername(username))) {
+          while (
+            attempts < 20 &&
+            (await this.userRepository.existsByUsername(username))
+          ) {
             attempts++;
             username = `${base.substring(0, 25)}_${Math.floor(Math.random() * 10000)}`;
           }
@@ -383,7 +423,10 @@ export class AuthController {
         return;
       }
 
-      const ttlSeconds = parseInt(this.configService.get<string>('MOBILE_OAUTH_CODE_TTL_SECONDS', '120'), 10);
+      const ttlSeconds = parseInt(
+        this.configService.get<string>('MOBILE_OAUTH_CODE_TTL_SECONDS', '120'),
+        10,
+      );
       const tempCodeValue = generateTempCode();
       const tempCode = SocialAuthCode.create(
         user.id,
@@ -393,7 +436,9 @@ export class AuthController {
       );
 
       await this.authCodeRepository.save(tempCode);
-      this.logger.log(`Código temporal generado para usuario ${user.id}, TTL=${ttlSeconds}s`);
+      this.logger.log(
+        `Código temporal generado para usuario ${user.id}, TTL=${ttlSeconds}s`,
+      );
 
       this.logger.log(`Redirigiendo a app con code temporal`);
       res.redirect(`${returnTo}?code=${tempCode.code}&provider=google`);
@@ -421,7 +466,9 @@ export class AuthController {
     response.accessToken = result.accessToken;
     response.refreshToken = result.refreshToken;
 
-    this.logger.log(`Código canjeado exitosamente para usuario ${result.user.id}`);
+    this.logger.log(
+      `Código canjeado exitosamente para usuario ${result.user.id}`,
+    );
     return response;
   }
 }

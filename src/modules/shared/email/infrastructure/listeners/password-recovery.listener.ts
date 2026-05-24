@@ -56,7 +56,10 @@ export class PasswordRecoveryListener {
     try {
       await this.emailSender.sendEmail(message);
     } catch (error) {
-      console.error(`[Email] Failed to send password recovery to ${event.email}:`, error);
+      console.error(
+        `[Email] Failed to send password recovery to ${event.email}:`,
+        error,
+      );
     }
   }
 }

@@ -41,7 +41,11 @@ export class PasswordRecoveryUseCase {
 
     const tokenValue = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-    const resetToken = PasswordResetToken.create(user.id, tokenValue, expiresAt);
+    const resetToken = PasswordResetToken.create(
+      user.id,
+      tokenValue,
+      expiresAt,
+    );
     await this.tokenRepository.save(resetToken);
 
     this.eventEmitter.emit(
@@ -54,6 +58,9 @@ export class PasswordRecoveryUseCase {
       ),
     );
 
-    return { message: 'Si el correo está registrado, recibirás un código de recuperación' };
+    return {
+      message:
+        'Si el correo está registrado, recibirás un código de recuperación',
+    };
   }
 }

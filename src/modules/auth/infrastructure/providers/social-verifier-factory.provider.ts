@@ -13,7 +13,10 @@ export class SocialVerifierFactory implements SocialAuthVerifierPort {
     private readonly appleVerifier: AppleVerifier,
   ) {}
 
-  async verify(provider: 'google' | 'apple', idToken: string): Promise<SocialUserData> {
+  async verify(
+    provider: 'google' | 'apple',
+    idToken: string,
+  ): Promise<SocialUserData> {
     if (provider === 'google') {
       return this.googleVerifier.verify(provider, idToken);
     }

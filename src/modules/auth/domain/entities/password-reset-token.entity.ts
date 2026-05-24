@@ -24,7 +24,11 @@ export class PasswordResetToken {
     this.createdAt = props.createdAt;
   }
 
-  static create(userId: string, token: string, expiresAt: Date): PasswordResetToken {
+  static create(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): PasswordResetToken {
     return new PasswordResetToken({
       id: crypto.randomUUID(),
       userId,

@@ -27,7 +27,12 @@ export class SocialAuthCode {
     this.createdAt = props.createdAt;
   }
 
-  static create(userId: string, provider: string, code: string, expiresAt: Date): SocialAuthCode {
+  static create(
+    userId: string,
+    provider: string,
+    code: string,
+    expiresAt: Date,
+  ): SocialAuthCode {
     return new SocialAuthCode({
       id: crypto.randomUUID(),
       code,

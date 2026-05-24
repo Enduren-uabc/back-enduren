@@ -139,7 +139,11 @@ export class User {
     this.updatedAt = new Date();
   }
 
-  updateFromSocial(email: string, username: string, avatarUrl: string | null): void {
+  updateFromSocial(
+    email: string,
+    username: string,
+    avatarUrl: string | null,
+  ): void {
     this.email = email.toLowerCase().trim();
     this.username = username.trim();
     if (avatarUrl !== null) {

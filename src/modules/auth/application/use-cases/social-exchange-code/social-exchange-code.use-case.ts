@@ -1,9 +1,23 @@
-import { Injectable, Inject, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserRepository, USER_REPOSITORY_PORT } from '../../../../users/domain/repositories/user.repository';
-import { RefreshTokenRepository, REFRESH_TOKEN_REPOSITORY_PORT } from '../../../domain/repositories/refresh-token.repository';
-import { SocialAuthCodeRepository, SOCIAL_AUTH_CODE_REPOSITORY_PORT } from '../../../domain/repositories/social-auth-code.repository';
+import {
+  UserRepository,
+  USER_REPOSITORY_PORT,
+} from '../../../../users/domain/repositories/user.repository';
+import {
+  RefreshTokenRepository,
+  REFRESH_TOKEN_REPOSITORY_PORT,
+} from '../../../domain/repositories/refresh-token.repository';
+import {
+  SocialAuthCodeRepository,
+  SOCIAL_AUTH_CODE_REPOSITORY_PORT,
+} from '../../../domain/repositories/social-auth-code.repository';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 
 export interface ExchangeCodeInput {
@@ -11,7 +25,13 @@ export interface ExchangeCodeInput {
 }
 
 export interface ExchangeCodeOutput {
-  user: { id: string; email: string; username: string; role: string; emailVerified: boolean };
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    role: string;
+    emailVerified: boolean;
+  };
   accessToken: string;
   refreshToken: string;
 }
@@ -37,7 +57,9 @@ export class SocialExchangeCodeUseCase {
     }
 
     if (authCode.isExpired()) {
-      throw new BadRequestException('El código ha expirado. Inicia sesión nuevamente.');
+      throw new BadRequestException(
+        'El código ha expirado. Inicia sesión nuevamente.',
+      );
     }
 
     if (authCode.usedAt !== null) {
@@ -50,7 +72,9 @@ export class SocialExchangeCodeUseCase {
     }
 
     if (user.status === 'locked') {
-      throw new UnauthorizedException('La cuenta está bloqueada. Intenta más tarde.');
+      throw new UnauthorizedException(
+        'La cuenta está bloqueada. Intenta más tarde.',
+      );
     }
 
     authCode.markAsUsed();
@@ -72,16 +96,31 @@ export class SocialExchangeCodeUseCase {
     };
   }
 
-  private async generateTokens(user: { id: string; email: string; role: string; emailVerified: boolean }): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified };
+  private async generateTokens(user: {
+    id: string;
+    email: string;
+    role: string;
+    emailVerified: boolean;
+  }): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      emailVerified: user.emailVerified,
+    };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as `${number}m`,
+      expiresIn: this.configService.get<string>(
+        'JWT_ACCESS_EXPIRATION',
+        '15m',
+      ) as `${number}m`,
     });
 
     const refreshTokenValue = crypto.randomUUID();
     const refreshExpiresDays = parseInt(
-      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d').replace('d', ''),
+      this.configService
+        .get<string>('JWT_REFRESH_EXPIRATION', '7d')
+        .replace('d', ''),
       10,
     );
     const refreshToken = RefreshToken.create(

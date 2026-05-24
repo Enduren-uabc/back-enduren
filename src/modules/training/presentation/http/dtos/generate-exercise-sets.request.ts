@@ -5,11 +5,13 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Length,
 } from 'class-validator';
 
 export class GenerateExerciseSetsRequestDto {
   @IsOptional()
   @IsString()
+  @Length(1, 50)
   strategyKey!: string | null;
 
   @IsInt()

@@ -35,8 +35,14 @@ import { ResetPasswordUseCase } from './application/use-cases/reset-password/res
 import { ValidateResetTokenUseCase } from './application/use-cases/validate-reset-token/validate-reset-token.use-case';
 import { SocialLoginUseCase } from './application/use-cases/social-login/social-login.use-case';
 import { SocialExchangeCodeUseCase } from './application/use-cases/social-exchange-code/social-exchange-code.use-case';
-import { SocialAuthVerifierPort, SOCIAL_AUTH_VERIFIER_PORT } from './application/ports/social-auth-verifier.port';
-import { SocialAuthCodeRepository, SOCIAL_AUTH_CODE_REPOSITORY_PORT } from './domain/repositories/social-auth-code.repository';
+import {
+  SocialAuthVerifierPort,
+  SOCIAL_AUTH_VERIFIER_PORT,
+} from './application/ports/social-auth-verifier.port';
+import {
+  SocialAuthCodeRepository,
+  SOCIAL_AUTH_CODE_REPOSITORY_PORT,
+} from './domain/repositories/social-auth-code.repository';
 import { SocialVerifierFactory } from './infrastructure/providers/social-verifier-factory.provider';
 import { GoogleVerifier } from './infrastructure/providers/google-verifier.provider';
 import { AppleVerifier } from './infrastructure/providers/apple-verifier.provider';
@@ -127,7 +133,8 @@ import { UsersModule } from '../users/users.module';
         appleVerifier: AppleVerifier,
         devSocialVerifier: DevSocialVerifier,
       ) => {
-        const useMock = configService.get<string>('SOCIAL_AUTH_MOCK', 'false') === 'true';
+        const useMock =
+          configService.get<string>('SOCIAL_AUTH_MOCK', 'false') === 'true';
         if (useMock) {
           return devSocialVerifier;
         }

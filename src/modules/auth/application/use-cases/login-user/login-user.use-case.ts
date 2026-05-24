@@ -22,7 +22,13 @@ export interface LoginInput {
 }
 
 export interface LoginOutput {
-  user: { id: string; email: string; username: string; role: string; emailVerified: boolean };
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    role: string;
+    emailVerified: boolean;
+  };
   accessToken: string;
   refreshToken: string;
 }
@@ -80,7 +86,12 @@ export class LoginUserUseCase {
   private async generateTokens(
     user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      emailVerified: user.emailVerified,
+    };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: this.configService.get<string>(

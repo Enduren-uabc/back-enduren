@@ -58,7 +58,10 @@ export class TypeormUserRepository implements UserRepository {
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findBySocialId(provider: string, socialId: string): Promise<User | null> {
+  async findBySocialId(
+    provider: string,
+    socialId: string,
+  ): Promise<User | null> {
     const entity = await this.ormRepo.findOne({
       where: { authProvider: provider, socialId },
     });

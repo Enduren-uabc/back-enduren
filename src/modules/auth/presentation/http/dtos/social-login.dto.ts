@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsIn } from 'class-validator';
+import { IsString, IsBoolean, IsIn, Length } from 'class-validator';
 
 export class SocialLoginDto {
   @IsString()
@@ -6,6 +6,7 @@ export class SocialLoginDto {
   provider!: 'google' | 'apple';
 
   @IsString()
+  @Length(1, 5000)
   idToken!: string;
 
   @IsBoolean()
