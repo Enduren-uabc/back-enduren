@@ -11,7 +11,7 @@ import { PUSH_TOKEN_REPOSITORY_PORT } from '../../domain/repositories/push-token
 import { NOTIFICATION_REPOSITORY_PORT } from '../../domain/repositories/notification.repository.port';
 import { ROUTINE_REPOSITORY_PORT } from '../../application/use-cases/create-reminder/create-reminder.use-case';
 import { PUSH_NOTIFICATION_PORT } from '../../application/ports/push-notification.port';
-import { AzureNotificationHubService } from '../push/azure-notification-hub.service';
+import { ExpoPushService } from '../push/expo-push.service';
 import { ReminderSchedulerService } from '../scheduling/reminder-scheduler.service';
 import { ReminderDueListener } from '../listeners/reminder-due.listener';
 import { ReminderCreatedListener } from '../listeners/reminder-created.listener';
@@ -49,7 +49,7 @@ import { RoutineDayTypeormEntity } from '../../../../modules/training/infrastruc
     },
     {
       provide: PUSH_NOTIFICATION_PORT,
-      useClass: AzureNotificationHubService,
+      useClass: ExpoPushService,
     },
     ReminderSchedulerService,
     ReminderDueListener,
