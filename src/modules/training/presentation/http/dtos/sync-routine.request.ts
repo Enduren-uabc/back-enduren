@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
-  IsUUID,
   Length,
   Matches,
   IsIn,
@@ -33,7 +32,7 @@ export class SyncRoutineExerciseSetDto {
 
 export class SyncRoutineExerciseDto {
   @IsOptional()
-  @IsUUID()
+  @IsString()
   id?: string;
 
   @IsString()
