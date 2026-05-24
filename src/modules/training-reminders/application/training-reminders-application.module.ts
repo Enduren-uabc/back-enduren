@@ -36,9 +36,11 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
     },
     {
       provide: EditReminderUseCase,
-      inject: [TRAINING_REMINDER_REPOSITORY_PORT],
-      useFactory: (reminderRepo: TrainingReminderRepository) =>
-        new EditReminderUseCase(reminderRepo),
+      inject: [TRAINING_REMINDER_REPOSITORY_PORT, ROUTINE_REPOSITORY_PORT],
+      useFactory: (
+        reminderRepo: TrainingReminderRepository,
+        routineRepo: RoutineRepository,
+      ) => new EditReminderUseCase(reminderRepo, routineRepo),
     },
     {
       provide: DeleteReminderUseCase,

@@ -14,11 +14,18 @@ export interface WorkoutSessionSummaryOutput {
   status: string;
 }
 
+export interface WorkoutSessionHistoryOutput {
+  sessions: WorkoutSessionSummaryOutput[];
+  hasIncompleteData: boolean;
+}
+
 /**
  * GetWorkoutSessionHistory use case (RF-13, RF-13.0.1, RF-13.0.5).
  * Returns all finished workout sessions for the current user,
  * ordered by startedAt descending, with summary data including
  * routine name and computed duration.
+ * Sessions with incomplete data (missing startedAt, missing routine,
+ * or missing finishedAt) are filtered out and reported via hasIncompleteData.
  */
 export class GetWorkoutSessionHistoryUseCase {
   constructor(
@@ -28,13 +35,13 @@ export class GetWorkoutSessionHistoryUseCase {
 
   public async execute(
     actor: CurrentActor,
-  ): Promise<WorkoutSessionSummaryOutput[]> {
+  ): Promise<WorkoutSessionHistoryOutput> {
     const sessions = await this.workoutSessionRepository.findFinishedByUserId(
       actor.userId,
     );
 
     if (sessions.length === 0) {
-      return [];
+      return { sessions: [], hasIncompleteData: false };
     }
 
     // Collect unique routine IDs to resolve routine names
@@ -43,10 +50,10 @@ export class GetWorkoutSessionHistoryUseCase {
 
     for (const routineId of routineIds) {
       const routine = await this.routineRepository.findById(routineId);
-      routineNames.set(routineId, routine?.name ?? 'Unknown Routine');
+      routineNames.set(routineId, routine?.name ?? '');
     }
 
-    return sessions.map((session) => {
+    const mapped = sessions.map((session) => {
       const durationMinutes =
         session.finishedAt && session.startedAt
           ? Math.round(
@@ -60,7 +67,7 @@ export class GetWorkoutSessionHistoryUseCase {
         id: session.id,
         routineId: session.routineId,
         dayOfWeek: session.dayOfWeek,
-        routineName: routineNames.get(session.routineId) ?? 'Unknown Routine',
+        routineName: routineNames.get(session.routineId) ?? '',
         startedAt: session.startedAt,
         finishedAt: session.finishedAt,
         durationMinutes,
@@ -68,5 +75,15 @@ export class GetWorkoutSessionHistoryUseCase {
         status: session.status,
       };
     });
+
+    const complete = mapped.filter(
+      (s) => s.startedAt && s.routineName !== '' && s.finishedAt,
+    );
+    const hasIncompleteData = complete.length < mapped.length;
+
+    return {
+      sessions: complete,
+      hasIncompleteData,
+    };
   }
 }

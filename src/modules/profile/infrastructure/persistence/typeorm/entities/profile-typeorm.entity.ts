@@ -41,6 +41,9 @@ export class ProfileTypeormEntity {
   @Column('varchar', { default: 'kg' })
   weightUnit!: string;
 
+  @Column('varchar', { nullable: true })
+  defaultTrainingStrategyKey!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

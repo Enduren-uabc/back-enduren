@@ -2,5 +2,5 @@ export class RecentSessionResponseDto {
   sessionId!: string;
   date!: string;
   routineName!: string;
-  durationMinutes!: number;
+  durationMinutes!: number | null;
 }

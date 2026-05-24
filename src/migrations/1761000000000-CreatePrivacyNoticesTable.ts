@@ -3,7 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class CreatePrivacyNoticesTable1761000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE privacy_notices (
+      CREATE TABLE IF NOT EXISTS privacy_notices (
         id uuid PRIMARY KEY,
         version varchar(20) NOT NULL,
         content text NOT NULL,
@@ -14,8 +14,10 @@ export class CreatePrivacyNoticesTable1761000000000 implements MigrationInterfac
       )
     `);
 
+    await queryRunner.query(`DELETE FROM privacy_notices`);
+
     await queryRunner.query(`
-      INSERT INTO privacy_notices (id, version, content, "updatedAt", "isActive")
+      INSERT INTO privacy_notices (id, version, content, "updatedAt")
       VALUES (
         gen_random_uuid(),
         '1.0',

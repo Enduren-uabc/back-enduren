@@ -4,6 +4,24 @@ import {
   ReminderErrorCode,
 } from '../../../domain/errors/reminder-domain.error';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  isValidDayOfWeek,
+  isValidTime,
+  DayOfWeek,
+} from '../../../domain/value-objects/day-of-week.vo';
+
+export const ROUTINE_REPOSITORY_PORT = Symbol('ROUTINE_REPOSITORY_PORT');
+
+export interface RoutineInfo {
+  id: string;
+  name: string;
+  days: Array<{ dayOfWeek: string }>;
+  isActive: boolean;
+}
+
+export interface RoutineRepository {
+  findById(id: string): Promise<RoutineInfo | null>;
+}
 
 export interface EditReminderInput {
   reminderId: string;
@@ -23,6 +41,7 @@ export interface EditReminderOutput {
 export class EditReminderUseCase {
   constructor(
     private readonly reminderRepository: TrainingReminderRepository,
+    private readonly routineRepository: RoutineRepository,
   ) {}
 
   public async execute(
@@ -54,14 +73,48 @@ export class EditReminderUseCase {
       );
     }
 
-    const newDay = (input.dayOfWeek ?? reminder.dayOfWeek) as any;
+    const newDay = input.dayOfWeek ?? reminder.dayOfWeek;
     const newTime = input.time ?? reminder.time;
+
+    if (input.dayOfWeek && !isValidDayOfWeek(input.dayOfWeek)) {
+      throw new ReminderDomainError(
+        ReminderErrorCode.INVALID_DAY,
+        `Invalid day: "${input.dayOfWeek}"`,
+        { dayOfWeek: input.dayOfWeek },
+      );
+    }
+
+    if (input.time && !isValidTime(input.time)) {
+      throw new ReminderDomainError(
+        ReminderErrorCode.INVALID_TIME_FORMAT,
+        `Invalid time: "${input.time}". Use HH:mm format`,
+        { time: input.time },
+      );
+    }
+
+    const routine = await this.routineRepository.findById(reminder.routineId);
+    if (!routine) {
+      throw new ReminderDomainError(
+        ReminderErrorCode.ROUTINE_NOT_FOUND,
+        'Associated routine not found',
+        { routineId: reminder.routineId },
+      );
+    }
+
+    const dayExists = routine.days.some((d) => d.dayOfWeek === newDay);
+    if (!dayExists) {
+      throw new ReminderDomainError(
+        ReminderErrorCode.DAY_NOT_IN_ROUTINE,
+        `Day "${newDay}" is not configured in the associated routine`,
+        { dayOfWeek: newDay, routineId: reminder.routineId },
+      );
+    }
 
     const nextActivationAt = reminder.recalculateNextActivation();
 
     const edited = reminder.edit({
-      dayOfWeek: input.dayOfWeek as any,
-      time: input.time,
+      dayOfWeek: newDay as DayOfWeek,
+      time: newTime,
       nextActivationAt,
     });
 

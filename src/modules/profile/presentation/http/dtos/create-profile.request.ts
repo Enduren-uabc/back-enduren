@@ -56,4 +56,8 @@ export class CreateProfileRequestDto {
   @IsOptional()
   @IsIn(['kg', 'lbs'])
   weightUnit?: 'kg' | 'lbs';
+
+  @IsOptional()
+  @IsString()
+  defaultTrainingStrategyKey?: string;
 }

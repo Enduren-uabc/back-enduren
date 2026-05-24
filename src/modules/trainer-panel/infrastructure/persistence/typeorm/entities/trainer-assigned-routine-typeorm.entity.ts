@@ -15,36 +15,36 @@ export class TrainerAssignedRoutineTypeormEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'trainer_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   trainerId: string;
 
-  @Column({ name: 'client_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   clientId: string;
 
-  @Column({ name: 'link_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   linkId: string;
 
-  @Column({ name: 'routine_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   routineId: string;
 
-  @Column({ name: 'routine_snapshot', type: 'jsonb' })
+  @Column({ type: 'jsonb' })
   routineSnapshot: Record<string, unknown>;
 
   @Column({ type: 'varchar', length: 20, default: 'active' })
   status: string;
 
-  @Column({ name: 'assigned_at', type: 'timestamp', default: () => 'NOW()' })
+  @Column({ type: 'timestamp', default: () => 'NOW()' })
   assignedAt: Date;
 
-  @Column({ name: 'replaced_by_id', type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   replacedById: string | null;
 
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

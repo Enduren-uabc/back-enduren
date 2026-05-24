@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
 import { TrainerVerificationModule } from '../trainer-verification/trainer-verification.module';
 import { TrainingModule } from '../training/training.module';
+import { TrainingRemindersInfrastructureModule } from '../training-reminders/infrastructure/providers/training-reminders-infrastructure.module';
 import { TRAINER_LINK_REQUEST_REPOSITORY_PORT } from './domain/repositories/trainer-link-request.repository.port';
 import { TRAINER_LINK_REPOSITORY_PORT } from './domain/repositories/trainer-link.repository.port';
 import { TRAINER_SEARCH_REPOSITORY_PORT } from './domain/repositories/trainer-search.repository.port';
@@ -44,6 +45,7 @@ import { TrainerLinkErrorFilter } from './presentation/http/filters/trainer-link
     UsersModule,
     TrainerVerificationModule,
     TrainingModule,
+    TrainingRemindersInfrastructureModule,
     TypeOrmModule.forFeature([
       TrainerLinkRequestTypeormEntity,
       TrainerLinkTypeormEntity,

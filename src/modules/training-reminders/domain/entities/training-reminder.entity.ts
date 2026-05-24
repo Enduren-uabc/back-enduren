@@ -194,7 +194,7 @@ export class TrainingReminder {
     const targetDay = dayMap[this.dayOfWeek];
     const currentDay = candidate.getDay();
     let diff = targetDay - currentDay;
-    if (diff <= 0) diff += 7;
+    if (diff < 0) diff += 7;
     candidate.setDate(candidate.getDate() + diff);
 
     return candidate;

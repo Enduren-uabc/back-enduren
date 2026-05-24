@@ -39,6 +39,7 @@ import {
   WorkoutExerciseTargetSetResponseDto,
 } from '../dtos/workout-session.response';
 import { WorkoutSessionSummaryResponseDto } from '../dtos/workout-session-summary.response';
+import { WorkoutSessionHistoryResponseDto } from '../dtos/workout-session-history.response';
 import {
   ExerciseProgressResponseDto,
   ExerciseProgressRecordDto,
@@ -116,23 +117,26 @@ export class WorkoutSessionController {
   @Get('history')
   public async history(
     @CurrentUser() user: JwtPayload,
-  ): Promise<WorkoutSessionSummaryResponseDto[]> {
-    const results = await this.getWorkoutSessionHistoryUseCase.execute(
+  ): Promise<WorkoutSessionHistoryResponseDto> {
+    const result = await this.getWorkoutSessionHistoryUseCase.execute(
       this.getActor(user),
     );
-    return results.map((r) => {
-      const dto = new WorkoutSessionSummaryResponseDto();
-      dto.id = r.id;
-      dto.routineId = r.routineId;
-      dto.routineName = r.routineName;
-      dto.dayOfWeek = r.dayOfWeek;
-      dto.startedAt = r.startedAt;
-      dto.finishedAt = r.finishedAt;
-      dto.durationMinutes = r.durationMinutes;
-      dto.exerciseCount = r.exerciseCount;
-      dto.status = r.status;
-      return dto;
+    const dto = new WorkoutSessionHistoryResponseDto();
+    dto.sessions = result.sessions.map((r) => {
+      const s = new WorkoutSessionSummaryResponseDto();
+      s.id = r.id;
+      s.routineId = r.routineId;
+      s.routineName = r.routineName ?? 'Unknown Routine';
+      s.dayOfWeek = r.dayOfWeek;
+      s.startedAt = r.startedAt;
+      s.finishedAt = r.finishedAt;
+      s.durationMinutes = r.durationMinutes;
+      s.exerciseCount = r.exerciseCount;
+      s.status = r.status;
+      return s;
     });
+    dto.hasIncompleteData = result.hasIncompleteData;
+    return dto;
   }
 
   @Patch(':sessionId/discard')

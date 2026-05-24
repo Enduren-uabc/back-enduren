@@ -6,28 +6,28 @@ export class TrainerCertificateTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid', { name: 'trainer_verification_id' })
+  @Column('uuid')
   trainerVerificationId!: string;
 
   @Column('varchar', { length: 255 })
   name!: string;
 
-  @Column('varchar', { name: 'issuing_organization', length: 255 })
+  @Column('varchar', { length: 255 })
   issuingOrganization!: string;
 
-  @Column('varchar', { name: 'container_name', length: 100 })
+  @Column('varchar', { length: 100 })
   containerName!: string;
 
-  @Column('text', { name: 'document_url' })
+  @Column('text')
   documentUrl!: string;
 
-  @Column('varchar', { name: 'file_name', length: 255 })
+  @Column('varchar', { length: 255 })
   fileName!: string;
 
-  @Column('integer', { name: 'file_size' })
+  @Column('integer')
   fileSize!: number;
 
-  @Column({ name: 'uploaded_at' })
+  @Column()
   uploadedAt!: Date;
 
   @ManyToOne(
@@ -35,6 +35,6 @@ export class TrainerCertificateTypeormEntity {
     (verification) => verification.certificates,
     { onDelete: 'CASCADE' },
   )
-  @JoinColumn({ name: 'trainer_verification_id' })
+  @JoinColumn({ name: 'trainerVerificationId' })
   verification!: TrainerVerificationTypeormEntity;
 }

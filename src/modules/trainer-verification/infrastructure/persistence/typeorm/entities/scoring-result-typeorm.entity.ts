@@ -6,34 +6,34 @@ export class ScoringResultTypeormEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ name: 'verification_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   verificationId: string;
 
   @ManyToOne(() => TrainerVerificationTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'verification_id' })
+  @JoinColumn({ name: 'verificationId' })
   verification: TrainerVerificationTypeormEntity;
 
-  @Column({ name: 'risk_score', type: 'integer' })
+  @Column({ type: 'integer' })
   riskScore: number;
 
-  @Column({ name: 'risk_level', type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 20 })
   riskLevel: string;
 
-  @Column({ name: 'recommended_action', type: 'varchar', length: 30 })
+  @Column({ type: 'varchar', length: 30 })
   recommendedAction: string;
 
-  @Column({ name: 'summary', type: 'text' })
+  @Column({ type: 'text' })
   summary: string;
 
-  @Column({ name: 'positive_signals', type: 'json' })
+  @Column({ type: 'json' })
   positiveSignals: string[];
 
-  @Column({ name: 'alerts', type: 'json' })
+  @Column({ type: 'json' })
   alerts: Array<{ code: string; severity: string; message: string }>;
 
-  @Column({ name: 'overrides', type: 'json' })
+  @Column({ type: 'json' })
   overrides: string[];
 
-  @Column({ name: 'created_at', type: 'timestamp' })
+  @Column({ type: 'timestamp' })
   createdAt: Date;
 }

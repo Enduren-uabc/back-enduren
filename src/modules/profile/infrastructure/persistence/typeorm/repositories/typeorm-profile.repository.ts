@@ -41,6 +41,7 @@ export class TypeormProfileRepository implements ProfileRepository {
     entity.mainGoal = profile.mainGoal;
     entity.daysAvailablePerWeek = profile.daysAvailablePerWeek;
     entity.weightUnit = profile.weightUnit;
+    entity.defaultTrainingStrategyKey = profile.defaultTrainingStrategyKey;
     entity.createdAt = profile.createdAt;
     entity.updatedAt = profile.updatedAt;
     return entity;
@@ -67,6 +68,7 @@ export class TypeormProfileRepository implements ProfileRepository {
         | 'general_fitness',
       daysAvailablePerWeek: entity.daysAvailablePerWeek,
       weightUnit: entity.weightUnit as 'kg' | 'lbs',
+      defaultTrainingStrategyKey: entity.defaultTrainingStrategyKey,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });

@@ -20,6 +20,7 @@ export interface ProfileProps {
   mainGoal: MainGoal;
   daysAvailablePerWeek: number;
   weightUnit: WeightUnit;
+  defaultTrainingStrategyKey: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +37,7 @@ export class Profile {
   public mainGoal: MainGoal;
   public daysAvailablePerWeek: number;
   public weightUnit: WeightUnit;
+  public defaultTrainingStrategyKey: string | null;
   public readonly createdAt: Date;
   public updatedAt: Date;
 
@@ -51,6 +53,7 @@ export class Profile {
     this.mainGoal = props.mainGoal;
     this.daysAvailablePerWeek = props.daysAvailablePerWeek;
     this.weightUnit = props.weightUnit;
+    this.defaultTrainingStrategyKey = props.defaultTrainingStrategyKey;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -67,6 +70,7 @@ export class Profile {
     mainGoal: MainGoal,
     daysAvailablePerWeek: number = 3,
     weightUnit: WeightUnit = 'kg',
+    defaultTrainingStrategyKey: string | null = null,
   ): Profile {
     const now = new Date();
     return new Profile({
@@ -81,6 +85,7 @@ export class Profile {
       mainGoal,
       daysAvailablePerWeek,
       weightUnit,
+      defaultTrainingStrategyKey,
       createdAt: now,
       updatedAt: now,
     });
@@ -113,6 +118,7 @@ export class Profile {
     mainGoal: MainGoal,
     daysAvailablePerWeek: number,
     weightUnit: WeightUnit,
+    defaultTrainingStrategyKey: string | null = null,
   ): void {
     this.fullName = fullName.trim();
     this.birthDate = birthDate;
@@ -123,6 +129,7 @@ export class Profile {
     this.mainGoal = mainGoal;
     this.daysAvailablePerWeek = daysAvailablePerWeek;
     this.weightUnit = weightUnit;
+    this.defaultTrainingStrategyKey = defaultTrainingStrategyKey;
     this.updatedAt = new Date();
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TrainerVerificationModule } from '../trainer-verification/trainer-verification.module';
 import { TrainerLinkModule } from '../trainer-link/trainer-link.module';
 import { TrainingModule } from '../training/training.module';
 import { TrainingRemindersInfrastructureModule } from '../training-reminders/infrastructure/providers/training-reminders-infrastructure.module';
@@ -22,6 +23,7 @@ import {
 
 @Module({
   imports: [
+    TrainerVerificationModule,
     TrainerLinkModule,
     TrainingModule,
     TrainingRemindersInfrastructureModule,
