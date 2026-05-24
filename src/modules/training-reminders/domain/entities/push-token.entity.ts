@@ -24,8 +24,19 @@ export class PushToken {
     this.updatedAt = updatedAt;
   }
 
-  public static create(userId: string, token: string, platform: Platform): PushToken {
-    return new PushToken(crypto.randomUUID(), userId, token, platform, new Date(), new Date());
+  public static create(
+    userId: string,
+    token: string,
+    platform: Platform,
+  ): PushToken {
+    return new PushToken(
+      crypto.randomUUID(),
+      userId,
+      token,
+      platform,
+      new Date(),
+      new Date(),
+    );
   }
 
   public static reconstitute(props: {
@@ -36,6 +47,13 @@ export class PushToken {
     createdAt: Date;
     updatedAt: Date;
   }): PushToken {
-    return new PushToken(props.id, props.userId, props.token, props.platform, props.createdAt, props.updatedAt);
+    return new PushToken(
+      props.id,
+      props.userId,
+      props.token,
+      props.platform,
+      props.createdAt,
+      props.updatedAt,
+    );
   }
 }

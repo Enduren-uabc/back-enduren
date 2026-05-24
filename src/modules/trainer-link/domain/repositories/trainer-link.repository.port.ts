@@ -19,6 +19,10 @@ export interface TrainerLinkRepositoryPort {
     trainerId: string,
     pagination: Pagination,
   ): Promise<PaginatedResult<TrainerLink>>;
+  findActiveByTrainerIdAndClientId(
+    trainerId: string,
+    clientId: string,
+  ): Promise<TrainerLink | null>;
   findActiveByClientId(clientId: string): Promise<TrainerLink[]>;
   countActiveByClientId(clientId: string): Promise<number>;
   countActiveByTrainerId(trainerId: string): Promise<number>;

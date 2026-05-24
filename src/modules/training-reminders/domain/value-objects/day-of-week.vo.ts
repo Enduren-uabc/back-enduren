@@ -1,4 +1,7 @@
-import { ReminderDomainError, ReminderErrorCode } from '../errors/reminder-domain.error';
+import {
+  ReminderDomainError,
+  ReminderErrorCode,
+} from '../errors/reminder-domain.error';
 
 export type DayOfWeek =
   | 'monday'

@@ -9,7 +9,14 @@ import { NOTIFICATION_REPOSITORY_PORT } from '../domain/repositories/notificatio
 import { TrainingRemindersInfrastructureModule } from '../infrastructure/providers/training-reminders-infrastructure.module';
 
 @Module({
-  imports: [TrainingRemindersApplicationModule, TrainingRemindersInfrastructureModule],
-  controllers: [RemindersController, PushTokenController, NotificationsController],
+  imports: [
+    TrainingRemindersApplicationModule,
+    TrainingRemindersInfrastructureModule,
+  ],
+  controllers: [
+    RemindersController,
+    PushTokenController,
+    NotificationsController,
+  ],
 })
 export class TrainingRemindersPresentationModule {}

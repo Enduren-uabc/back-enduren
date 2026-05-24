@@ -1,5 +1,8 @@
 import { TrainingReminderRepository } from '../../../domain/repositories/training-reminder.repository.port';
-import { ReminderDomainError, ReminderErrorCode } from '../../../domain/errors/reminder-domain.error';
+import {
+  ReminderDomainError,
+  ReminderErrorCode,
+} from '../../../domain/errors/reminder-domain.error';
 import { CurrentActor } from '../../ports/current-actor.port';
 
 export interface EditReminderInput {

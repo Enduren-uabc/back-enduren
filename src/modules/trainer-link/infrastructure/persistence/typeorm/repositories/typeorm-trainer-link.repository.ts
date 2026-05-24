@@ -58,6 +58,16 @@ export class TypeormTrainerLinkRepository implements TrainerLinkRepositoryPort {
     };
   }
 
+  async findActiveByTrainerIdAndClientId(
+    trainerId: string,
+    clientId: string,
+  ): Promise<TrainerLink | null> {
+    const entity = await this.ormRepo.findOne({
+      where: { trainerId, clientId, status: 'active' },
+    });
+    return entity ? TrainerLinkMapper.toDomain(entity) : null;
+  }
+
   async findActiveByClientId(clientId: string): Promise<TrainerLink[]> {
     const entities = await this.ormRepo.find({
       where: { clientId, status: 'active' },

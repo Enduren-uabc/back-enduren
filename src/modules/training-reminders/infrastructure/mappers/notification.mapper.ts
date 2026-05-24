@@ -1,4 +1,7 @@
-import { InAppNotification, type NotificationType } from '../../domain/entities/notification.entity';
+import {
+  InAppNotification,
+  type NotificationType,
+} from '../../domain/entities/notification.entity';
 import { NotificationTypeormEntity } from '../persistence/typeorm/entities/notification-typeorm.entity';
 
 export class NotificationMapper {

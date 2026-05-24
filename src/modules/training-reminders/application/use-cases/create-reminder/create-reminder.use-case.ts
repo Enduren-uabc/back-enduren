@@ -1,8 +1,17 @@
 import { TrainingReminder } from '../../../domain/entities/training-reminder.entity';
-import { ReminderDomainError, ReminderErrorCode } from '../../../domain/errors/reminder-domain.error';
+import {
+  ReminderDomainError,
+  ReminderErrorCode,
+} from '../../../domain/errors/reminder-domain.error';
 import { ReminderCreatedEvent } from '../../../domain/events/reminder-created.event';
-import { TrainingReminderRepository, TRAINING_REMINDER_REPOSITORY_PORT } from '../../../domain/repositories/training-reminder.repository.port';
-import { isValidDayOfWeek, isValidTime } from '../../../domain/value-objects/day-of-week.vo';
+import {
+  TrainingReminderRepository,
+  TRAINING_REMINDER_REPOSITORY_PORT,
+} from '../../../domain/repositories/training-reminder.repository.port';
+import {
+  isValidDayOfWeek,
+  isValidTime,
+} from '../../../domain/value-objects/day-of-week.vo';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
@@ -92,10 +101,13 @@ export class CreateReminderUseCase {
       userId: actor.userId,
       routineId: routine.id,
       routineName: routine.name,
-      dayOfWeek: input.dayOfWeek as any,
+      dayOfWeek: input.dayOfWeek,
       time: input.time,
       timezone: input.timezone,
-      nextActivationAt: this.calculateNextActivation(input.dayOfWeek, input.time),
+      nextActivationAt: this.calculateNextActivation(
+        input.dayOfWeek,
+        input.time,
+      ),
     });
 
     const saved = await this.reminderRepository.save(reminder);
@@ -121,7 +133,10 @@ export class CreateReminderUseCase {
     };
   }
 
-  private calculateNextActivation(dayOfWeek: import('../../../domain/value-objects/day-of-week.vo').DayOfWeek, time: string): Date {
+  private calculateNextActivation(
+    dayOfWeek: import('../../../domain/value-objects/day-of-week.vo').DayOfWeek,
+    time: string,
+  ): Date {
     const now = new Date();
     const [hours, minutes] = time.split(':').map(Number);
     const candidate = new Date(now);
@@ -132,8 +147,13 @@ export class CreateReminderUseCase {
     }
 
     const dayMap: Record<string, number> = {
-      monday: 1, tuesday: 2, wednesday: 3, thursday: 4,
-      friday: 5, saturday: 6, sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+      sunday: 0,
     };
     const targetDay = dayMap[dayOfWeek];
     const currentDay = candidate.getDay();

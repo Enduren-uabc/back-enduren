@@ -1,4 +1,7 @@
-import { PushToken, type Platform } from '../../domain/entities/push-token.entity';
+import {
+  PushToken,
+  type Platform,
+} from '../../domain/entities/push-token.entity';
 import { PushTokenTypeormEntity } from '../persistence/typeorm/entities/push-token-typeorm.entity';
 
 export class PushTokenMapper {

@@ -254,14 +254,16 @@ export class WorkoutExercise {
 
     const updatedSets = this.workoutSets
       .filter((_, i) => i !== setIndex)
-      .map((ws, i) => WorkoutSet.reconstitute(
-        i + 1,
-        ws.repsPerformed,
-        ws.weightUsed,
-        ws.completed,
-        ws.targetReps,
-        ws.targetWeight,
-      ));
+      .map((ws, i) =>
+        WorkoutSet.reconstitute(
+          i + 1,
+          ws.repsPerformed,
+          ws.weightUsed,
+          ws.completed,
+          ws.targetReps,
+          ws.targetWeight,
+        ),
+      );
 
     return new WorkoutExercise(
       this.exerciseId,

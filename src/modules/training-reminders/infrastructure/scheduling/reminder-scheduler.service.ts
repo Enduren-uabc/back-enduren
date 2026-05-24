@@ -1,7 +1,10 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { TrainingReminderRepository, TRAINING_REMINDER_REPOSITORY_PORT } from '../../domain/repositories/training-reminder.repository.port';
+import {
+  TrainingReminderRepository,
+  TRAINING_REMINDER_REPOSITORY_PORT,
+} from '../../domain/repositories/training-reminder.repository.port';
 import { ReminderDueEvent } from '../../domain/events/reminder-due.event';
 
 @Injectable()

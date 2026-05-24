@@ -13,7 +13,9 @@ export class TypeormNotificationRepository implements NotificationRepository {
     private readonly ormRepo: Repository<NotificationTypeormEntity>,
   ) {}
 
-  public async save(notification: InAppNotification): Promise<InAppNotification> {
+  public async save(
+    notification: InAppNotification,
+  ): Promise<InAppNotification> {
     const orm = NotificationMapper.toOrm(notification);
     const saved = await this.ormRepo.save(orm);
     return NotificationMapper.toDomain(saved);

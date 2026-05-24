@@ -10,7 +10,7 @@ export class ReminderCreatedListener {
   public async handle(event: ReminderCreatedEvent): Promise<void> {
     this.logger.log(
       `Reminder created: ${event.reminderId} for user ${event.userId}. ` +
-      `Next activation: ${event.nextActivationAt.toISOString()}`,
+        `Next activation: ${event.nextActivationAt.toISOString()}`,
     );
   }
 }

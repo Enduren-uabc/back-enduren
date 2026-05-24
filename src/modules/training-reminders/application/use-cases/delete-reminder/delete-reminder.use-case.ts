@@ -1,5 +1,11 @@
-import { TrainingReminderRepository, TRAINING_REMINDER_REPOSITORY_PORT } from '../../../domain/repositories/training-reminder.repository.port';
-import { ReminderDomainError, ReminderErrorCode } from '../../../domain/errors/reminder-domain.error';
+import {
+  TrainingReminderRepository,
+  TRAINING_REMINDER_REPOSITORY_PORT,
+} from '../../../domain/repositories/training-reminder.repository.port';
+import {
+  ReminderDomainError,
+  ReminderErrorCode,
+} from '../../../domain/errors/reminder-domain.error';
 import { ReminderDeletedEvent } from '../../../domain/events/reminder-deleted.event';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { EventEmitter2 } from '@nestjs/event-emitter';

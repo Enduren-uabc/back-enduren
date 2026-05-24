@@ -1,5 +1,12 @@
-import { ReminderDomainError, ReminderErrorCode } from '../errors/reminder-domain.error';
-import { assertValidDayOfWeek, assertValidTime, type DayOfWeek } from '../value-objects/day-of-week.vo';
+import {
+  ReminderDomainError,
+  ReminderErrorCode,
+} from '../errors/reminder-domain.error';
+import {
+  assertValidDayOfWeek,
+  assertValidTime,
+  type DayOfWeek,
+} from '../value-objects/day-of-week.vo';
 
 export type ReminderStatus = 'activo' | 'eliminado' | 'inactivo';
 
@@ -176,8 +183,13 @@ export class TrainingReminder {
     }
 
     const dayMap: Record<DayOfWeek, number> = {
-      monday: 1, tuesday: 2, wednesday: 3, thursday: 4,
-      friday: 5, saturday: 6, sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+      sunday: 0,
     };
     const targetDay = dayMap[this.dayOfWeek];
     const currentDay = candidate.getDay();

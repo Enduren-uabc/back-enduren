@@ -27,8 +27,20 @@ export class InAppNotification {
     this.createdAt = createdAt;
   }
 
-  public static create(userId: string, title: string, body: string): InAppNotification {
-    return new InAppNotification(crypto.randomUUID(), userId, title, body, 'reminder', null, new Date());
+  public static create(
+    userId: string,
+    title: string,
+    body: string,
+  ): InAppNotification {
+    return new InAppNotification(
+      crypto.randomUUID(),
+      userId,
+      title,
+      body,
+      'reminder',
+      null,
+      new Date(),
+    );
   }
 
   public static reconstitute(props: {
@@ -40,11 +52,27 @@ export class InAppNotification {
     readAt: Date | null;
     createdAt: Date;
   }): InAppNotification {
-    return new InAppNotification(props.id, props.userId, props.title, props.body, props.type, props.readAt, props.createdAt);
+    return new InAppNotification(
+      props.id,
+      props.userId,
+      props.title,
+      props.body,
+      props.type,
+      props.readAt,
+      props.createdAt,
+    );
   }
 
   public markAsRead(): InAppNotification {
-    return new InAppNotification(this.id, this.userId, this.title, this.body, this.type, new Date(), this.createdAt);
+    return new InAppNotification(
+      this.id,
+      this.userId,
+      this.title,
+      this.body,
+      this.type,
+      new Date(),
+      this.createdAt,
+    );
   }
 
   public get isRead(): boolean {

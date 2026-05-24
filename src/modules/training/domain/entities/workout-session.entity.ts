@@ -388,8 +388,7 @@ export class WorkoutSession {
       );
     }
 
-    const updatedExercise =
-      this.exercises[exerciseIndex].removeSet(setNumber);
+    const updatedExercise = this.exercises[exerciseIndex].removeSet(setNumber);
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 

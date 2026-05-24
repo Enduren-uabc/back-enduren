@@ -8,6 +8,8 @@ export class ReminderDeletedListener {
 
   @OnEvent('reminder.deleted', { async: true })
   public async handle(event: ReminderDeletedEvent): Promise<void> {
-    this.logger.log(`Reminder deleted: ${event.reminderId} for user ${event.userId}. Future activations cancelled.`);
+    this.logger.log(
+      `Reminder deleted: ${event.reminderId} for user ${event.userId}. Future activations cancelled.`,
+    );
   }
 }

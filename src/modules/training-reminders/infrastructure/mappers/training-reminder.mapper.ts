@@ -1,4 +1,7 @@
-import { TrainingReminder, type ReminderStatus } from '../../domain/entities/training-reminder.entity';
+import {
+  TrainingReminder,
+  type ReminderStatus,
+} from '../../domain/entities/training-reminder.entity';
 import type { DayOfWeek } from '../../domain/value-objects/day-of-week.vo';
 import { TrainingReminderTypeormEntity } from '../persistence/typeorm/entities/training-reminder-typeorm.entity';
 

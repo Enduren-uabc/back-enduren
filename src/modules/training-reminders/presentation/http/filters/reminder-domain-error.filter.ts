@@ -7,7 +7,10 @@ import {
   BadRequestException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { ReminderDomainError, ReminderErrorCode } from '../../../domain/errors/reminder-domain.error';
+import {
+  ReminderDomainError,
+  ReminderErrorCode,
+} from '../../../domain/errors/reminder-domain.error';
 
 @Catch(ReminderDomainError)
 export class ReminderDomainErrorFilter implements ExceptionFilter {

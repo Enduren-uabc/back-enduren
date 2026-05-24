@@ -1,6 +1,8 @@
 import { InAppNotification } from '../entities/notification.entity';
 
-export const NOTIFICATION_REPOSITORY_PORT = Symbol('NOTIFICATION_REPOSITORY_PORT');
+export const NOTIFICATION_REPOSITORY_PORT = Symbol(
+  'NOTIFICATION_REPOSITORY_PORT',
+);
 
 export interface NotificationRepository {
   save(notification: InAppNotification): Promise<InAppNotification>;

@@ -7,7 +7,12 @@ export class ExpoPushService implements PushNotificationPort {
   private readonly logger = new Logger(ExpoPushService.name);
   private readonly expo = new Expo();
 
-  public async send(userId: string, title: string, body: string, pushTokens: string[]): Promise<void> {
+  public async send(
+    userId: string,
+    title: string,
+    body: string,
+    pushTokens: string[],
+  ): Promise<void> {
     if (pushTokens.length === 0) {
       this.logger.warn(`No push tokens for user ${userId}. Skipping.`);
       return;
@@ -16,7 +21,9 @@ export class ExpoPushService implements PushNotificationPort {
     const validTokens = pushTokens.filter((t) => Expo.isExpoPushToken(t));
 
     if (validTokens.length === 0) {
-      this.logger.warn(`No valid Expo push tokens for user ${userId}. Skipping.`);
+      this.logger.warn(
+        `No valid Expo push tokens for user ${userId}. Skipping.`,
+      );
       return;
     }
 
@@ -33,16 +40,23 @@ export class ExpoPushService implements PushNotificationPort {
     for (const chunk of chunks) {
       try {
         const receipts = await this.expo.sendPushNotificationsAsync(chunk);
-        this.logger.log(`Push sent: ${chunk.length} notification(s) to user ${userId}`);
+        this.logger.log(
+          `Push sent: ${chunk.length} notification(s) to user ${userId}`,
+        );
 
         for (let i = 0; i < receipts.length; i++) {
           const receipt = receipts[i];
           if (receipt.status === 'error') {
-            this.logger.error(`Push error for token ${validTokens[i]}: ${receipt.message}`);
+            this.logger.error(
+              `Push error for token ${validTokens[i]}: ${receipt.message}`,
+            );
           }
         }
       } catch (error) {
-        this.logger.error(`Failed to send push chunk for user ${userId}`, error);
+        this.logger.error(
+          `Failed to send push chunk for user ${userId}`,
+          error,
+        );
       }
     }
   }

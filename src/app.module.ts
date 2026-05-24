@@ -16,7 +16,9 @@ import { PublicationModule } from './modules/publication/publication.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TrainerVerificationModule } from './modules/trainer-verification/trainer-verification.module';
 import { TrainerLinkModule } from './modules/trainer-link/trainer-link.module';
+import { TrainerPanelModule } from './modules/trainer-panel/trainer-panel.module';
 import { TrainingRemindersModule } from './modules/training-reminders/training-reminders.module';
+import { PrivacyNoticeModule } from './modules/privacy-notice/privacy-notice.module';
 import { StorageSmokeTestModule } from './modules/storage-smoke-test/storage-smoke-test.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
 import { ObservabilityModule } from './shared/observability/observability.module';
@@ -64,7 +66,9 @@ import { ObservabilityModule } from './shared/observability/observability.module
     ProfileModule,
     TrainerVerificationModule,
     TrainerLinkModule,
+    TrainerPanelModule,
     TrainingRemindersModule,
+    PrivacyNoticeModule,
     StorageSmokeTestModule,
   ],
   controllers: [AppController],

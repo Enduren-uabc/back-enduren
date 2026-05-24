@@ -3,6 +3,9 @@ import { TrainingRemindersInfrastructureModule } from './infrastructure/provider
 import { TrainingRemindersPresentationModule } from './presentation/training-reminders-presentation.module';
 
 @Module({
-  imports: [TrainingRemindersInfrastructureModule, TrainingRemindersPresentationModule],
+  imports: [
+    TrainingRemindersInfrastructureModule,
+    TrainingRemindersPresentationModule,
+  ],
 })
 export class TrainingRemindersModule {}
