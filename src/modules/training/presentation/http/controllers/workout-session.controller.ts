@@ -3,6 +3,7 @@ import {
   Post,
   Patch,
   Get,
+  Delete,
   Body,
   Param,
   ParseIntPipe,
@@ -19,13 +20,17 @@ import { GetWorkoutSessionUseCase } from '../../../application/use-cases/get-wor
 import { GetWorkoutSessionHistoryUseCase } from '../../../application/use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from '../../../application/use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from '../../../application/use-cases/get-exercise-progress/get-exercise-progress.use-case';
+import { DiscardWorkoutSessionUseCase } from '../../../application/use-cases/discard-workout-session/discard-workout-session.use-case';
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
 import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
+import { AddSetToExerciseUseCase } from '../../../application/use-cases/add-set-to-exercise/add-set-to-exercise.use-case';
+import { RemoveSetFromExerciseUseCase } from '../../../application/use-cases/remove-set-from-exercise/remove-set-from-exercise.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.request';
 import { AdvanceWorkoutSessionRequestDto } from '../dtos/advance-workout-session.request';
 import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
+import { AddWorkoutSetRequestDto } from '../dtos/add-workout-set.request';
 import {
   WorkoutSessionResponseDto,
   WorkoutSessionDetailResponseDto,
@@ -55,9 +60,12 @@ export class WorkoutSessionController {
     private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase,
     private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase,
     private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
+    private readonly discardWorkoutSessionUseCase: DiscardWorkoutSessionUseCase,
     private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase,
     private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase,
     private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase,
+    private readonly addSetToExerciseUseCase: AddSetToExerciseUseCase,
+    private readonly removeSetFromExerciseUseCase: RemoveSetFromExerciseUseCase,
   ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
@@ -95,10 +103,13 @@ export class WorkoutSessionController {
   @Get('in-progress')
   public async resume(
     @CurrentUser() user: JwtPayload,
-  ): Promise<WorkoutSessionResponseDto> {
+  ): Promise<WorkoutSessionResponseDto | null> {
     const result = await this.resumeWorkoutSessionUseCase.execute(
       this.getActor(user),
     );
+    if (!result) {
+      return null;
+    }
     return this.mapToResponse(result);
   }
 
@@ -122,6 +133,18 @@ export class WorkoutSessionController {
       dto.status = r.status;
       return dto;
     });
+  }
+
+  @Patch(':sessionId/discard')
+  public async discard(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.discardWorkoutSessionUseCase.execute(
+      this.getActor(user),
+      { sessionId },
+    );
+    return this.mapToResponse(result);
   }
 
   @Get('exercises/:exerciseId/progress')
@@ -207,6 +230,34 @@ export class WorkoutSessionController {
     const result = await this.advanceToNextExerciseUseCase.execute(
       this.getActor(user),
       { sessionId, allowIncomplete: dto.allowIncomplete === true },
+    );
+    return this.mapToResponse(result);
+  }
+
+  @Post(':sessionId/exercises/:exerciseIndex/sets')
+  public async addSetToExercise(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+    @Param('exerciseIndex', ParseIntPipe) exerciseIndex: number,
+    @Body() dto: AddWorkoutSetRequestDto,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.addSetToExerciseUseCase.execute(
+      this.getActor(user),
+      { sessionId, exerciseIndex, reps: dto.reps, weight: dto.weight },
+    );
+    return this.mapToResponse(result);
+  }
+
+  @Delete(':sessionId/exercises/:exerciseIndex/sets/:setNumber')
+  public async removeSetFromExercise(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+    @Param('exerciseIndex', ParseIntPipe) exerciseIndex: number,
+    @Param('setNumber', ParseIntPipe) setNumber: number,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.removeSetFromExerciseUseCase.execute(
+      this.getActor(user),
+      { sessionId, exerciseIndex, setNumber },
     );
     return this.mapToResponse(result);
   }
