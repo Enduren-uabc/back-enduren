@@ -7,14 +7,14 @@ import { EditReminderUseCase } from './use-cases/edit-reminder/edit-reminder.use
 import { DeleteReminderUseCase } from './use-cases/delete-reminder/delete-reminder.use-case';
 import type { TrainingReminderRepository } from '../domain/repositories/training-reminder.repository.port';
 import type { RoutineRepository } from './use-cases/create-reminder/create-reminder.use-case';
-import type { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Module({
   imports: [TrainingRemindersInfrastructureModule],
   providers: [
     {
       provide: CreateReminderUseCase,
-      inject: [TRAINING_REMINDER_REPOSITORY_PORT, ROUTINE_REPOSITORY_PORT, 'EventEmitter2'],
+      inject: [TRAINING_REMINDER_REPOSITORY_PORT, ROUTINE_REPOSITORY_PORT, EventEmitter2],
       useFactory: (
         reminderRepo: TrainingReminderRepository,
         routineRepo: RoutineRepository,
@@ -35,7 +35,7 @@ import type { EventEmitter2 } from '@nestjs/event-emitter';
     },
     {
       provide: DeleteReminderUseCase,
-      inject: [TRAINING_REMINDER_REPOSITORY_PORT, 'EventEmitter2'],
+      inject: [TRAINING_REMINDER_REPOSITORY_PORT, EventEmitter2],
       useFactory: (
         reminderRepo: TrainingReminderRepository,
         eventEmitter: EventEmitter2,

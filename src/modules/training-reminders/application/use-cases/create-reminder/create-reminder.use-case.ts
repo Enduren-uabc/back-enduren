@@ -4,7 +4,7 @@ import { ReminderCreatedEvent } from '../../../domain/events/reminder-created.ev
 import { TrainingReminderRepository, TRAINING_REMINDER_REPOSITORY_PORT } from '../../../domain/repositories/training-reminder.repository.port';
 import { isValidDayOfWeek, isValidTime } from '../../../domain/value-objects/day-of-week.vo';
 import { CurrentActor } from '../../ports/current-actor.port';
-import type { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 export const ROUTINE_REPOSITORY_PORT = Symbol('ROUTINE_REPOSITORY_PORT');
 

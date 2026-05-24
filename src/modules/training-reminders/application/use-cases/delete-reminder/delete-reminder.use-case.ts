@@ -2,7 +2,7 @@ import { TrainingReminderRepository, TRAINING_REMINDER_REPOSITORY_PORT } from '.
 import { ReminderDomainError, ReminderErrorCode } from '../../../domain/errors/reminder-domain.error';
 import { ReminderDeletedEvent } from '../../../domain/events/reminder-deleted.event';
 import { CurrentActor } from '../../ports/current-actor.port';
-import type { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 export interface DeleteReminderInput {
   reminderId: string;
