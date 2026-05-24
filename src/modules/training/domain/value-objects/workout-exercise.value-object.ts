@@ -183,6 +183,96 @@ export class WorkoutExercise {
   }
 
   /**
+   * Adds a new set to this exercise.
+   * Enforces max 10 sets per exercise.
+   * Returns a new WorkoutExercise with the set added.
+   */
+  public addSet(reps: number, weight: number): WorkoutExercise {
+    if (this.workoutSets.length >= 10) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_EXERCISE_SETS_MAX_REACHED,
+        'Cannot add more than 10 sets to an exercise in a session',
+        { exerciseId: this.exerciseId, currentSets: this.workoutSets.length },
+      );
+    }
+
+    if (!Number.isInteger(reps) || reps < 1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        'Reps must be a positive integer (1+)',
+        { reps },
+      );
+    }
+
+    if (typeof weight !== 'number' || weight < 0) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_MISSING_REQUIRED_DATA,
+        'Weight must be a number >= 0',
+        { weight },
+      );
+    }
+
+    const nextSetNumber =
+      this.workoutSets.length > 0
+        ? Math.max(...this.workoutSets.map((s) => s.setNumber)) + 1
+        : 1;
+
+    const newWorkoutSet = WorkoutSet.create(nextSetNumber, reps, weight);
+    return new WorkoutExercise(
+      this.exerciseId,
+      this.exerciseName,
+      this.order,
+      this.targetSets,
+      [...this.workoutSets, newWorkoutSet],
+    );
+  }
+
+  /**
+   * Removes a set from this exercise by set number.
+   * Enforces at least 1 set must remain.
+   * Returns a new WorkoutExercise with the set removed.
+   */
+  public removeSet(setNumber: number): WorkoutExercise {
+    if (this.workoutSets.length <= 1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_EXERCISE_SETS_MIN_REQUIRED,
+        'Cannot remove the last set from an exercise',
+        { exerciseId: this.exerciseId, setNumber },
+      );
+    }
+
+    const setIndex = this.workoutSets.findIndex(
+      (ws) => ws.setNumber === setNumber,
+    );
+    if (setIndex === -1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_NOT_FOUND,
+        `Set number ${setNumber} not found in exercise ${this.exerciseName}`,
+        { setNumber, exerciseId: this.exerciseId },
+      );
+    }
+
+    const updatedSets = this.workoutSets
+      .filter((_, i) => i !== setIndex)
+      .map((ws, i) => WorkoutSet.reconstitute(
+        i + 1,
+        ws.repsPerformed,
+        ws.weightUsed,
+        ws.completed,
+        ws.targetReps,
+        ws.targetWeight,
+      ));
+
+    return new WorkoutExercise(
+      this.exerciseId,
+      this.exerciseName,
+      this.order,
+      this.targetSets,
+      updatedSets,
+    );
+  }
+
+  /**
    * Checks if all sets in this exercise are completed.
    */
   public areAllSetsCompleted(): boolean {

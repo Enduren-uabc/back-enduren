@@ -15,6 +15,7 @@ import {
 } from '../../../domain/repositories/refresh-token.repository';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 import { User } from '../../../../users/domain/entities/user.entity';
+import { AccountLockedException } from './account-locked.exception';
 
 export interface LoginInput {
   email: string;
@@ -51,13 +52,11 @@ export class LoginUserUseCase {
       input.email.toLowerCase().trim(),
     );
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    if (user.status === 'locked') {
-      throw new UnauthorizedException(
-        'Account is locked. Please try again later.',
-      );
+    if (user.isLocked()) {
+      throw new AccountLockedException(user.getRemainingLockSeconds());
     }
 
     const valid = await this.passwordHasher.compare(
@@ -65,8 +64,19 @@ export class LoginUserUseCase {
       user.passwordHash,
     );
     if (!valid) {
-      throw new UnauthorizedException('Invalid credentials');
+      user.recordFailedAttempt(
+        this.configService.get<number>('MAX_LOGIN_ATTEMPTS', 5),
+        this.configService.get<number>(
+          'LOGIN_LOCKOUT_DURATION_MS',
+          15 * 60 * 1000,
+        ),
+      );
+      await this.userRepository.save(user);
+      throw new UnauthorizedException('Credenciales inválidas');
     }
+
+    user.resetFailedAttempts();
+    await this.userRepository.save(user);
 
     await this.refreshTokenRepository.deleteByUserId(user.id);
 

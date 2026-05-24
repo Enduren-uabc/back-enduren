@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StorageModule } from './shared/storage/storage.module';
@@ -41,6 +42,15 @@ import { ObservabilityModule } from './shared/observability/observability.module
         migrationsRun: true,
       }),
     }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 120,
+        },
+      ],
+      errorMessage: 'Demasiadas solicitudes. Intenta de nuevo en un momento.',
+    }),
     ObservabilityModule,
     StorageModule,
     SharedEmailModule,
@@ -56,6 +66,10 @@ import { ObservabilityModule } from './shared/observability/observability.module
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

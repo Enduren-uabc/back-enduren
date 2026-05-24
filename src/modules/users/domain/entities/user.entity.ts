@@ -10,6 +10,8 @@ export interface UserProps {
   role: UserRole;
   emailVerified: boolean;
   status: UserStatus;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
   trainerCode: string | null;
   authProvider: AuthProvider | null;
   socialId: string | null;
@@ -27,6 +29,8 @@ export class User {
   public role: UserRole;
   public emailVerified: boolean;
   public status: UserStatus;
+  public failedLoginAttempts: number;
+  public lockedUntil: Date | null;
   public trainerCode: string | null;
   public authProvider: AuthProvider | null;
   public socialId: string | null;
@@ -43,6 +47,8 @@ export class User {
     this.role = props.role;
     this.emailVerified = props.emailVerified;
     this.status = props.status;
+    this.failedLoginAttempts = props.failedLoginAttempts;
+    this.lockedUntil = props.lockedUntil;
     this.trainerCode = props.trainerCode;
     this.authProvider = props.authProvider;
     this.socialId = props.socialId;
@@ -68,6 +74,8 @@ export class User {
       role,
       emailVerified: false,
       status: 'active',
+      failedLoginAttempts: 0,
+      lockedUntil: null,
       trainerCode: null,
       authProvider: 'email',
       socialId: null,
@@ -95,6 +103,8 @@ export class User {
       role: 'user',
       emailVerified: true,
       status: 'active',
+      failedLoginAttempts: 0,
+      lockedUntil: null,
       trainerCode: null,
       authProvider,
       socialId,
@@ -109,13 +119,49 @@ export class User {
     return new User(props);
   }
 
-  lock(): void {
+  lock(lockedUntil: Date): void {
     this.status = 'locked';
+    this.lockedUntil = lockedUntil;
     this.updatedAt = new Date();
   }
 
   unlock(): void {
     this.status = 'active';
+    this.lockedUntil = null;
+    this.failedLoginAttempts = 0;
+    this.updatedAt = new Date();
+  }
+
+  isLocked(): boolean {
+    return (
+      this.status === 'locked' &&
+      this.lockedUntil !== null &&
+      this.lockedUntil > new Date()
+    );
+  }
+
+  getRemainingLockSeconds(): number {
+    if (!this.lockedUntil) return 0;
+    const remaining = Math.floor(
+      (this.lockedUntil.getTime() - Date.now()) / 1000,
+    );
+    return Math.max(0, remaining);
+  }
+
+  recordFailedAttempt(maxAttempts: number, lockoutDurationMs: number): void {
+    this.failedLoginAttempts += 1;
+    if (this.failedLoginAttempts >= maxAttempts) {
+      this.lock(new Date(Date.now() + lockoutDurationMs));
+    }
+    this.updatedAt = new Date();
+  }
+
+  resetFailedAttempts(): void {
+    this.failedLoginAttempts = 0;
+    this.lockedUntil = null;
+    if (this.status === 'locked') {
+      this.status = 'active';
+    }
     this.updatedAt = new Date();
   }
 

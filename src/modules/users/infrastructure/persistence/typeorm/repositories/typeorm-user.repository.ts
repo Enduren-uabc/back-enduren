@@ -77,6 +77,8 @@ export class TypeormUserRepository implements UserRepository {
     entity.role = user.role;
     entity.emailVerified = user.emailVerified;
     entity.status = user.status;
+    entity.failedLoginAttempts = user.failedLoginAttempts;
+    entity.lockedUntil = user.lockedUntil;
     entity.trainerCode = user.trainerCode;
     entity.authProvider = user.authProvider;
     entity.socialId = user.socialId;
@@ -96,6 +98,8 @@ export class TypeormUserRepository implements UserRepository {
       role: entity.role as 'admin' | 'trainer' | 'user',
       emailVerified: entity.emailVerified,
       status: entity.status as 'active' | 'inactive' | 'locked',
+      failedLoginAttempts: entity.failedLoginAttempts,
+      lockedUntil: entity.lockedUntil,
       trainerCode: entity.trainerCode,
       authProvider: entity.authProvider as 'email' | 'google' | 'apple' | null,
       socialId: entity.socialId,
