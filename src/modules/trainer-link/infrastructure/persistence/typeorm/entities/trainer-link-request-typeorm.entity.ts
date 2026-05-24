@@ -15,10 +15,10 @@ export class TrainerLinkRequestTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'client_id' })
   clientId!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'trainer_id' })
   trainerId!: string;
 
   @Column('varchar', { length: 20, default: 'pendiente' })
@@ -27,21 +27,21 @@ export class TrainerLinkRequestTypeormEntity {
   @Column('text', { nullable: true })
   message!: string | null;
 
-  @Column('text', { nullable: true })
+  @Column('text', { name: 'rejection_reason', nullable: true })
   rejectionReason!: string | null;
 
-  @Column('timestamp', { nullable: true })
+  @Column('timestamp', { name: 'cancelled_at', nullable: true })
   cancelledAt!: Date | null;
 
-  @Column('timestamp', { nullable: true })
+  @Column('timestamp', { name: 'responded_at', nullable: true })
   respondedAt!: Date | null;
 
-  @Column('uuid', { nullable: true })
+  @Column('uuid', { name: 'responded_by_id', nullable: true })
   respondedById!: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 }
