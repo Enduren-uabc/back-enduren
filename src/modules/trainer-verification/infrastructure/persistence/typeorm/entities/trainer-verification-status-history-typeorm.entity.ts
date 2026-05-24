@@ -13,19 +13,19 @@ export class TrainerVerificationStatusHistoryTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'trainer_verification_id' })
   trainerVerificationId!: string;
 
-  @Column('varchar', { length: 40, nullable: true })
+  @Column('varchar', { name: 'previous_status', length: 40, nullable: true })
   previousStatus!: string | null;
 
-  @Column('varchar', { length: 40 })
+  @Column('varchar', { name: 'new_status', length: 40 })
   newStatus!: string;
 
-  @Column('varchar', { length: 36 })
+  @Column('varchar', { name: 'actor_id', length: 36 })
   actorId!: string;
 
-  @Column('varchar', { length: 20, default: 'system' })
+  @Column('varchar', { name: 'actor_type', length: 20, default: 'system' })
   actorType!: string;
 
   @Column('text', { nullable: true })
@@ -34,13 +34,13 @@ export class TrainerVerificationStatusHistoryTypeormEntity {
   @Column('jsonb', { nullable: true })
   metadata!: Record<string, unknown> | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
   @ManyToOne(
     () => TrainerVerificationTypeormEntity,
     (verification) => verification.statusHistory,
   )
-  @JoinColumn({ name: 'trainerVerificationId' })
+  @JoinColumn({ name: 'trainer_verification_id' })
   verification!: TrainerVerificationTypeormEntity;
 }

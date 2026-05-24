@@ -11,7 +11,7 @@ export class SocialAuthCodeTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
   @Column('varchar')
@@ -21,12 +21,12 @@ export class SocialAuthCodeTypeormEntity {
   @Column('varchar', { length: 64 })
   code!: string;
 
-  @Column('timestamp')
+  @Column('timestamp', { name: 'expires_at' })
   expiresAt!: Date;
 
-  @Column('timestamp', { nullable: true })
+  @Column('timestamp', { nullable: true, name: 'used_at' })
   usedAt!: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

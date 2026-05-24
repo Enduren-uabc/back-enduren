@@ -5,15 +5,15 @@ export class SpecialtyCatalogTypeormEntity {
   @PrimaryColumn('varchar', { length: 50 })
   key!: string;
 
-  @Column('varchar', { length: 100 })
+  @Column('varchar', { name: 'display_name', length: 100 })
   displayName!: string;
 
   @Column('varchar', { length: 50 })
   category!: string;
 
-  @Column('varchar', { length: 500, nullable: true })
+  @Column('varchar', { name: 'icon_url', length: 500, nullable: true })
   iconUrl!: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

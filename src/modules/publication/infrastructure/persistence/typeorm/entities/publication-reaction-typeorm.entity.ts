@@ -20,17 +20,17 @@ export class PublicationReactionTypeormEntity {
   id!: string;
 
   @Index()
-  @Column('uuid')
+  @Column('uuid', { name: 'publication_id' })
   publicationId!: string;
 
   @Index()
-  @Column('uuid')
+  @Column('uuid', { name: 'author_user_id' })
   authorUserId!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
   @ManyToOne(() => PublicationTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'publicationId' })
+  @JoinColumn({ name: 'publication_id' })
   publication!: PublicationTypeormEntity;
 }

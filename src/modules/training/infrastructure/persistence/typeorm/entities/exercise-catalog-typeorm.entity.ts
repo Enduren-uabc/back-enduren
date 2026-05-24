@@ -11,15 +11,15 @@ export class ExerciseCatalogTypeormEntity {
   @Column('varchar')
   category!: string;
 
-  @Column('varchar')
+  @Column('varchar', { name: 'primary_muscle_group' })
   primaryMuscleGroup!: string;
 
   @Column('varchar')
   equipment!: string;
 
-  @Column('varchar', { nullable: true })
+  @Column('varchar', { name: 'video_url', nullable: true })
   videoUrl!: string | null;
 
-  @Column('varchar', { nullable: true })
+  @Column('varchar', { name: 'image_url', nullable: true })
   imageUrl!: string | null;
 }

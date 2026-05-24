@@ -13,7 +13,7 @@ export class SocialProfileTypeormEntity {
   userId!: string;
 
   @Index()
-  @Column('varchar', { length: 120 })
+  @Column('varchar', { length: 120, name: 'display_name' })
   displayName!: string;
 
   @Index({ unique: true })
@@ -23,12 +23,12 @@ export class SocialProfileTypeormEntity {
   @Column('varchar', { length: 300, nullable: true })
   bio!: string | null;
 
-  @Column('varchar', { length: 2048, nullable: true })
+  @Column('varchar', { length: 2048, nullable: true, name: 'avatar_url' })
   avatarUrl!: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 }

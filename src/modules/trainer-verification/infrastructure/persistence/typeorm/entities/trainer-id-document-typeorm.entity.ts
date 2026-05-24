@@ -6,25 +6,25 @@ export class TrainerIdDocumentTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'trainer_verification_id' })
   trainerVerificationId!: string;
 
-  @Column('varchar', { length: 20 })
+  @Column('varchar', { name: 'document_type', length: 20 })
   documentType!: string;
 
-  @Column('varchar', { length: 100 })
+  @Column('varchar', { name: 'container_name', length: 100 })
   containerName!: string;
 
-  @Column('text')
+  @Column('text', { name: 'file_url' })
   fileUrl!: string;
 
-  @Column('varchar', { length: 255 })
+  @Column('varchar', { name: 'file_name', length: 255 })
   fileName!: string;
 
-  @Column('integer')
+  @Column('integer', { name: 'file_size' })
   fileSize!: number;
 
-  @Column()
+  @Column({ name: 'uploaded_at' })
   uploadedAt!: Date;
 
   @ManyToOne(
@@ -32,6 +32,6 @@ export class TrainerIdDocumentTypeormEntity {
     (verification) => verification.idDocuments,
     { onDelete: 'CASCADE' },
   )
-  @JoinColumn({ name: 'trainerVerificationId' })
+  @JoinColumn({ name: 'trainer_verification_id' })
   verification!: TrainerVerificationTypeormEntity;
 }

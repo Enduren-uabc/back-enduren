@@ -14,16 +14,16 @@ export class RoutineDayTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('varchar')
+  @Column('varchar', { name: 'day_of_week' })
   dayOfWeek!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'routine_id' })
   routineId!: string;
 
   @ManyToOne(() => RoutineTypeormEntity, (routine) => routine.days, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'routineId' })
+  @JoinColumn({ name: 'routine_id' })
   routine!: RoutineTypeormEntity;
 
   @OneToMany(() => ExerciseTypeormEntity, (exercise) => exercise.routineDay, {

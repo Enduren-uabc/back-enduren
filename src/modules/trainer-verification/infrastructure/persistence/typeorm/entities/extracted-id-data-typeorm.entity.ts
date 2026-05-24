@@ -6,34 +6,34 @@ export class ExtractedIdDataTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ name: 'verification_id', type: 'uuid' })
   verificationId!: string;
 
   @ManyToOne(() => TrainerVerificationTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'verificationId' })
+  @JoinColumn({ name: 'verification_id' })
   verification!: TrainerVerificationTypeormEntity;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'full_name', type: 'varchar', length: 255 })
   fullName!: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'document_type', type: 'varchar', length: 50 })
   documentType!: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'issuing_country', type: 'varchar', length: 100, nullable: true })
   issuingCountry!: string | null;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'birth_date', type: 'date', nullable: true })
   birthDate!: Date | null;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'expiration_date', type: 'date', nullable: true })
   expirationDate!: Date | null;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'document_identifier', type: 'varchar', length: 100, nullable: true })
   documentIdentifier!: string | null;
 
-  @Column({ type: 'float' })
+  @Column({ name: 'ocr_confidence', type: 'float' })
   ocrConfidence!: number;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

@@ -13,16 +13,16 @@ export class TrainerVerificationAuditEventTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'trainer_verification_id' })
   trainerVerificationId!: string;
 
-  @Column('varchar', { length: 40 })
+  @Column('varchar', { name: 'event_type', length: 40 })
   eventType!: string;
 
-  @Column('varchar', { length: 36 })
+  @Column('varchar', { name: 'actor_id', length: 36 })
   actorId!: string;
 
-  @Column('varchar', { length: 20, default: 'system' })
+  @Column('varchar', { name: 'actor_type', length: 20, default: 'system' })
   actorType!: string;
 
   @Column('text')
@@ -31,13 +31,13 @@ export class TrainerVerificationAuditEventTypeormEntity {
   @Column('jsonb', { nullable: true })
   metadata!: Record<string, unknown> | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
   @ManyToOne(
     () => TrainerVerificationTypeormEntity,
     (verification) => verification.auditEvents,
   )
-  @JoinColumn({ name: 'trainerVerificationId' })
+  @JoinColumn({ name: 'trainer_verification_id' })
   verification!: TrainerVerificationTypeormEntity;
 }

@@ -20,21 +20,21 @@ export class ProfileFollowTypeormEntity {
   id!: string;
 
   @Index()
-  @Column('uuid')
+  @Column('uuid', { name: 'follower_user_id' })
   followerUserId!: string;
 
   @Index()
-  @Column('uuid')
+  @Column('uuid', { name: 'followed_user_id' })
   followedUserId!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
   @ManyToOne(() => SocialProfileTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'followerUserId', referencedColumnName: 'userId' })
+  @JoinColumn({ name: 'follower_user_id', referencedColumnName: 'userId' })
   follower!: SocialProfileTypeormEntity;
 
   @ManyToOne(() => SocialProfileTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'followedUserId', referencedColumnName: 'userId' })
+  @JoinColumn({ name: 'followed_user_id', referencedColumnName: 'userId' })
   followed!: SocialProfileTypeormEntity;
 }

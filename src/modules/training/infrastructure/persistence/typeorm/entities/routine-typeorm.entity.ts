@@ -16,19 +16,19 @@ export class RoutineTypeormEntity {
   @Column('varchar')
   name!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
-  @Column('boolean', { default: false })
+  @Column('boolean', { name: 'is_active', default: false })
   isActive!: boolean;
 
-  @Column('varchar', { nullable: true })
+  @Column('varchar', { name: 'training_strategy_key', nullable: true })
   trainingStrategyKey!: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
   @OneToMany(() => RoutineDayTypeormEntity, (day) => day.routine, {

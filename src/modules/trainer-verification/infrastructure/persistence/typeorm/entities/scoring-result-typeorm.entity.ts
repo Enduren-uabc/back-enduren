@@ -6,26 +6,26 @@ export class ScoringResultTypeormEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ name: 'verification_id', type: 'uuid' })
   verificationId: string;
 
   @ManyToOne(() => TrainerVerificationTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'verificationId' })
+  @JoinColumn({ name: 'verification_id' })
   verification: TrainerVerificationTypeormEntity;
 
-  @Column({ type: 'integer' })
+  @Column({ name: 'risk_score', type: 'integer' })
   riskScore: number;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ name: 'risk_level', type: 'varchar', length: 20 })
   riskLevel: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Column({ name: 'recommended_action', type: 'varchar', length: 30 })
   recommendedAction: string;
 
   @Column({ type: 'text' })
   summary: string;
 
-  @Column({ type: 'json' })
+  @Column({ type: 'json', name: 'positive_signals' })
   positiveSignals: string[];
 
   @Column({ type: 'json' })
@@ -34,6 +34,6 @@ export class ScoringResultTypeormEntity {
   @Column({ type: 'json' })
   overrides: string[];
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 }

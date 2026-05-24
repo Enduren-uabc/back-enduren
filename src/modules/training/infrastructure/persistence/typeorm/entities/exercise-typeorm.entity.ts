@@ -17,16 +17,16 @@ export class ExerciseTypeormEntity {
   @Column('varchar')
   name!: string;
 
-  @Column('int')
+  @Column('int', { name: 'exercise_order' })
   order!: number;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'routine_day_id' })
   routineDayId!: string;
 
   @ManyToOne(() => RoutineDayTypeormEntity, (day) => day.exercises, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'routineDayId' })
+  @JoinColumn({ name: 'routine_day_id' })
   routineDay!: RoutineDayTypeormEntity;
 
   @OneToMany(() => ExerciseSetTypeormEntity, (set) => set.exercise, {

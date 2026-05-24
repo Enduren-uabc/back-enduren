@@ -5,7 +5,7 @@ export class NotificationTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
   @Column('varchar')
@@ -17,9 +17,9 @@ export class NotificationTypeormEntity {
   @Column('varchar', { length: 20, default: 'reminder' })
   type!: string;
 
-  @Column('timestamp', { nullable: true })
+  @Column('timestamp', { nullable: true, name: 'read_at' })
   readAt!: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

@@ -12,16 +12,16 @@ export class TrainingReminderTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'routine_id' })
   routineId!: string;
 
-  @Column('varchar')
+  @Column('varchar', { name: 'routine_name' })
   routineName!: string;
 
-  @Column('varchar')
+  @Column('varchar', { name: 'day_of_week' })
   dayOfWeek!: string;
 
   @Column('varchar', { length: 5 })
@@ -33,15 +33,15 @@ export class TrainingReminderTypeormEntity {
   @Column('varchar', { length: 20, default: 'activo' })
   status!: string;
 
-  @Column('timestamp', { nullable: true })
+  @Column('timestamp', { name: 'next_activation_at', nullable: true })
   nextActivationAt!: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt!: Date | null;
 }

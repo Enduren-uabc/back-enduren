@@ -14,22 +14,22 @@ export class TrainerVerificationAdvancedStatusTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid', { unique: true })
+  @Column('uuid', { name: 'trainer_verification_id', unique: true })
   trainerVerificationId!: string;
 
-  @Column('varchar', { length: 40, default: 'draft' })
+  @Column('varchar', { name: 'advanced_status', length: 40, default: 'draft' })
   advancedStatus!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
   @OneToOne(
     () => TrainerVerificationTypeormEntity,
     (verification) => verification.advancedStatus,
   )
-  @JoinColumn({ name: 'trainerVerificationId' })
+  @JoinColumn({ name: 'trainer_verification_id' })
   verification!: TrainerVerificationTypeormEntity;
 }

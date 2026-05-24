@@ -11,7 +11,7 @@ export class PushTokenTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
   @Column('varchar')
@@ -20,9 +20,9 @@ export class PushTokenTypeormEntity {
   @Column('varchar', { length: 10 })
   platform!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 }

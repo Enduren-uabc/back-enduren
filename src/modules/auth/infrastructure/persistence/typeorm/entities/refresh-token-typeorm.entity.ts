@@ -17,15 +17,15 @@ export class RefreshTokenTypeormEntity {
   @Column('varchar', { unique: true })
   token!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
-  @Column({ type: dateTimeColumnType })
+  @Column({ type: dateTimeColumnType, name: 'expires_at' })
   expiresAt!: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  @Column({ type: dateTimeColumnType, nullable: true })
+  @Column({ type: dateTimeColumnType, nullable: true, name: 'used_at' })
   usedAt!: Date | null;
 }

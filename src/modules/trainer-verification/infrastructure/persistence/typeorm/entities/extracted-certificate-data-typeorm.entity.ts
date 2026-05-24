@@ -6,37 +6,37 @@ export class ExtractedCertificateDataTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ name: 'verification_id', type: 'uuid' })
   verificationId!: string;
 
   @ManyToOne(() => TrainerVerificationTypeormEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'verificationId' })
+  @JoinColumn({ name: 'verification_id' })
   verification!: TrainerVerificationTypeormEntity;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'full_name', type: 'varchar', length: 255 })
   fullName!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'certificate_name', type: 'varchar', length: 255 })
   certificateName!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'issuing_organization', type: 'varchar', length: 255 })
   issuingOrganization!: string;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'issue_date', type: 'date', nullable: true })
   issueDate!: Date | null;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'expiration_date', type: 'date', nullable: true })
   expirationDate!: Date | null;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'folio_number', type: 'varchar', length: 100, nullable: true })
   folioNumber!: string | null;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ name: 'qr_url', type: 'varchar', length: 500, nullable: true })
   qrUrl!: string | null;
 
-  @Column({ type: 'float' })
+  @Column({ name: 'ocr_confidence', type: 'float' })
   ocrConfidence!: number;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }
