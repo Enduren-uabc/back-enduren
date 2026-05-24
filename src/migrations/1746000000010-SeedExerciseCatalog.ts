@@ -236,8 +236,8 @@ export class SeedExerciseCatalog1746000000010 implements MigrationInterface {
 
     for (const ex of exercises) {
       await queryRunner.query(
-        `INSERT INTO exercise_catalog (id, name, category, "primaryMuscleGroup", equipment, "videoUrl", "imageUrl")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO exercise_catalog (id, name, category, "primaryMuscleGroup", equipment)
+         VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (id) DO NOTHING`,
         [
           ex.id,
@@ -245,8 +245,6 @@ export class SeedExerciseCatalog1746000000010 implements MigrationInterface {
           ex.category,
           ex.primaryMuscleGroup,
           ex.equipment,
-          ex.videoUrl,
-          ex.imageUrl,
         ],
       );
     }
