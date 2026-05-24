@@ -19,7 +19,10 @@ export class AppleVerifier implements SocialAuthVerifierPort {
     });
   }
 
-  async verify(provider: 'google' | 'apple', idToken: string): Promise<SocialUserData> {
+  async verify(
+    provider: 'google' | 'apple',
+    idToken: string,
+  ): Promise<SocialUserData> {
     if (provider !== 'apple') {
       throw new Error('AppleVerifier only supports apple provider');
     }
@@ -49,7 +52,9 @@ export class AppleVerifier implements SocialAuthVerifierPort {
     return {
       socialId: payload.sub,
       email: payload.email,
-      name: (payload as Record<string, unknown>).name as string ?? payload.email.split('@')[0],
+      name:
+        ((payload as Record<string, unknown>).name as string) ??
+        payload.email.split('@')[0],
       avatarUrl: null,
     };
   }

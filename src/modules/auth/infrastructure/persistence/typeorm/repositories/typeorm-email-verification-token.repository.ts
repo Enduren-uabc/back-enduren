@@ -23,7 +23,9 @@ export class TypeormEmailVerificationTokenRepository implements EmailVerificatio
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findValidByUserId(userId: string): Promise<EmailVerificationToken | null> {
+  async findValidByUserId(
+    userId: string,
+  ): Promise<EmailVerificationToken | null> {
     const entity = await this.ormRepo.findOne({
       where: { userId, usedAt: IsNull() },
       order: { createdAt: 'DESC' },
@@ -35,7 +37,9 @@ export class TypeormEmailVerificationTokenRepository implements EmailVerificatio
     await this.ormRepo.delete({ userId });
   }
 
-  private toOrm(token: EmailVerificationToken): EmailVerificationTokenTypeormEntity {
+  private toOrm(
+    token: EmailVerificationToken,
+  ): EmailVerificationTokenTypeormEntity {
     const entity = new EmailVerificationTokenTypeormEntity();
     entity.id = token.id;
     entity.userId = token.userId;
@@ -46,7 +50,9 @@ export class TypeormEmailVerificationTokenRepository implements EmailVerificatio
     return entity;
   }
 
-  private toDomain(entity: EmailVerificationTokenTypeormEntity): EmailVerificationToken {
+  private toDomain(
+    entity: EmailVerificationTokenTypeormEntity,
+  ): EmailVerificationToken {
     return EmailVerificationToken.reconstitute({
       id: entity.id,
       userId: entity.userId,

@@ -1,7 +1,7 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength, IsUUID } from 'class-validator';
 
 export class SendLinkRequestRequestDto {
-  @IsString()
+  @IsUUID()
   trainerId!: string;
 
   @IsOptional()

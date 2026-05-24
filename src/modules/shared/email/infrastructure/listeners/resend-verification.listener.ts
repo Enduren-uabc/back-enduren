@@ -52,7 +52,10 @@ export class ResendVerificationListener {
     try {
       await this.emailSender.sendEmail(message);
     } catch (error) {
-      console.error(`[Email] Failed to resend verification to ${event.email}:`, error);
+      console.error(
+        `[Email] Failed to resend verification to ${event.email}:`,
+        error,
+      );
     }
   }
 }

@@ -29,7 +29,9 @@ export class VerifyEmailUseCase {
   ) {}
 
   async execute(input: VerifyEmailInput): Promise<VerifyEmailOutput> {
-    const verificationToken = await this.tokenRepository.findByToken(input.token);
+    const verificationToken = await this.tokenRepository.findByToken(
+      input.token,
+    );
 
     if (!verificationToken) {
       throw new BadRequestException('Código inválido');

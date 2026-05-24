@@ -29,7 +29,13 @@ export class UserTypeormEntity {
   @Column('varchar', { default: 'active' })
   status!: string;
 
-  @Column('varchar', { name: 'trainer_code', unique: true, nullable: true })
+  @Column('int', { default: 0 })
+  failedLoginAttempts!: number;
+
+  @Column('timestamp', { nullable: true })
+  lockedUntil!: Date | null;
+
+  @Column('varchar', { unique: true, nullable: true })
   trainerCode!: string | null;
 
   @Column('varchar', { nullable: true })

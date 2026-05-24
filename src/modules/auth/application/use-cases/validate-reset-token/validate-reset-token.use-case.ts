@@ -19,7 +19,9 @@ export class ValidateResetTokenUseCase {
     private readonly tokenRepository: PasswordResetTokenRepository,
   ) {}
 
-  async execute(input: ValidateResetTokenInput): Promise<ValidateResetTokenOutput> {
+  async execute(
+    input: ValidateResetTokenInput,
+  ): Promise<ValidateResetTokenOutput> {
     if (!input.token) {
       return { valid: false };
     }

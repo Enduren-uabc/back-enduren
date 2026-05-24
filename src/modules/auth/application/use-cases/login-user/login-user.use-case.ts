@@ -15,6 +15,7 @@ import {
 } from '../../../domain/repositories/refresh-token.repository';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 import { User } from '../../../../users/domain/entities/user.entity';
+import { AccountLockedException } from './account-locked.exception';
 
 export interface LoginInput {
   email: string;
@@ -22,7 +23,13 @@ export interface LoginInput {
 }
 
 export interface LoginOutput {
-  user: { id: string; email: string; username: string; role: string; emailVerified: boolean };
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    role: string;
+    emailVerified: boolean;
+  };
   accessToken: string;
   refreshToken: string;
 }
@@ -45,13 +52,11 @@ export class LoginUserUseCase {
       input.email.toLowerCase().trim(),
     );
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    if (user.status === 'locked') {
-      throw new UnauthorizedException(
-        'Account is locked. Please try again later.',
-      );
+    if (user.isLocked()) {
+      throw new AccountLockedException(user.getRemainingLockSeconds());
     }
 
     const valid = await this.passwordHasher.compare(
@@ -59,8 +64,19 @@ export class LoginUserUseCase {
       user.passwordHash,
     );
     if (!valid) {
-      throw new UnauthorizedException('Invalid credentials');
+      user.recordFailedAttempt(
+        this.configService.get<number>('MAX_LOGIN_ATTEMPTS', 5),
+        this.configService.get<number>(
+          'LOGIN_LOCKOUT_DURATION_MS',
+          15 * 60 * 1000,
+        ),
+      );
+      await this.userRepository.save(user);
+      throw new UnauthorizedException('Credenciales inválidas');
     }
+
+    user.resetFailedAttempts();
+    await this.userRepository.save(user);
 
     await this.refreshTokenRepository.deleteByUserId(user.id);
 
@@ -80,7 +96,12 @@ export class LoginUserUseCase {
   private async generateTokens(
     user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      emailVerified: user.emailVerified,
+    };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: this.configService.get<string>(

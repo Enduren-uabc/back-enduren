@@ -2,8 +2,12 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateTrainerLinkTables1746000000030 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS trainer_code VARCHAR(10) UNIQUE`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_users_trainer_code ON users(trainer_code) WHERE trainer_code IS NOT NULL`);
+    await queryRunner.query(
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS trainer_code VARCHAR(10) UNIQUE`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_users_trainer_code ON users(trainer_code) WHERE trainer_code IS NOT NULL`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS trainer_link_requests (
@@ -68,8 +72,12 @@ export class CreateTrainerLinkTables1746000000030 implements MigrationInterface 
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS trainer_links CASCADE`);
-    await queryRunner.query(`DROP TABLE IF EXISTS trainer_link_requests CASCADE`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS trainer_link_requests CASCADE`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS idx_users_trainer_code`);
-    await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS trainer_code`);
+    await queryRunner.query(
+      `ALTER TABLE users DROP COLUMN IF EXISTS trainer_code`,
+    );
   }
 }

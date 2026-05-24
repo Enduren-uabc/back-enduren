@@ -7,10 +7,10 @@ export class TrainerVerificationSpecialtyTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid', { name: 'trainer_verification_id' })
+  @Column('uuid')
   trainerVerificationId!: string;
 
-  @Column('varchar', { name: 'specialty_key', length: 50 })
+  @Column('varchar', { length: 50 })
   specialtyKey!: string;
 
   @ManyToOne(
@@ -18,10 +18,10 @@ export class TrainerVerificationSpecialtyTypeormEntity {
     (verification) => verification.specialties,
     { onDelete: 'CASCADE' },
   )
-  @JoinColumn({ name: 'trainer_verification_id' })
+  @JoinColumn({ name: 'trainerVerificationId' })
   verification!: TrainerVerificationTypeormEntity;
 
   @ManyToOne(() => SpecialtyCatalogTypeormEntity, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'specialty_key' })
+  @JoinColumn({ name: 'specialtyKey' })
   specialty!: SpecialtyCatalogTypeormEntity;
 }

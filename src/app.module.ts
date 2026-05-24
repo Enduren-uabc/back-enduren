@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StorageModule } from './shared/storage/storage.module';
@@ -14,6 +16,9 @@ import { PublicationModule } from './modules/publication/publication.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { TrainerVerificationModule } from './modules/trainer-verification/trainer-verification.module';
 import { TrainerLinkModule } from './modules/trainer-link/trainer-link.module';
+import { TrainerPanelModule } from './modules/trainer-panel/trainer-panel.module';
+import { TrainingRemindersModule } from './modules/training-reminders/training-reminders.module';
+import { PrivacyNoticeModule } from './modules/privacy-notice/privacy-notice.module';
 import { StorageSmokeTestModule } from './modules/storage-smoke-test/storage-smoke-test.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
 import { ObservabilityModule } from './shared/observability/observability.module';
@@ -41,6 +46,16 @@ import { ObservabilityModule } from './shared/observability/observability.module
         migrationsRun: true,
       }),
     }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 120,
+        },
+      ],
+      errorMessage: 'Demasiadas solicitudes. Intenta de nuevo en un momento.',
+    }),
     ObservabilityModule,
     StorageModule,
     SharedEmailModule,
@@ -51,11 +66,18 @@ import { ObservabilityModule } from './shared/observability/observability.module
     ProfileModule,
     TrainerVerificationModule,
     TrainerLinkModule,
+    TrainerPanelModule,
+    TrainingRemindersModule,
+    PrivacyNoticeModule,
     StorageSmokeTestModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

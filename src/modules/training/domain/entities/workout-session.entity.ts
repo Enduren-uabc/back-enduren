@@ -154,6 +154,41 @@ export class WorkoutSession {
   }
 
   /**
+   * Transitions session from IN_PROGRESS to DISCARDED.
+   * Records finishedAt timestamp.
+   * Throws if session is already finished, discarded, or not in progress.
+   */
+  public discard(): WorkoutSession {
+    if (this.status === WorkoutSessionStatus.FINISHED) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Cannot discard a finished workout session',
+        { sessionId: this.id },
+      );
+    }
+
+    if (this.status === WorkoutSessionStatus.DISCARDED) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Workout session is already discarded',
+        { sessionId: this.id },
+      );
+    }
+
+    return new WorkoutSession(
+      this.id,
+      this.userId,
+      this.routineId,
+      this.dayOfWeek,
+      WorkoutSessionStatus.DISCARDED,
+      [...this.exercises],
+      this.currentExerciseIndex,
+      this.startedAt,
+      new Date(),
+    );
+  }
+
+  /**
    * Checks whether this session is in progress.
    */
   public isInProgress(): boolean {
@@ -165,6 +200,13 @@ export class WorkoutSession {
    */
   public isFinished(): boolean {
     return this.status === WorkoutSessionStatus.FINISHED;
+  }
+
+  /**
+   * Checks whether this session is discarded.
+   */
+  public isDiscarded(): boolean {
+    return this.status === WorkoutSessionStatus.DISCARDED;
   }
 
   /**
@@ -252,6 +294,101 @@ export class WorkoutSession {
     const updatedExercise =
       this.exercises[exerciseIndex].markSetAsCompleted(setNumber);
 
+    const updatedExercises = [...this.exercises];
+    updatedExercises[exerciseIndex] = updatedExercise;
+
+    return new WorkoutSession(
+      this.id,
+      this.userId,
+      this.routineId,
+      this.dayOfWeek,
+      this.status,
+      updatedExercises,
+      this.currentExerciseIndex,
+      this.startedAt,
+      this.finishedAt,
+    );
+  }
+
+  /**
+   * Adds a new set to a specific exercise in the session.
+   * Validates session is IN_PROGRESS, exerciseIndex is valid.
+   * Delegates to WorkoutExercise.addSet().
+   * Returns a new WorkoutSession with the updated exercises.
+   */
+  public addSetToExercise(
+    exerciseIndex: number,
+    reps: number,
+    weight: number,
+  ): WorkoutSession {
+    if (this.status === WorkoutSessionStatus.FINISHED) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Cannot add a set to a finished session',
+        { sessionId: this.id },
+      );
+    }
+
+    if (
+      !Number.isInteger(exerciseIndex) ||
+      exerciseIndex < 0 ||
+      exerciseIndex >= this.exercises.length
+    ) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_EXERCISE_INDEX_INVALID,
+        `Exercise index ${exerciseIndex} is invalid for this session`,
+        { exerciseIndex, exerciseCount: this.exercises.length },
+      );
+    }
+
+    const updatedExercise = this.exercises[exerciseIndex].addSet(reps, weight);
+    const updatedExercises = [...this.exercises];
+    updatedExercises[exerciseIndex] = updatedExercise;
+
+    return new WorkoutSession(
+      this.id,
+      this.userId,
+      this.routineId,
+      this.dayOfWeek,
+      this.status,
+      updatedExercises,
+      this.currentExerciseIndex,
+      this.startedAt,
+      this.finishedAt,
+    );
+  }
+
+  /**
+   * Removes a set from a specific exercise in the session.
+   * Validates session is IN_PROGRESS, exerciseIndex is valid.
+   * Delegates to WorkoutExercise.removeSet().
+   * Returns a new WorkoutSession with the updated exercises.
+   */
+  public removeSetFromExercise(
+    exerciseIndex: number,
+    setNumber: number,
+  ): WorkoutSession {
+    if (this.status === WorkoutSessionStatus.FINISHED) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Cannot remove a set from a finished session',
+        { sessionId: this.id },
+      );
+    }
+
+    if (
+      !Number.isInteger(exerciseIndex) ||
+      exerciseIndex < 0 ||
+      exerciseIndex >= this.exercises.length
+    ) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_EXERCISE_INDEX_INVALID,
+        `Exercise index ${exerciseIndex} is invalid for this session`,
+        { exerciseIndex, exerciseCount: this.exercises.length },
+      );
+    }
+
+    const updatedExercise = this.exercises[exerciseIndex].removeSet(setNumber);
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 

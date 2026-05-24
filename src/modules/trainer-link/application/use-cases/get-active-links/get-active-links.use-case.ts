@@ -19,6 +19,7 @@ export interface ActiveLinkWithClientInfo {
   linkId: string;
   clientId: string;
   clientName: string;
+  linkStatus: string;
   activatedAt: Date;
 }
 
@@ -64,13 +65,18 @@ export class GetActiveLinksUseCase {
         linkId: l.id,
         clientId: l.clientId,
         clientName: client?.username ?? 'Unknown',
+        linkStatus: 'Activa',
         activatedAt: l.activatedAt,
       };
     });
 
+    const validItems = items.filter(
+      (i) => i.clientName && i.clientName !== 'Unknown',
+    );
+
     return {
-      items,
-      total: result.total,
+      items: validItems,
+      total: validItems.length,
       page: result.page,
       limit: result.limit,
     };

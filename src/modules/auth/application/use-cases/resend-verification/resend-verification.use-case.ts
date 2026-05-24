@@ -29,7 +29,9 @@ export class ResendVerificationUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(input: ResendVerificationInput): Promise<ResendVerificationOutput> {
+  async execute(
+    input: ResendVerificationInput,
+  ): Promise<ResendVerificationOutput> {
     const user = await this.userRepository.findById(input.userId);
     if (!user) {
       throw new BadRequestException('Usuario no encontrado');

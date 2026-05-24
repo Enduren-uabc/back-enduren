@@ -16,7 +16,10 @@ export class GoogleVerifier implements SocialAuthVerifierPort {
     this.client = new OAuth2Client(this.clientId);
   }
 
-  async verify(provider: 'google' | 'apple', idToken: string): Promise<SocialUserData> {
+  async verify(
+    provider: 'google' | 'apple',
+    idToken: string,
+  ): Promise<SocialUserData> {
     if (provider !== 'google') {
       throw new Error('GoogleVerifier only supports google provider');
     }

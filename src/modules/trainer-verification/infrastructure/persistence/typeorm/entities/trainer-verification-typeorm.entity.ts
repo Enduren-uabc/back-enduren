@@ -22,44 +22,40 @@ export class TrainerVerificationTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid', { name: 'user_id', unique: true })
+  @Column('uuid', { unique: true })
   userId!: string;
 
-  @Column('varchar', {
-    name: 'verification_status',
-    length: 20,
-    default: 'pending',
-  })
+  @Column('varchar', { length: 20, default: 'pending' })
   verificationStatus!: string;
 
-  @Column('integer', { name: 'years_of_experience' })
+  @Column('integer')
   yearsOfExperience!: number;
 
-  @Column('text', { name: 'short_bio' })
+  @Column('text')
   shortBio!: string;
 
-  @Column('varchar', { name: 'id_document_number', length: 100 })
+  @Column('varchar', { length: 100 })
   idDocumentNumber!: string;
 
-  @Column('text', { name: 'rejection_reason', nullable: true })
+  @Column('text', { nullable: true })
   rejectionReason!: string | null;
 
-  @Column('uuid', { name: 'verified_by', nullable: true })
+  @Column('uuid', { nullable: true })
   verifiedBy!: string | null;
 
-  @Column({ name: 'verified_at', nullable: true })
+  @Column({ nullable: true })
   verifiedAt!: Date;
 
-  @Column({ name: 'assigned_reviewer_id', type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   assignedReviewerId!: string | null;
 
-  @Column('varchar', { name: 'flow_mode', length: 20, default: 'legacy' })
+  @Column('varchar', { length: 20, default: 'legacy' })
   flowMode!: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt!: Date;
 
   @OneToMany(

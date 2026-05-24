@@ -29,6 +29,9 @@ import { AdvanceToNextExerciseUseCase } from './use-cases/advance-to-next-exerci
 import { GetWorkoutSessionHistoryUseCase } from './use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from './use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from './use-cases/get-exercise-progress/get-exercise-progress.use-case';
+import { AddSetToExerciseUseCase } from './use-cases/add-set-to-exercise/add-set-to-exercise.use-case';
+import { RemoveSetFromExerciseUseCase } from './use-cases/remove-set-from-exercise/remove-set-from-exercise.use-case';
+import { DiscardWorkoutSessionUseCase } from './use-cases/discard-workout-session/discard-workout-session.use-case';
 import {
   ListExerciseCatalogUseCase,
   EXERCISE_CATALOG_REPOSITORY_PORT,
@@ -194,6 +197,24 @@ const workoutSessionUseCaseProviders = [
     inject: [WORKOUT_SESSION_REPOSITORY_PORT],
     useFactory: (workoutSessionRepository) =>
       new GetExerciseProgressUseCase(workoutSessionRepository),
+  },
+  {
+    provide: AddSetToExerciseUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new AddSetToExerciseUseCase(workoutSessionRepository),
+  },
+  {
+    provide: RemoveSetFromExerciseUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new RemoveSetFromExerciseUseCase(workoutSessionRepository),
+  },
+  {
+    provide: DiscardWorkoutSessionUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new DiscardWorkoutSessionUseCase(workoutSessionRepository),
   },
 ];
 

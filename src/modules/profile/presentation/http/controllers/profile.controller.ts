@@ -122,6 +122,7 @@ export class ProfileController {
       mainGoal: dto.mainGoal,
       daysAvailablePerWeek: dto.daysAvailablePerWeek,
       weightUnit: dto.weightUnit,
+      defaultTrainingStrategyKey: dto.defaultTrainingStrategyKey,
     });
 
     return this.mapToOnboardingResponse(result);
@@ -276,6 +277,7 @@ export class ProfileController {
     mainGoal: string;
     daysAvailablePerWeek: number;
     weightUnit: string;
+    defaultTrainingStrategyKey: string | null;
     onboardingCompleted: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -295,6 +297,7 @@ export class ProfileController {
     response.mainGoal = result.mainGoal;
     response.daysAvailablePerWeek = result.daysAvailablePerWeek;
     response.weightUnit = result.weightUnit;
+    response.defaultTrainingStrategyKey = result.defaultTrainingStrategyKey;
     response.onboardingCompleted = result.onboardingCompleted;
     response.createdAt = result.createdAt;
     response.updatedAt = result.updatedAt;

@@ -4,5 +4,6 @@ import { TrainingPresentationModule } from './presentation/http/training-present
 
 @Module({
   imports: [TrainingInfrastructureModule, TrainingPresentationModule],
+  exports: [TrainingInfrastructureModule],
 })
 export class TrainingModule {}
