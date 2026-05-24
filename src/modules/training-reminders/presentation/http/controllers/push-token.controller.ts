@@ -1,8 +1,8 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Inject } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
 import type { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
-import { PushTokenRepository } from '../../../domain/repositories/push-token.repository.port';
+import { PushTokenRepository, PUSH_TOKEN_REPOSITORY_PORT } from '../../../domain/repositories/push-token.repository.port';
 import { PushToken } from '../../../domain/entities/push-token.entity';
 import { RegisterPushTokenRequestDto } from '../dtos/register-push-token.dto';
 
@@ -10,6 +10,7 @@ import { RegisterPushTokenRequestDto } from '../dtos/register-push-token.dto';
 @UseGuards(JwtAuthGuard)
 export class PushTokenController {
   constructor(
+    @Inject(PUSH_TOKEN_REPOSITORY_PORT)
     private readonly pushTokenRepository: PushTokenRepository,
   ) {}
 
