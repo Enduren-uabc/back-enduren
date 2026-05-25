@@ -5,6 +5,8 @@ import { AzureEmailSender } from './infrastructure/azure/azure-email-sender.prov
 import { UserRegisteredListener } from './infrastructure/listeners/user-registered.listener';
 import { ResendVerificationListener } from './infrastructure/listeners/resend-verification.listener';
 import { PasswordRecoveryListener } from './infrastructure/listeners/password-recovery.listener';
+import { TrainerVerificationSubmittedListener } from './infrastructure/listeners/trainer-verification-submitted.listener';
+import { TrainerVerificationReviewedListener } from './infrastructure/listeners/trainer-verification-reviewed.listener';
 
 @Module({
   imports: [ConfigModule],
@@ -16,6 +18,8 @@ import { PasswordRecoveryListener } from './infrastructure/listeners/password-re
     UserRegisteredListener,
     ResendVerificationListener,
     PasswordRecoveryListener,
+    TrainerVerificationSubmittedListener,
+    TrainerVerificationReviewedListener,
   ],
   exports: [EMAIL_SENDER_PORT],
 })

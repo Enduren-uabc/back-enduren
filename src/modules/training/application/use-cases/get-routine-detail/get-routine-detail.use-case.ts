@@ -10,6 +10,7 @@ export interface GetRoutineDetailOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  trainingStrategyKey: string | null;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -54,6 +55,7 @@ export class GetRoutineDetailUseCase {
       name: routine.name,
       userId: routine.userId,
       isActive: routine.isActive,
+      trainingStrategyKey: routine.trainingStrategyKey,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

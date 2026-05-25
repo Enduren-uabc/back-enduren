@@ -6,6 +6,7 @@ export interface ExtractedIdDataProps {
   expirationDate?: Date;
   documentIdentifier?: string;
   ocrConfidence: number;
+  curp?: string;
 }
 
 export class ExtractedIdData {
@@ -16,6 +17,7 @@ export class ExtractedIdData {
   public readonly expirationDate?: Date;
   public readonly documentIdentifier?: string;
   public readonly ocrConfidence: number;
+  public readonly curp?: string;
 
   private constructor(props: ExtractedIdDataProps) {
     this.fullName = props.fullName;
@@ -25,6 +27,7 @@ export class ExtractedIdData {
     this.expirationDate = props.expirationDate;
     this.documentIdentifier = props.documentIdentifier;
     this.ocrConfidence = props.ocrConfidence;
+    this.curp = props.curp;
   }
 
   static create(props: ExtractedIdDataProps): ExtractedIdData {

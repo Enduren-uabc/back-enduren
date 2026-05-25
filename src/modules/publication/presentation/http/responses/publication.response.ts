@@ -1,11 +1,20 @@
-import { PublicationDto } from '../../../application/dto/publication.dto';
+import {
+  PublicationDto,
+  ExerciseSummaryDto,
+  PublicationMediaDto,
+} from '../../../application/dto/publication.dto';
 
 export class PublicationResponseDto {
   id!: string;
   authorUserId!: string;
+  authorDisplayName?: string;
+  authorAvatarUrl?: string;
   title!: string;
   content!: string;
   mediaUrls!: string[];
+  media!: PublicationMediaDto[];
+  workoutSessionId!: string | null;
+  exerciseSummary!: ExerciseSummaryDto | null;
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -28,9 +37,14 @@ export class PublicationPresenter {
     const response = new PublicationResponseDto();
     response.id = publication.id;
     response.authorUserId = publication.authorUserId;
+    response.authorDisplayName = publication.authorDisplayName;
+    response.authorAvatarUrl = publication.authorAvatarUrl;
     response.title = publication.title;
     response.content = publication.content;
     response.mediaUrls = publication.mediaUrls;
+    response.media = publication.media;
+    response.workoutSessionId = publication.workoutSessionId;
+    response.exerciseSummary = publication.exerciseSummary;
     response.createdAt = publication.createdAt;
     response.updatedAt = publication.updatedAt;
     return response;
@@ -51,6 +65,42 @@ export class PublicationPresenter {
     response.offset = input.offset;
     response.total = input.total;
     response.hasMore = input.hasMore;
+    return response;
+  }
+}
+
+export class CreateWorkoutPublicationResponseDto {
+  id!: string;
+  authorUserId!: string;
+  authorDisplayName?: string;
+  authorAvatarUrl?: string;
+  title!: string;
+  content!: string;
+  mediaUrls!: string[];
+  media!: PublicationMediaDto[];
+  workoutSessionId!: string;
+  exerciseSummary!: ExerciseSummaryDto;
+  createdAt!: Date;
+  updatedAt!: Date;
+}
+
+export class WorkoutPublicationPresenter {
+  public static toHttp(
+    publication: PublicationDto,
+  ): CreateWorkoutPublicationResponseDto {
+    const response = new CreateWorkoutPublicationResponseDto();
+    response.id = publication.id;
+    response.authorUserId = publication.authorUserId;
+    response.authorDisplayName = publication.authorDisplayName;
+    response.authorAvatarUrl = publication.authorAvatarUrl;
+    response.title = publication.title;
+    response.content = publication.content;
+    response.mediaUrls = publication.mediaUrls;
+    response.media = publication.media;
+    response.workoutSessionId = publication.workoutSessionId!;
+    response.exerciseSummary = publication.exerciseSummary!;
+    response.createdAt = publication.createdAt;
+    response.updatedAt = publication.updatedAt;
     return response;
   }
 }

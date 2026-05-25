@@ -368,6 +368,31 @@ export class RiskScoringService {
         break;
     }
 
+    const certCurp = input.certificateData?.curp;
+    const idCurp = input.idData?.curp;
+    if (certCurp && idCurp) {
+      const curpResult = this.nameComparison.compareCurp(certCurp, idCurp);
+      if (curpResult.level === 'exact') {
+        positive.push('CURP coincide entre certificado e INE');
+      } else {
+        alerts.push(
+          RiskAlert.create({
+            code: 'CURP_MISMATCH',
+            severity: 'critical',
+            message: `CURP del certificado (${curpResult.normalizedCertCurp}) no coincide con CURP de INE (${curpResult.normalizedIdCurp})`,
+          }),
+        );
+      }
+    } else if (certCurp && !idCurp) {
+      alerts.push(
+        RiskAlert.create({
+          code: 'ID_WITHOUT_CURP',
+          severity: 'medium',
+          message: 'No se pudo extraer CURP de la INE para comparar',
+        }),
+      );
+    }
+
     return result.score;
   }
 

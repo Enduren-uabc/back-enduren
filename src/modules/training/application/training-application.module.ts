@@ -15,7 +15,9 @@ import { GetRoutineDetailUseCase } from './use-cases/get-routine-detail/get-rout
 import { DeleteRoutineUseCase } from './use-cases/delete-routine/delete-routine.use-case';
 import { SyncRoutineUseCase } from './use-cases/sync-routine/sync-routine.use-case';
 import { SetRoutineTrainingStrategyUseCase } from './use-cases/set-routine-training-strategy/set-routine-training-strategy.use-case';
+import { ForkWorkoutToRoutineUseCase } from './use-cases/fork-workout-to-routine/fork-workout-to-routine.use-case';
 import { GenerateExerciseSetsUseCase } from './use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
+import { UpdateRoutineNameUseCase } from './use-cases/update-routine-name/update-routine-name.use-case';
 import {
   StartWorkoutSessionUseCase,
   WORKOUT_SESSION_REPOSITORY_PORT,
@@ -34,6 +36,8 @@ import { AddSetToExerciseUseCase } from './use-cases/add-set-to-exercise/add-set
 import { RemoveSetFromExerciseUseCase } from './use-cases/remove-set-from-exercise/remove-set-from-exercise.use-case';
 import { DiscardWorkoutSessionUseCase } from './use-cases/discard-workout-session/discard-workout-session.use-case';
 import { GetWorkoutStatsUseCase } from './use-cases/get-workout-stats/get-workout-stats.use-case';
+import { GetWeeklyVolumeUseCase } from './use-cases/get-weekly-volume/get-weekly-volume.use-case';
+import { GetPersonalRecordsUseCase } from './use-cases/get-personal-records/get-personal-records.use-case';
 import {
   ListExerciseCatalogUseCase,
   EXERCISE_CATALOG_REPOSITORY_PORT,
@@ -118,6 +122,21 @@ const routineUseCaseProviders = [
     inject: [TRAINING_STRATEGY_REPOSITORY_PORT],
     useFactory: (trainingStrategyRepository) =>
       new GenerateExerciseSetsUseCase(trainingStrategyRepository),
+  },
+  {
+    provide: UpdateRoutineNameUseCase,
+    inject: [ROUTINE_REPOSITORY_PORT],
+    useFactory: (routineRepository) =>
+      new UpdateRoutineNameUseCase(routineRepository),
+  },
+  {
+    provide: ForkWorkoutToRoutineUseCase,
+    inject: [ROUTINE_REPOSITORY_PORT, WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (routineRepository, workoutSessionRepository) =>
+      new ForkWorkoutToRoutineUseCase(
+        routineRepository,
+        workoutSessionRepository,
+      ),
   },
 ];
 
@@ -223,6 +242,18 @@ const workoutSessionUseCaseProviders = [
     inject: [WORKOUT_SESSION_REPOSITORY_PORT],
     useFactory: (workoutSessionRepository) =>
       new GetWorkoutStatsUseCase(workoutSessionRepository),
+  },
+  {
+    provide: GetWeeklyVolumeUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new GetWeeklyVolumeUseCase(workoutSessionRepository),
+  },
+  {
+    provide: GetPersonalRecordsUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new GetPersonalRecordsUseCase(workoutSessionRepository),
   },
 ];
 

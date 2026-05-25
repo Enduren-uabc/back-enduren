@@ -3,6 +3,8 @@ import {
   PublicationErrorCode,
 } from '../../../domain/errors/publication-domain.error';
 import { PublicationRepository } from '../../../domain/repositories/publication.repository';
+import { PublicationMediaRepository } from '../../../domain/repositories/publication-media.repository';
+import { AuthorProfileQueryPort } from '../../ports/author-profile-query.port';
 import { ListPublicationsDto } from '../../dto/list-publications.dto';
 import { PublicationDto } from '../../dto/publication.dto';
 import { PublicationApplicationMapper } from '../../mappers/publication.mapper';
@@ -26,7 +28,9 @@ export interface ListPublicationsOutput {
 export class ListPublicationsUseCase {
   constructor(
     private readonly publicationRepository: PublicationRepository,
+    private readonly publicationMediaRepository?: PublicationMediaRepository,
     private readonly followedUsersQuery?: FollowedUsersQueryPort,
+    private readonly authorProfileQuery?: AuthorProfileQueryPort,
   ) {}
 
   public async execute(
@@ -59,43 +63,78 @@ export class ListPublicationsUseCase {
       );
     }
 
+    let publications: any[] = [];
+    let total = 0;
+
     if (filter === 'following') {
       const followedUserIds =
-        await this.followedUsersQuery?.findFollowedUserIds(actor.userId);
+        (await this.followedUsersQuery?.findFollowedUserIds(actor.userId)) ??
+        [];
 
-      if (!followedUserIds || followedUserIds.length === 0) {
-        return { items: [], limit, offset, total: 0, hasMore: false };
-      }
+      // Include self in following feed
+      const authorUserIds = [...new Set([...followedUserIds, actor.userId])];
 
-      const [publications, total] = await Promise.all([
+      const [pubs, tot] = await Promise.all([
         this.publicationRepository.findFeedByAuthorUserIds({
-          authorUserIds: followedUserIds,
+          authorUserIds,
           limit,
           offset,
         }),
-        this.publicationRepository.countFeedByAuthorUserIds(followedUserIds),
+        this.publicationRepository.countFeedByAuthorUserIds(authorUserIds),
       ]);
-
-      return {
-        items: publications.map((publication) =>
-          PublicationApplicationMapper.toDto(publication),
-        ),
-        limit,
-        offset,
-        total,
-        hasMore: offset + publications.length < total,
-      };
+      publications = pubs;
+      total = tot;
+    } else {
+      const [pubs, tot] = await Promise.all([
+        this.publicationRepository.findFeed({ limit, offset }),
+        this.publicationRepository.countFeed(),
+      ]);
+      publications = pubs;
+      total = tot;
     }
 
-    const [publications, total] = await Promise.all([
-      this.publicationRepository.findFeed({ limit, offset }),
-      this.publicationRepository.countFeed(),
-    ]);
+    // Enrich with author info
+    const authorIds = [...new Set(publications.map((p) => p.authorUserId))];
+    const profiles =
+      (await this.authorProfileQuery?.ensureProfilesExist(authorIds)) ?? [];
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    // Batch load media for all publications
+    const publicationIds = publications.map((p) => p.id);
+    const mediaEntries = this.publicationMediaRepository
+      ? await Promise.all(
+          publicationIds.map((id) =>
+            this.publicationMediaRepository!.findByPublicationId(id),
+          ),
+        )
+      : [];
+    const mediaMap = new Map<string, PublicationDto['media']>();
+    publicationIds.forEach((id, i) => {
+      const media = (mediaEntries[i] ?? []).map((m) => ({
+        id: m.id,
+        url: m.url,
+        fileName: m.fileName,
+        fileSize: m.fileSize,
+        mimeType: m.mimeType,
+        sortOrder: m.sortOrder,
+        createdAt: m.createdAt.toISOString(),
+      }));
+      mediaMap.set(id, media);
+    });
 
     return {
-      items: publications.map((publication) =>
-        PublicationApplicationMapper.toDto(publication),
-      ),
+      items: publications.map((publication) => {
+        const dto = PublicationApplicationMapper.toDto(
+          publication,
+          mediaMap.get(publication.id) ?? [],
+        );
+        const profile = profileMap.get(publication.authorUserId);
+        if (profile) {
+          dto.authorDisplayName = profile.displayName;
+          dto.authorAvatarUrl = profile.avatarUrl ?? undefined;
+        }
+        return dto;
+      }),
       limit,
       offset,
       total,

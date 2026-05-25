@@ -35,6 +35,8 @@ import { RiskScoringService } from './application/services/risk-scoring.service'
 import { InMemoryCommandBus } from './infrastructure/cqrs/in-memory-command-bus';
 import { InMemoryEventBus } from './infrastructure/cqrs/in-memory-event-bus';
 import { AzureDocumentIntelligenceService } from './infrastructure/document-extraction/azure-document-intelligence.service';
+import { OpenAIDocumentExtractor } from './infrastructure/document-extraction/openai-document-extractor.service';
+import { CompositeDocumentExtractionService } from './infrastructure/document-extraction/composite-document-extraction.service';
 import { SimpleNameComparisonService } from './infrastructure/name-comparison/simple-name-comparison.service';
 import { SpecialtyCatalogTypeormEntity } from './infrastructure/persistence/typeorm/entities/specialty-catalog-typeorm.entity';
 import { TrainerCertificateTypeormEntity } from './infrastructure/persistence/typeorm/entities/trainer-certificate-typeorm.entity';
@@ -94,9 +96,11 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
       provide: SPECIALTY_CATALOG_REPOSITORY_PORT,
       useClass: TypeormSpecialtyCatalogRepository,
     },
+    AzureDocumentIntelligenceService,
+    OpenAIDocumentExtractor,
     {
       provide: DOCUMENT_EXTRACTION_PORT,
-      useClass: AzureDocumentIntelligenceService,
+      useClass: CompositeDocumentExtractionService,
     },
     TrainerVerificationStateMachineService,
     RiskScoringService,

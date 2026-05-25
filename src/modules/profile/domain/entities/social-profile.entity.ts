@@ -94,10 +94,15 @@ export class SocialProfile {
   }
 
   public updateOwn(input: {
+    displayName?: string | null;
     bio?: string | null;
     avatarUrl?: ProfileAvatarUrl;
   }): SocialProfile {
-    if (input.bio === undefined && input.avatarUrl === undefined) {
+    if (
+      input.displayName === undefined &&
+      input.bio === undefined &&
+      input.avatarUrl === undefined
+    ) {
       throw new ProfileDomainError(
         ProfileErrorCode.PROFILE_UPDATE_EMPTY,
         'At least one profile field must be provided',
@@ -107,7 +112,9 @@ export class SocialProfile {
 
     return new SocialProfile(
       this.userId,
-      this.displayName,
+      input.displayName !== undefined && input.displayName !== null
+        ? input.displayName.trim()
+        : this.displayName,
       this.handle,
       input.bio !== undefined
         ? SocialProfile.normalizeBio(input.bio)

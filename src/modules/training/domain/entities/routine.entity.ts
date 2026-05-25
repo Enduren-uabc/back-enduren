@@ -105,6 +105,31 @@ export class Routine {
   }
 
   /**
+   * Renames this routine. Validates the new name is non-empty.
+   * Returns a new Routine with the updated name.
+   */
+  public rename(newName: string): Routine {
+    if (!newName || newName.trim().length === 0) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_NAME_REQUIRED,
+        'Routine name is required',
+        { name: newName },
+      );
+    }
+
+    return new Routine(
+      this.id,
+      newName.trim(),
+      this.userId,
+      this.days,
+      this.isActive,
+      this.trainingStrategyKey,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
    * Activates this routine. Returns a new Routine with isActive: true.
    * No domain invariants to enforce beyond the field change.
    */

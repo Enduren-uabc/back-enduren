@@ -7,6 +7,11 @@ export interface ExtractedCertificateDataProps {
   folioNumber?: string;
   qrUrl?: string;
   ocrConfidence: number;
+  curp?: string;
+  documentType?: string;
+  certifyingInstitution?: string;
+  competencyStandardCode?: string;
+  competencyStandardName?: string;
 }
 
 export class ExtractedCertificateData {
@@ -18,6 +23,11 @@ export class ExtractedCertificateData {
   public readonly folioNumber?: string;
   public readonly qrUrl?: string;
   public readonly ocrConfidence: number;
+  public readonly curp?: string;
+  public readonly documentType?: string;
+  public readonly certifyingInstitution?: string;
+  public readonly competencyStandardCode?: string;
+  public readonly competencyStandardName?: string;
 
   private constructor(props: ExtractedCertificateDataProps) {
     this.fullName = props.fullName;
@@ -28,6 +38,11 @@ export class ExtractedCertificateData {
     this.folioNumber = props.folioNumber;
     this.qrUrl = props.qrUrl;
     this.ocrConfidence = props.ocrConfidence;
+    this.curp = props.curp;
+    this.documentType = props.documentType;
+    this.certifyingInstitution = props.certifyingInstitution;
+    this.competencyStandardCode = props.competencyStandardCode;
+    this.competencyStandardName = props.competencyStandardName;
   }
 
   static create(

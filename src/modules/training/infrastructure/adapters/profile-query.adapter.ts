@@ -11,7 +11,9 @@ export class ProfileQueryAdapter implements ProfileRepository {
     private readonly profileRepository: ProfileDomainRepository,
   ) {}
 
-  async findByUserId(userId: string): Promise<{ defaultTrainingStrategyKey: string | null } | null> {
+  async findByUserId(
+    userId: string,
+  ): Promise<{ defaultTrainingStrategyKey: string | null } | null> {
     const profile = await this.profileRepository.findByUserId(userId);
     if (!profile) return null;
     return { defaultTrainingStrategyKey: profile.defaultTrainingStrategyKey };

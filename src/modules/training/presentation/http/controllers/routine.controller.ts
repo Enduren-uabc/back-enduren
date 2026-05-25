@@ -15,6 +15,8 @@ import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases
 import { ConfigureExerciseUseCase } from '../../../application/use-cases/configure-exercise/configure-exercise.use-case';
 import { ActivateRoutineUseCase } from '../../../application/use-cases/activate-routine/activate-routine.use-case';
 import { DeactivateRoutineUseCase } from '../../../application/use-cases/deactivate-routine/deactivate-routine.use-case';
+import { ForkWorkoutToRoutineUseCase } from '../../../application/use-cases/fork-workout-to-routine/fork-workout-to-routine.use-case';
+import { UpdateRoutineNameUseCase } from '../../../application/use-cases/update-routine-name/update-routine-name.use-case';
 import { ListRoutinesUseCase } from '../../../application/use-cases/list-routines/list-routines.use-case';
 import { GetRoutineDetailUseCase } from '../../../application/use-cases/get-routine-detail/get-routine-detail.use-case';
 import { DeleteRoutineUseCase } from '../../../application/use-cases/delete-routine/delete-routine.use-case';
@@ -28,6 +30,8 @@ import { ConfigureExerciseRequestDto } from '../dtos/configure-exercise.request'
 import { SyncRoutineRequestDto } from '../dtos/sync-routine.request';
 import { SetTrainingStrategyRequestDto } from '../dtos/set-training-strategy.request';
 import { GenerateExerciseSetsRequestDto } from '../dtos/generate-exercise-sets.request';
+import { UpdateRoutineNameRequestDto } from '../dtos/update-routine-name.request';
+import { ForkWorkoutRequestDto } from '../dtos/fork-workout.request';
 import {
   RoutineResponseDto,
   RoutineDayResponseDto,
@@ -35,6 +39,7 @@ import {
   ExerciseSetResponseDto,
 } from '../dtos/routine.response';
 import { DeleteRoutineResponseDto } from '../dtos/delete-routine.response';
+import { ForkWorkoutResponseDto } from '../dtos/fork-workout.response';
 import { isValidDayOfWeek } from '../../../domain/value-objects/routine-day.value-object';
 import { RoutineDomainErrorFilter } from '../filters/routine-domain-error.filter';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
@@ -52,12 +57,14 @@ export class RoutineController {
     private readonly configureExerciseUseCase: ConfigureExerciseUseCase,
     private readonly activateRoutineUseCase: ActivateRoutineUseCase,
     private readonly deactivateRoutineUseCase: DeactivateRoutineUseCase,
+    private readonly forkWorkoutUseCase: ForkWorkoutToRoutineUseCase,
     private readonly listRoutinesUseCase: ListRoutinesUseCase,
     private readonly getRoutineDetailUseCase: GetRoutineDetailUseCase,
     private readonly deleteRoutineUseCase: DeleteRoutineUseCase,
     private readonly syncRoutineUseCase: SyncRoutineUseCase,
     private readonly setRoutineTrainingStrategyUseCase: SetRoutineTrainingStrategyUseCase,
     private readonly generateExerciseSetsUseCase: GenerateExerciseSetsUseCase,
+    private readonly updateRoutineNameUseCase: UpdateRoutineNameUseCase,
   ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
@@ -172,6 +179,20 @@ export class RoutineController {
     return this.mapToResponse(result);
   }
 
+  @Patch(':routineId/name')
+  public async updateName(
+    @CurrentUser() user: JwtPayload,
+    @Param('routineId') routineId: string,
+    @Body() dto: UpdateRoutineNameRequestDto,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.updateRoutineNameUseCase.execute(
+      this.getActor(user),
+      { routineId, name: dto.name },
+    );
+
+    return this.mapToResponse(result);
+  }
+
   @Patch(':routineId/activate')
   public async activate(
     @CurrentUser() user: JwtPayload,
@@ -245,6 +266,26 @@ export class RoutineController {
     );
 
     return this.mapToResponse(result);
+  }
+
+  @Post(':routineId/days/:dayOfWeek/fork')
+  public async forkWorkout(
+    @CurrentUser() user: JwtPayload,
+    @Param('routineId') routineId: string,
+    @Param('dayOfWeek') dayOfWeek: string,
+    @Body() dto: ForkWorkoutRequestDto,
+  ): Promise<ForkWorkoutResponseDto> {
+    const result = await this.forkWorkoutUseCase.execute(this.getActor(user), {
+      routineId,
+      dayOfWeek,
+      sourceWorkoutSessionId: dto.sourceWorkoutSessionId,
+      exercises: dto.exercises,
+    });
+    const response = new ForkWorkoutResponseDto();
+    response.routineId = result.routineId;
+    response.dayOfWeek = result.dayOfWeek;
+    response.exercisesAdded = result.exercisesAdded;
+    return response;
   }
 
   @Post(':routineId/generate-sets')

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   NameComparisonPort,
   NameComparisonResult,
+  CurpComparisonResult,
 } from '../../application/ports/name-comparison.port';
 
 @Injectable()
@@ -93,6 +94,36 @@ export class SimpleNameComparisonService implements NameComparisonPort {
       score: 0,
       normalizedCertName: normalizedCert,
       normalizedIdName: normalizedId,
+    };
+  }
+
+  compareCurp(
+    certCurp: string | undefined,
+    idCurp: string | undefined,
+  ): CurpComparisonResult {
+    const normalizedCert = (certCurp ?? '').toUpperCase().trim();
+    const normalizedId = (idCurp ?? '').toUpperCase().trim();
+
+    if (!normalizedCert || !normalizedId) {
+      return {
+        level: 'mismatch',
+        normalizedCertCurp: normalizedCert,
+        normalizedIdCurp: normalizedId,
+      };
+    }
+
+    if (normalizedCert === normalizedId) {
+      return {
+        level: 'exact',
+        normalizedCertCurp: normalizedCert,
+        normalizedIdCurp: normalizedId,
+      };
+    }
+
+    return {
+      level: 'mismatch',
+      normalizedCertCurp: normalizedCert,
+      normalizedIdCurp: normalizedId,
     };
   }
 

@@ -32,11 +32,9 @@ export class StorageService {
         mimeType: file.mimetype,
         destinationPath,
       });
-    } catch {
-      throw new StorageDomainError(
-        StorageErrorCode.FILE_UPLOAD_FAILED,
-        'File upload failed',
-      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'File upload failed';
+      throw new StorageDomainError(StorageErrorCode.FILE_UPLOAD_FAILED, msg);
     }
   }
 

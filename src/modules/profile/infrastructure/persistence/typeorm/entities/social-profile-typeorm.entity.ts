@@ -9,7 +9,7 @@ import {
 
 @Entity('social_profiles')
 export class SocialProfileTypeormEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryColumn('uuid', { name: 'user_id' })
   userId!: string;
 
   @Index()

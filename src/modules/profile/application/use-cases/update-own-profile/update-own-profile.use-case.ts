@@ -27,6 +27,7 @@ export class UpdateOwnProfileUseCase {
     }
 
     const updated = profile.updateOwn({
+      displayName: input.displayName,
       bio: input.bio,
       avatarUrl:
         input.avatarUrl !== undefined

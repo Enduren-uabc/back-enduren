@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StorageService } from '../../../../../shared/storage/domain/services/storage.service';
 import { UploadFileOutput } from '../../../../../shared/storage/domain/ports/file-storage.port';
 import { CurrentActor } from '../../ports/current-actor.port';
@@ -18,6 +19,7 @@ import {
   TRAINER_VERIFICATION_REPOSITORY_PORT,
 } from '../../../domain/repositories/trainer-verification.repository.port';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
+import { TrainerVerificationSubmittedEvent } from '../../../../shared/email/domain/events/trainer-verification-submitted.event';
 
 export interface UpdateTrainerCertificateInput {
   name: string;
@@ -51,6 +53,7 @@ export class UpdateTrainerVerificationUseCase {
     @Inject(SPECIALTY_CATALOG_REPOSITORY_PORT)
     private readonly specialtyCatalogRepository: SpecialtyCatalogRepository,
     private readonly storageService: StorageService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -142,6 +145,11 @@ export class UpdateTrainerVerificationUseCase {
       });
 
       const saved = await this.verificationRepository.save(verification);
+
+      this.eventEmitter.emit(
+        'trainer-verification.submitted',
+        new TrainerVerificationSubmittedEvent(input.actor.email),
+      );
 
       await Promise.allSettled(
         oldFiles.map((file) =>

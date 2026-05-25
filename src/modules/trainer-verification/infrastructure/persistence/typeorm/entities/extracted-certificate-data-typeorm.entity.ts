@@ -42,6 +42,41 @@ export class ExtractedCertificateDataTypeormEntity {
   @Column({ name: 'ocr_confidence', type: 'float' })
   ocrConfidence!: number;
 
+  @Column({ name: 'curp', type: 'varchar', length: 18, nullable: true })
+  curp!: string | null;
+
+  @Column({
+    name: 'document_type',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  documentType!: string | null;
+
+  @Column({
+    name: 'certifying_institution',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  certifyingInstitution!: string | null;
+
+  @Column({
+    name: 'competency_standard_code',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  competencyStandardCode!: string | null;
+
+  @Column({
+    name: 'competency_standard_name',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
+  competencyStandardName!: string | null;
+
   @Column({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

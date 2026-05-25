@@ -20,7 +20,10 @@ import { WORKOUT_SESSION_REPOSITORY_PORT } from '../../application/use-cases/sta
 import { ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { EXERCISE_CATALOG_REPOSITORY_PORT } from '../../application/use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
 import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/list-training-strategies/list-training-strategies.use-case';
-import { PROFILE_QUERY_PORT, ProfileQueryAdapter } from '../adapters/profile-query.adapter';
+import {
+  PROFILE_QUERY_PORT,
+  ProfileQueryAdapter,
+} from '../adapters/profile-query.adapter';
 
 @Module({
   imports: [

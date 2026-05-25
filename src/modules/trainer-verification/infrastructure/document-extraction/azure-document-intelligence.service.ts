@@ -11,25 +11,35 @@ import {
 import { ExtractedCertificateData } from '../../domain/value-objects/extracted-certificate-data.vo';
 import { ExtractedIdData } from '../../domain/value-objects/extracted-id-data.vo';
 
-interface FieldMatch {
-  value: string;
-  confidence: number;
-}
+const QUERY_FIELDS = [
+  'documentType',
+  'holderFullName',
+  'curp',
+  'certificateFolio',
+  'issuingAuthority',
+  'certifyingInstitution',
+  'competencyStandardCode',
+  'competencyStandardName',
+  'issueDate',
+  'expirationDate',
+];
 
 @Injectable()
 export class AzureDocumentIntelligenceService implements DocumentExtractionPort {
   private readonly client: DocumentAnalysisClient;
+  private readonly endpoint: string;
+  private readonly key: string;
 
   constructor(configService: ConfigService) {
-    const endpoint = configService.getOrThrow<string>(
+    this.endpoint = configService.getOrThrow<string>(
       'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT',
     );
-    const key = configService.getOrThrow<string>(
+    this.key = configService.getOrThrow<string>(
       'AZURE_DOCUMENT_INTELLIGENCE_KEY',
     );
     this.client = new DocumentAnalysisClient(
-      endpoint,
-      new AzureKeyCredential(key),
+      this.endpoint,
+      new AzureKeyCredential(this.key),
     );
   }
 
@@ -38,8 +48,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     mimeType: string,
     _originalName: string,
   ): Promise<ExtractionResult<ExtractedCertificateData>> {
+    void mimeType;
     try {
-      void mimeType;
       const poller = await this.client.beginAnalyzeDocument(
         'prebuilt-layout',
         buffer,
@@ -56,8 +66,15 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         };
       }
 
-      const extracted = this.parseCertificateFromLayout(result);
-      return { success: true, data: extracted };
+      const layoutData = this.parseCertificateFromLayout(result);
+      const qfResult = await this.analyzeWithQueryFields(buffer);
+
+      if (qfResult.success && qfResult.data) {
+        const merged = this.mergeCertificateData(layoutData, qfResult.data);
+        return { success: true, data: merged };
+      }
+
+      return { success: true, data: layoutData };
     } catch (error) {
       return {
         success: false,
@@ -68,6 +85,39 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         },
       };
     }
+  }
+
+  private mergeCertificateData(
+    layout: ExtractedCertificateData,
+    queryFields: ExtractedCertificateData,
+  ): ExtractedCertificateData {
+    const isValid = (s: string | undefined | null): boolean =>
+      !!s && s.length >= 5 && !s.includes('|') && !s.includes('  ');
+
+    return ExtractedCertificateData.create({
+      fullName: isValid(layout.fullName) ? layout.fullName : queryFields.fullName,
+      certificateName:
+        layout.certificateName !== 'Unknown Certificate'
+          ? layout.certificateName
+          : queryFields.certificateName,
+      issuingOrganization:
+        layout.issuingOrganization !== 'Unknown Organization'
+          ? layout.issuingOrganization
+          : queryFields.issuingOrganization,
+      issueDate: layout.issueDate ?? queryFields.issueDate,
+      expirationDate: layout.expirationDate ?? queryFields.expirationDate,
+      folioNumber: layout.folioNumber ?? queryFields.folioNumber,
+      qrUrl: layout.qrUrl ?? queryFields.qrUrl,
+      ocrConfidence: Math.max(layout.ocrConfidence, queryFields.ocrConfidence),
+      curp: layout.curp ?? queryFields.curp,
+      documentType: layout.documentType ?? queryFields.documentType,
+      certifyingInstitution:
+        layout.certifyingInstitution ?? queryFields.certifyingInstitution,
+      competencyStandardCode:
+        layout.competencyStandardCode ?? queryFields.competencyStandardCode,
+      competencyStandardName:
+        layout.competencyStandardName ?? queryFields.competencyStandardName,
+    });
   }
 
   async extractIdDocument(
@@ -109,7 +159,6 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       const expirationDate = getField('DateOfExpiration');
       const docNumber = getField('DocumentNumber');
 
-      // Para INE mexicana, intentar extraer el nombre completo del contenido raw
       let fullName = [
         this.extractStringValue(firstName),
         this.extractStringValue(lastName),
@@ -118,7 +167,6 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         .join(' ')
         .trim();
 
-      // Si no se pudo extraer el nombre de los campos estructurados, buscar en el contenido
       if (!fullName || fullName.length < 5) {
         const nameMatch = content.match(/NOMBRE[\s:]*([A-Z\s]{5,60})/i);
         if (nameMatch && nameMatch[1]) {
@@ -138,60 +186,39 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
 
       const documentType = this.extractStringValue(docType) || 'other';
 
-      // Mejorar extracción de fecha de expiración para INE mexicana
       let extractedExpirationDate = this.extractDateValue(expirationDate);
 
-      // Si no hay fecha de expiración estructurada, buscar en el contenido
       if (!extractedExpirationDate) {
-        // Buscar patrones de vigencia mexicanos: "VIGENCIA 2020-2030" o "VIGENCIA 2020 - 2030" o "VIGENCIA 2020 2030"
-        const vigenciaMatch = content.match(
-          /VIGENCIA[:\s]*(\d{4})\s*[-–\s]+\s*(\d{4})/i,
-        );
-        if (vigenciaMatch && vigenciaMatch[2]) {
-          const yearEnd = parseInt(vigenciaMatch[2], 10);
-          // La INE mexicana típicamente expira el 31 de diciembre del año final
-          extractedExpirationDate = new Date(yearEnd, 11, 31);
+        const yearRanges = content.matchAll(/(\d{4})\s*[-–]\s*(\d{4})/g);
+        let lastEndYear: number | null = null;
+        for (const match of yearRanges) {
+          lastEndYear = parseInt(match[2], 10);
         }
-
-        // Buscar formato "VIGENCIA AÑO INICIO - AÑO FIN" con más flexibilidad
-        if (!extractedExpirationDate) {
-          const vigenciaAltMatch = content.match(
-            /VIGENCIA[:\s]+(\d{4})\s+(?:A\s+)?[:\s]*(\d{4})/i,
-          );
-          if (vigenciaAltMatch && vigenciaAltMatch[2]) {
-            const yearEnd = parseInt(vigenciaAltMatch[2], 10);
-            extractedExpirationDate = new Date(yearEnd, 11, 31);
-          }
+        if (lastEndYear) {
+          extractedExpirationDate = new Date(lastEndYear, 11, 31);
         }
+      }
 
-        // También buscar fechas completas en formato DD/MM/YYYY o DD-MM-YYYY
-        if (!extractedExpirationDate) {
-          const dateMatch = content.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-          if (dateMatch) {
-            const [, day, month, year] = dateMatch;
-            // Validar que sea una fecha futura razonable (después de 2024)
-            const yearNum = parseInt(year);
-            if (yearNum > 2024) {
-              extractedExpirationDate = new Date(
-                yearNum,
-                parseInt(month) - 1,
-                parseInt(day),
-              );
-            }
-          }
-        }
-
-        // Buscar solo año de expiración si aparece después de "VIGENCIA" o "HASTA"
-        if (!extractedExpirationDate) {
-          const yearMatch = content.match(
-            /(?:VIGENCIA|HASTA|VENCE)[:\s]+\d{4}[-\s]+(\d{4})/i,
-          );
-          if (yearMatch && yearMatch[1]) {
-            const yearEnd = parseInt(yearMatch[1], 10);
-            extractedExpirationDate = new Date(yearEnd, 11, 31);
+      if (!extractedExpirationDate) {
+        const dateMatch = content.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch;
+          const yearNum = parseInt(year);
+          if (yearNum > 2024) {
+            extractedExpirationDate = new Date(
+              yearNum,
+              parseInt(month) - 1,
+              parseInt(day),
+            );
           }
         }
       }
+
+      const curp =
+        this.extractByRegex(content, [
+          /CURP[\s\S]*?([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+          /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+        ]) ?? undefined;
 
       const confidences: number[] = [];
       const addConf = (f: DocumentField | undefined) => {
@@ -218,6 +245,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         expirationDate: extractedExpirationDate,
         documentIdentifier: this.extractStringValue(docNumber) || undefined,
         ocrConfidence,
+        curp,
       });
 
       return { success: true, data };
@@ -233,10 +261,264 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     }
   }
 
+  private async analyzeWithQueryFields(
+    buffer: Buffer,
+  ): Promise<ExtractionResult<ExtractedCertificateData>> {
+    const submitUrl = `${this.endpoint.replace(/\/+$/, '')}/formrecognizer/documentModels/prebuilt-layout:analyze?api-version=2024-11-30`;
+
+    const base64Source = buffer.toString('base64');
+    const payload = {
+      base64Source,
+      features: ['queryFields'] as string[],
+      queryFields: QUERY_FIELDS,
+    };
+
+    const submitResponse = await fetch(submitUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': this.key,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!submitResponse.ok) {
+      const errorText = await submitResponse.text().catch(() => 'Unknown');
+      return {
+        success: false,
+        error: {
+          code: 'technical_failure',
+          message: `Azure submit failed (${submitResponse.status}): ${errorText}`,
+        },
+      };
+    }
+
+    const operationLocation = submitResponse.headers.get('Operation-Location');
+    if (!operationLocation) {
+      return {
+        success: false,
+        error: {
+          code: 'technical_failure',
+          message: 'No Operation-Location header in Azure response',
+        },
+      };
+    }
+
+    const pollResult = await this.pollForResult(operationLocation);
+    if (!pollResult.success || !pollResult.data) {
+      return {
+        success: false,
+        error: pollResult.error ?? {
+          code: 'technical_failure',
+          message: 'Azure analysis failed',
+        },
+      };
+    }
+
+    const analyzeResult = pollResult.data;
+    const content: string = analyzeResult.content ?? '';
+    const queryDocs = analyzeResult.documents ?? [];
+    const fields =
+      queryDocs.length > 0 && queryDocs[0].fields ? queryDocs[0].fields : {};
+
+    return this.buildExtractedData(fields, content);
+  }
+
+  private async pollForResult(
+    operationLocation: string,
+  ): Promise<ExtractionResult<{ content: string; documents: any[] }>> {
+    const maxRetries = 60;
+    for (let i = 0; i < maxRetries; i++) {
+      const pollResponse = await fetch(operationLocation, {
+        headers: { 'Ocp-Apim-Subscription-Key': this.key },
+      });
+
+      if (!pollResponse.ok) {
+        return {
+          success: false,
+          error: {
+            code: 'technical_failure',
+            message: `Azure poll failed (${pollResponse.status})`,
+          },
+        };
+      }
+
+      const body: any = await pollResponse.json();
+
+      if (body.status === 'succeeded') {
+        return {
+          success: true,
+          data: body.analyzeResult ?? { content: '', documents: [] },
+        };
+      }
+
+      if (body.status === 'failed') {
+        return {
+          success: false,
+          error: {
+            code: 'unreadable_document',
+            message: 'Azure analysis failed',
+          },
+        };
+      }
+
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    return {
+      success: false,
+      error: {
+        code: 'technical_failure',
+        message: 'Azure analysis timed out',
+      },
+    };
+  }
+
+  private buildExtractedData(
+    fields: Record<string, any>,
+    content: string,
+  ): ExtractionResult<ExtractedCertificateData> {
+    const getFieldStr = (name: string): string | undefined => {
+      const field = fields[name];
+      if (!field) return undefined;
+      const confidence = field.confidence;
+      if (confidence !== undefined && confidence < 0.5) return undefined;
+      return field.valueString ?? field.valueDate ?? field.content ?? undefined;
+    };
+
+    const getFieldDate = (name: string): string | undefined => {
+      const field = fields[name];
+      if (!field) return undefined;
+      const confidence = field.confidence;
+      if (confidence !== undefined && confidence < 0.5) return undefined;
+      return field.valueDate ?? field.content ?? field.valueString ?? undefined;
+    };
+
+    const holderFullName = getFieldStr('holderFullName');
+    const rawCurp = getFieldStr('curp');
+    const rawCompetencyStandardCode = getFieldStr('competencyStandardCode');
+    const rawCertificateFolio = getFieldStr('certificateFolio');
+    const rawIssuingAuthority = getFieldStr('issuingAuthority');
+    const rawCertifyingInstitution = getFieldStr('certifyingInstitution');
+    const rawCompetencyStandardName = getFieldStr('competencyStandardName');
+    const rawIssueDate = getFieldDate('issueDate');
+    const rawExpirationDate = getFieldDate('expirationDate');
+    const rawDocumentType = getFieldStr('documentType');
+
+    const curp = rawCurp || rawCompetencyStandardCode || undefined;
+    const competencyStandardCode = this.extractByRegex(content, [
+      /(EC\d{4,5})/i,
+    ]);
+    const competencyStandardName =
+      rawCompetencyStandardName ??
+      this.extractByRegex(content, [
+        /(?:Estándar\s+de\s+Competencia\s*\n?\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
+        /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,áéíóúüñ]+(?:\s+de\s+[a-z]+)*)/i,
+        /(Acondicionamiento\s+físico\s+de\s+jóvenes\s+y\s+adultos\s+para\s+el\s+mantenimiento\s+de\s+la\s+salud)/i,
+      ]) ??
+      undefined;
+
+    const fullName =
+      holderFullName &&
+      holderFullName.length >= 5 &&
+      !holderFullName.includes('|')
+        ? holderFullName
+        : (this.extractByRegex(content, [
+            /(?:Nombre|Name|Nombre\s+Completo|Full\s+Name|Student\s+Name)[:\s\n]*([^\n]{2,60})/i,
+            /Otorga\s+el\s+presente[\s\na]+([A-Z][A-Z\s]{5,60})/i,
+            /Certificado\s+a[:\s\n]*([A-Z][A-Z\s]{5,60})/i,
+            /a[:\s\n]+([A-Z][A-Z\s]{5,60})(?:\s+con|\s+por|\s+nivel|$)/i,
+          ]) ?? 'Unknown');
+
+    const certificateName =
+      competencyStandardName ??
+      this.extractByRegex(content, [
+        /(Acondicionamiento\s+físico[^.\n]{0,100})/i,
+        /(EC\d{4,5}[^.\n]{0,50})/i,
+      ]) ??
+      'Unknown Certificate';
+
+    const issuingOrganization =
+      rawIssuingAuthority ??
+      this.extractByRegex(content, [
+        /(CONOCER[^.\n]{0,30})/i,
+        /(SEP[\s\n]*SECRETARIA[^.\n]{0,50})/i,
+      ]) ??
+      'Unknown Organization';
+
+    const certifyingInstitution =
+      rawCertifyingInstitution ??
+      this.extractByRegex(content, [
+        /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACIÓN[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MÉXICO)/i,
+        /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACION[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MEXICO)/i,
+        /(INSTITUTO\s+DE\s+CERTIFICACIÓN\s+EMPRESARIAL\s+DE\s+MÉXICO)/i,
+      ]) ??
+      undefined;
+
+    const folioNumber =
+      rawCertificateFolio ??
+      this.extractByRegex(content, [
+        /Folio\s+CONOCER[\s:]*([A-Z0-9-]{5,})/i,
+        /(D-\d{10,}-E\d{2}-\d{4})/i,
+      ]) ??
+      undefined;
+
+    const qrUrl =
+      this.extractByRegex(content, [
+        /(https?:\/\/[^\s]{10,})/i,
+        /(www\.conocer\.gob\.mx[^\s]*)/i,
+        /(conocer\.gob\.mx[^\s]*)/i,
+      ]) ?? undefined;
+
+    const issueDate =
+      this.tryParseDate(
+        rawIssueDate ??
+          this.extractByRegex(content, [
+            /(?:Issue\s+Date|Date\s+Issued|Fecha\s+de\s+[Ee]misi[oó]n)[:\s]*([0-9]{1,4}[-/][0-9]{1,2}[-/][0-9]{1,4})/i,
+            /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
+          ]),
+      ) ?? undefined;
+
+    const expirationDate =
+      this.tryParseDate(
+        rawExpirationDate ??
+          this.extractByRegex(content, [
+            /(?:Expiration|Expiry|Valid\s+Until|Vigencia|Vence|Expiration\s+Date|Fecha\s+de\s+expiraci[oó]n)[:\s]*([0-9]{1,4}[-/][0-9]{1,2}[-/][0-9]{1,4})/i,
+            /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
+          ]),
+      ) ?? undefined;
+
+    const confidenceValues: number[] = Object.values(fields)
+      .map((f: any) => f.confidence)
+      .filter((c: any) => typeof c === 'number');
+    const ocrConfidence =
+      confidenceValues.length > 0
+        ? confidenceValues.reduce((a, b) => a + b, 0) / confidenceValues.length
+        : 0.85;
+
+    return {
+      success: true,
+      data: ExtractedCertificateData.create({
+        fullName,
+        certificateName,
+        issuingOrganization,
+        issueDate,
+        expirationDate,
+        folioNumber,
+        qrUrl,
+        ocrConfidence,
+        curp,
+        documentType: rawDocumentType ?? 'certificate',
+        certifyingInstitution,
+        competencyStandardCode: competencyStandardCode ?? undefined,
+        competencyStandardName,
+      }),
+    };
+  }
+
   private parseCertificateFromLayout(result: any): ExtractedCertificateData {
     const keyValuePairs = result.keyValuePairs ?? [];
     const content: string = result.content ?? '';
-    const tables = result.tables ?? [];
 
     const fieldMap = this.extractFromKeyValuePairs(keyValuePairs);
 
@@ -247,7 +529,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         /Otorga\s+el\s+presente[\s\na]+([A-Z][A-Z\s]{5,60})/i,
         /Certificado\s+a[:\s\n]*([A-Z][A-Z\s]{5,60})/i,
         /a[:\s\n]+([A-Z][A-Z\s]{5,60})(?:\s+con|\s+por|\s+nivel|$)/i,
-      ]);
+      ]) ??
+      'Unknown';
 
     const certificateName =
       fieldMap.get('certificateName') ??
@@ -256,7 +539,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         /(EC\d{4,5}[^.\n]{0,50})/i,
         /(Acondicionamiento\s+f[ií]sico[^.\n]{0,100})/i,
         /(Estandar\s+de\s+Competencia[^.\n]{0,50})/i,
-      ]);
+      ]) ??
+      'Unknown Certificate';
 
     const issuingOrganization =
       fieldMap.get('issuingOrganization') ??
@@ -266,7 +550,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         /(CONOCER[^.\n]{0,30})/i,
         /(SEP[\s\n]*SECRETARIA[^.\n]{0,50})/i,
         /(INSTITUTO\s+DE\s+CERTIFICACION[^.\n]{0,50})/i,
-      ]);
+      ]) ??
+      'Unknown Organization';
 
     const folioNumber =
       fieldMap.get('folioNumber') ??
@@ -274,7 +559,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         /(?:Folio|N[uú]mero|No\.?\s*|ID|Credential|Certificate\s+Number|Credential\s+ID)[:\s]*([^\n]{2,50})/i,
         /Folio\s+CONOCER[\s:]*([A-Z0-9-]{5,})/i,
         /(D-\d{10,}-E\d{2}-\d{4})/i,
-      ]);
+      ]) ??
+      undefined;
 
     const qrUrl =
       fieldMap.get('qrUrl') ??
@@ -283,7 +569,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         /(https?:\/\/[^\s]{10,})/i,
         /(www\.conocer\.gob\.mx[^\s]*)/i,
         /(conocer\.gob\.mx[^\s]*)/i,
-      ]);
+      ]) ??
+      undefined;
 
     const issueDateStr =
       fieldMap.get('issueDate') ??
@@ -299,6 +586,27 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
       ]);
 
+    const curp = this.extractByRegex(content, [
+      /(?:CURP|Clave[^:]*)[:\s]*([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+      /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+    ]);
+
+    const competencyStandardCode = this.extractByRegex(content, [
+      /(EC\d{4,5})/i,
+    ]);
+
+    const competencyStandardName = this.extractByRegex(content, [
+      /(?:Estándar\s+de\s+Competencia\s*\n?\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
+      /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,áéíóúüñ]+)/i,
+      /(Acondicionamiento\s+físico[^.\n]{0,100})/i,
+    ]);
+
+    const certifyingInstitution = this.extractByRegex(content, [
+      /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACIÓN[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MÉXICO)/i,
+      /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACION[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MEXICO)/i,
+      /(INSTITUTO\s+DE\s+CERTIFICACIÓN\s+EMPRESARIAL\s+DE\s+MÉXICO)/i,
+    ]);
+
     const confidenceValues: number[] = keyValuePairs
       .map((kv: any) => kv.confidence)
       .filter(Boolean);
@@ -308,14 +616,10 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
           confidenceValues.length
         : 0.85;
 
-    const result_fullName = fullName || 'Unknown';
-    const result_certificateName = certificateName || 'Unknown Certificate';
-    const result_issuingOrg = issuingOrganization || 'Unknown Organization';
-
     return ExtractedCertificateData.create({
-      fullName: result_fullName,
-      certificateName: result_certificateName,
-      issuingOrganization: result_issuingOrg,
+      fullName,
+      certificateName,
+      issuingOrganization,
       issueDate: issueDateStr ? this.tryParseDate(issueDateStr) : undefined,
       expirationDate: expirationDateStr
         ? this.tryParseDate(expirationDateStr)
@@ -323,6 +627,11 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       folioNumber: folioNumber || undefined,
       qrUrl: qrUrl || undefined,
       ocrConfidence,
+      curp: curp || undefined,
+      documentType: 'certificate',
+      certifyingInstitution: certifyingInstitution || undefined,
+      competencyStandardCode: competencyStandardCode || undefined,
+      competencyStandardName: competencyStandardName || undefined,
     });
   }
 
@@ -432,7 +741,35 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     return null;
   }
 
-  private tryParseDate(value: string): Date | undefined {
+  private tryParseDate(value: string | null | undefined): Date | undefined {
+    if (!value) return undefined;
+    const months: Record<string, number> = {
+      enero: 0,
+      febrero: 1,
+      marzo: 2,
+      abril: 3,
+      mayo: 4,
+      junio: 5,
+      julio: 6,
+      agosto: 7,
+      septiembre: 8,
+      octubre: 9,
+      noviembre: 10,
+      diciembre: 11,
+    };
+
+    const spanishDateMatch = value.match(
+      /(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i,
+    );
+    if (spanishDateMatch) {
+      const [, day, monthStr, year] = spanishDateMatch;
+      const month = months[monthStr.toLowerCase()];
+      if (month !== undefined) {
+        const parsed = new Date(parseInt(year), month, parseInt(day));
+        if (!isNaN(parsed.getTime())) return parsed;
+      }
+    }
+
     const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? undefined : parsed;
   }

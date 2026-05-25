@@ -25,6 +25,12 @@ export class PublicationTypeormEntity {
   @Column('text', { array: true, default: '{}', name: 'media_urls' })
   mediaUrls!: string[];
 
+  @Column('uuid', { name: 'workout_session_id', nullable: true })
+  workoutSessionId!: string | null;
+
+  @Column('jsonb', { name: 'exercise_summary', nullable: true })
+  exerciseSummary!: Record<string, unknown> | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

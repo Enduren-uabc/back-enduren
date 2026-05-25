@@ -19,7 +19,9 @@ export type AlertCode =
   | 'LIVENESS_FAILED'
   | 'REPEATED_LIVENESS_FAILURE'
   | 'DOCUMENT_NOT_RELATED_TO_FITNESS'
-  | 'DOCUMENT_EXTRACTION_FAILED';
+  | 'DOCUMENT_EXTRACTION_FAILED'
+  | 'CURP_MISMATCH'
+  | 'ID_WITHOUT_CURP';
 
 export interface RiskAlertProps {
   code: AlertCode;

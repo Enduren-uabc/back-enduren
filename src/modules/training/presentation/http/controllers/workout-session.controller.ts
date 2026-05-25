@@ -21,6 +21,8 @@ import { GetWorkoutSessionHistoryUseCase } from '../../../application/use-cases/
 import { GetWorkoutSessionDetailUseCase } from '../../../application/use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from '../../../application/use-cases/get-exercise-progress/get-exercise-progress.use-case';
 import { GetWorkoutStatsUseCase } from '../../../application/use-cases/get-workout-stats/get-workout-stats.use-case';
+import { GetWeeklyVolumeUseCase } from '../../../application/use-cases/get-weekly-volume/get-weekly-volume.use-case';
+import { GetPersonalRecordsUseCase } from '../../../application/use-cases/get-personal-records/get-personal-records.use-case';
 import { DiscardWorkoutSessionUseCase } from '../../../application/use-cases/discard-workout-session/discard-workout-session.use-case';
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
@@ -46,6 +48,14 @@ import {
   ExerciseProgressRecordDto,
 } from '../dtos/exercise-progress-response';
 import { WorkoutStatsResponseDto } from '../dtos/workout-stats.response';
+import {
+  WeeklyVolumeResponseDto,
+  WeeklyVolumeEntryDto,
+} from '../dtos/weekly-volume.response';
+import {
+  PersonalRecordsResponseDto,
+  PersonalRecordEntryDto,
+} from '../dtos/personal-records.response';
 import { WorkoutSessionDomainErrorFilter } from '../filters/workout-session-domain-error.filter';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
@@ -64,6 +74,8 @@ export class WorkoutSessionController {
     private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase,
     private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
     private readonly getWorkoutStatsUseCase: GetWorkoutStatsUseCase,
+    private readonly getWeeklyVolumeUseCase: GetWeeklyVolumeUseCase,
+    private readonly getPersonalRecordsUseCase: GetPersonalRecordsUseCase,
     private readonly discardWorkoutSessionUseCase: DiscardWorkoutSessionUseCase,
     private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase,
     private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase,
@@ -154,6 +166,47 @@ export class WorkoutSessionController {
       currentStreak: result.currentStreak,
       longestStreak: result.longestStreak,
     };
+  }
+
+  @Get('volume/weekly')
+  public async weeklyVolume(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<WeeklyVolumeResponseDto> {
+    const result = await this.getWeeklyVolumeUseCase.execute(
+      this.getActor(user),
+    );
+    const dto = new WeeklyVolumeResponseDto();
+    dto.entries = result.entries.map((e) => {
+      const entry = new WeeklyVolumeEntryDto();
+      entry.weekStart = e.weekStart;
+      entry.weekLabel = e.weekLabel;
+      entry.totalVolume = e.totalVolume;
+      entry.workoutCount = e.workoutCount;
+      return entry;
+    });
+    return dto;
+  }
+
+  @Get('personal-records')
+  public async personalRecords(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<PersonalRecordsResponseDto> {
+    const result = await this.getPersonalRecordsUseCase.execute(
+      this.getActor(user),
+    );
+    const dto = new PersonalRecordsResponseDto();
+    dto.totalCount = result.totalCount;
+    dto.records = result.records.map((r) => {
+      const entry = new PersonalRecordEntryDto();
+      entry.exerciseName = r.exerciseName;
+      entry.exerciseId = r.exerciseId;
+      entry.weight = r.weight;
+      entry.reps = r.reps;
+      entry.date = r.date;
+      entry.sessionId = r.sessionId;
+      return entry;
+    });
+    return dto;
   }
 
   @Patch(':sessionId/discard')

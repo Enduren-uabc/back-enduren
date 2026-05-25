@@ -3,6 +3,7 @@ import {
   IsArray,
   IsOptional,
   IsString,
+  IsUUID,
   IsUrl,
   MaxLength,
   MinLength,
@@ -27,4 +28,9 @@ export class CreatePublicationRequestDto {
   @ArrayMaxSize(MAX_PUBLICATION_MEDIA_URLS)
   @IsUrl({ require_protocol: true }, { each: true })
   mediaUrls?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  mediaIds?: string[];
 }
