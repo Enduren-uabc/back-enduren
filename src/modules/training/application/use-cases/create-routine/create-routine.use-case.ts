@@ -10,6 +10,12 @@ import { CurrentActor } from '../../ports/current-actor.port';
 export const ROUTINE_REPOSITORY_PORT = Symbol('ROUTINE_REPOSITORY_PORT');
 export const CURRENT_ACTOR_PORT = Symbol('CURRENT_ACTOR_PORT');
 
+export const PROFILE_REPOSITORY_PORT = Symbol('PROFILE_REPOSITORY_PORT');
+
+export interface ProfileRepository {
+  findByUserId(userId: string): Promise<{ defaultTrainingStrategyKey: string | null } | null>;
+}
+
 export interface CreateRoutineInput {
   name: string;
   dayOfWeeks: string[];
@@ -42,7 +48,10 @@ export interface CreateRoutineOutput {
 export const MAX_ROUTINES_PER_USER = 5;
 
 export class CreateRoutineUseCase {
-  constructor(private readonly routineRepository: RoutineRepository) {}
+  constructor(
+    private readonly routineRepository: RoutineRepository,
+    private readonly profileRepository: ProfileRepository,
+  ) {}
 
   public async execute(
     actor: CurrentActor,
@@ -100,12 +109,17 @@ export class CreateRoutineUseCase {
     // RF-09.0.3: Auto-assign first routine as active when user has 0 existing routines
     const isActive = currentCount === 0;
 
+    // Auto-assign training strategy from user's profile default
+    const profile = await this.profileRepository.findByUserId(actor.userId);
+    const defaultTrainingStrategyKey = profile?.defaultTrainingStrategyKey ?? null;
+
     const routine = Routine.create(
       id,
       input.name,
       actor.userId,
       days,
       isActive,
+      defaultTrainingStrategyKey,
     );
 
     const saved = await this.routineRepository.save(routine);

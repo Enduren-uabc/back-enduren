@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProfileModule } from '../../../profile/profile.module';
+import { PROFILE_REPOSITORY_PORT } from '../../../profile/domain/repositories/profile.repository';
 import { RoutineTypeormEntity } from '../persistence/typeorm/entities/routine-typeorm.entity';
 import { RoutineDayTypeormEntity } from '../persistence/typeorm/entities/routine-day-typeorm.entity';
 import { ExerciseTypeormEntity } from '../persistence/typeorm/entities/exercise-typeorm.entity';
@@ -18,6 +20,7 @@ import { WORKOUT_SESSION_REPOSITORY_PORT } from '../../application/use-cases/sta
 import { ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { EXERCISE_CATALOG_REPOSITORY_PORT } from '../../application/use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
 import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/list-training-strategies/list-training-strategies.use-case';
+import { PROFILE_QUERY_PORT, ProfileQueryAdapter } from '../adapters/profile-query.adapter';
 
 @Module({
   imports: [
@@ -32,6 +35,7 @@ import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/l
       ExerciseCatalogTypeormEntity,
       TrainingStrategyTypeormEntity,
     ]),
+    ProfileModule,
   ],
   providers: [
     {
@@ -54,6 +58,10 @@ import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/l
       provide: TRAINING_STRATEGY_REPOSITORY_PORT,
       useClass: TypeormTrainingStrategyRepository,
     },
+    {
+      provide: PROFILE_QUERY_PORT,
+      useClass: ProfileQueryAdapter,
+    },
   ],
   exports: [
     ROUTINE_REPOSITORY_PORT,
@@ -61,6 +69,7 @@ import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/l
     ROUTINE_REPOSITORY_PORT_FOR_SESSION,
     EXERCISE_CATALOG_REPOSITORY_PORT,
     TRAINING_STRATEGY_REPOSITORY_PORT,
+    PROFILE_QUERY_PORT,
   ],
 })
 export class TrainingInfrastructureModule {}

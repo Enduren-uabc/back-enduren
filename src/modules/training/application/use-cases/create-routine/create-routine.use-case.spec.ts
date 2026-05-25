@@ -1,6 +1,7 @@
 import {
   CreateRoutineUseCase,
   MAX_ROUTINES_PER_USER,
+  ProfileRepository,
 } from './create-routine.use-case';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
@@ -13,6 +14,7 @@ import {
 describe('CreateRoutineUseCase', () => {
   let useCase: CreateRoutineUseCase;
   let routineRepository: RoutineRepository;
+  let profileRepository: ProfileRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
   beforeEach(() => {
@@ -24,7 +26,10 @@ describe('CreateRoutineUseCase', () => {
       countByUserId: jest.fn(),
       findActiveByUserId: jest.fn(),
     };
-    useCase = new CreateRoutineUseCase(routineRepository);
+    profileRepository = {
+      findByUserId: jest.fn().mockResolvedValue(null),
+    };
+    useCase = new CreateRoutineUseCase(routineRepository, profileRepository);
   });
 
   describe('RF-09.0.2: Validate required fields', () => {
@@ -298,6 +303,75 @@ describe('CreateRoutineUseCase', () => {
       });
 
       expect(result.isActive).toBe(false);
+    });
+  });
+
+  describe('Auto-assign training strategy from profile', () => {
+    it('should use defaultTrainingStrategyKey from profile when available', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(0);
+      (routineRepository.save as jest.Mock).mockImplementation(
+        (routine: Routine) => Promise.resolve(routine),
+      );
+      (profileRepository.findByUserId as jest.Mock).mockResolvedValue({
+        defaultTrainingStrategyKey: 'drop_sets',
+      });
+
+      const result = await useCase.execute(actor, {
+        name: 'Strategy Routine',
+        dayOfWeeks: ['monday'],
+      });
+
+      expect(
+        (routineRepository.save as jest.Mock).mock.calls[0][0]
+          .trainingStrategyKey,
+      ).toBe('drop_sets');
+    });
+
+    it('should create routine without strategy when profile has no default', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(0);
+      (routineRepository.save as jest.Mock).mockImplementation(
+        (routine: Routine) => Promise.resolve(routine),
+      );
+      (profileRepository.findByUserId as jest.Mock).mockResolvedValue({
+        defaultTrainingStrategyKey: null,
+      });
+
+      const result = await useCase.execute(actor, {
+        name: 'No Strategy Routine',
+        dayOfWeeks: ['monday'],
+      });
+
+      expect(
+        (routineRepository.save as jest.Mock).mock.calls[0][0]
+          .trainingStrategyKey,
+      ).toBeNull();
+    });
+
+    it('should create routine without strategy when no profile exists', async () => {
+      (routineRepository.existsByNameForUser as jest.Mock).mockResolvedValue(
+        false,
+      );
+      (routineRepository.countByUserId as jest.Mock).mockResolvedValue(0);
+      (routineRepository.save as jest.Mock).mockImplementation(
+        (routine: Routine) => Promise.resolve(routine),
+      );
+      (profileRepository.findByUserId as jest.Mock).mockResolvedValue(null);
+
+      const result = await useCase.execute(actor, {
+        name: 'No Profile Routine',
+        dayOfWeeks: ['monday'],
+      });
+
+      expect(
+        (routineRepository.save as jest.Mock).mock.calls[0][0]
+          .trainingStrategyKey,
+      ).toBeNull();
     });
   });
 });
