@@ -20,6 +20,7 @@ import { GetWorkoutSessionUseCase } from '../../../application/use-cases/get-wor
 import { GetWorkoutSessionHistoryUseCase } from '../../../application/use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from '../../../application/use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from '../../../application/use-cases/get-exercise-progress/get-exercise-progress.use-case';
+import { GetWorkoutStatsUseCase } from '../../../application/use-cases/get-workout-stats/get-workout-stats.use-case';
 import { DiscardWorkoutSessionUseCase } from '../../../application/use-cases/discard-workout-session/discard-workout-session.use-case';
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
@@ -44,6 +45,7 @@ import {
   ExerciseProgressResponseDto,
   ExerciseProgressRecordDto,
 } from '../dtos/exercise-progress-response';
+import { WorkoutStatsResponseDto } from '../dtos/workout-stats.response';
 import { WorkoutSessionDomainErrorFilter } from '../filters/workout-session-domain-error.filter';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
@@ -61,6 +63,7 @@ export class WorkoutSessionController {
     private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase,
     private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase,
     private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
+    private readonly getWorkoutStatsUseCase: GetWorkoutStatsUseCase,
     private readonly discardWorkoutSessionUseCase: DiscardWorkoutSessionUseCase,
     private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase,
     private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase,
@@ -137,6 +140,20 @@ export class WorkoutSessionController {
     });
     dto.hasIncompleteData = result.hasIncompleteData;
     return dto;
+  }
+
+  @Get('stats')
+  public async stats(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<WorkoutStatsResponseDto> {
+    const result = await this.getWorkoutStatsUseCase.execute(
+      this.getActor(user),
+    );
+    return {
+      totalWorkouts: result.totalWorkouts,
+      currentStreak: result.currentStreak,
+      longestStreak: result.longestStreak,
+    };
   }
 
   @Patch(':sessionId/discard')

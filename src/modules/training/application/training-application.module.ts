@@ -32,6 +32,7 @@ import { GetExerciseProgressUseCase } from './use-cases/get-exercise-progress/ge
 import { AddSetToExerciseUseCase } from './use-cases/add-set-to-exercise/add-set-to-exercise.use-case';
 import { RemoveSetFromExerciseUseCase } from './use-cases/remove-set-from-exercise/remove-set-from-exercise.use-case';
 import { DiscardWorkoutSessionUseCase } from './use-cases/discard-workout-session/discard-workout-session.use-case';
+import { GetWorkoutStatsUseCase } from './use-cases/get-workout-stats/get-workout-stats.use-case';
 import {
   ListExerciseCatalogUseCase,
   EXERCISE_CATALOG_REPOSITORY_PORT,
@@ -215,6 +216,12 @@ const workoutSessionUseCaseProviders = [
     inject: [WORKOUT_SESSION_REPOSITORY_PORT],
     useFactory: (workoutSessionRepository) =>
       new DiscardWorkoutSessionUseCase(workoutSessionRepository),
+  },
+  {
+    provide: GetWorkoutStatsUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new GetWorkoutStatsUseCase(workoutSessionRepository),
   },
 ];
 
