@@ -1,18 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
+/**
+ * NO-OP: la columna ya está como trainer_code en snake_case y la entidad
+ * UserTypeormEntity ya tiene { name: 'trainer_code' } en @Column.
+ */
 export class AddTrainerCodeCamelCase1763000000003 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    const exists = await queryRunner.query(
-      `SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='trainer_code'`,
-    );
-    if (exists.length > 0) {
-      await queryRunner.query(`ALTER TABLE users ADD COLUMN "trainerCode" varchar`);
-      await queryRunner.query(`UPDATE users SET "trainerCode" = trainer_code`);
-      await queryRunner.query(`ALTER TABLE users DROP COLUMN trainer_code`);
-    }
+  public async up(_queryRunner: QueryRunner): Promise<void> {
+    // No-op — la BD debe permanecer en snake_case
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    // No reverse needed
+  public async down(_queryRunner: QueryRunner): Promise<void> {
+    // No-op
   }
 }

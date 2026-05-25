@@ -1,4 +1,11 @@
-import { Controller, Get, HttpCode, HttpStatus, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
 import { Public } from '../../../../auth/presentation/http/decorators/public.decorator';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
 import {
@@ -19,7 +26,9 @@ export class PrivacyNoticeController {
   async getCurrent(): Promise<PrivacyNoticeResponseDto> {
     const notice = await this.repo.findCurrent();
     if (!notice) {
-      throw new NotFoundException('El aviso de privacidad no está disponible en este momento');
+      throw new NotFoundException(
+        'El aviso de privacidad no está disponible en este momento',
+      );
     }
     return {
       version: notice.version,

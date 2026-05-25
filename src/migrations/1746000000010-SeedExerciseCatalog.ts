@@ -239,13 +239,7 @@ export class SeedExerciseCatalog1746000000010 implements MigrationInterface {
         `INSERT INTO exercise_catalog (id, name, category, "primaryMuscleGroup", equipment)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (id) DO NOTHING`,
-        [
-          ex.id,
-          ex.name,
-          ex.category,
-          ex.primaryMuscleGroup,
-          ex.equipment,
-        ],
+        [ex.id, ex.name, ex.category, ex.primaryMuscleGroup, ex.equipment],
       );
     }
   }

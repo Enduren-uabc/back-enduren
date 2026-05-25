@@ -28,7 +28,12 @@ export class ExtractedCertificateDataTypeormEntity {
   @Column({ name: 'expiration_date', type: 'date', nullable: true })
   expirationDate!: Date | null;
 
-  @Column({ name: 'folio_number', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'folio_number',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   folioNumber!: string | null;
 
   @Column({ name: 'qr_url', type: 'varchar', length: 500, nullable: true })

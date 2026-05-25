@@ -1,7 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import {
-  WORKOUT_SESSION_REPOSITORY_PORT,
-} from '../start-workout-session/start-workout-session.use-case';
+import { WORKOUT_SESSION_REPOSITORY_PORT } from '../start-workout-session/start-workout-session.use-case';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
 

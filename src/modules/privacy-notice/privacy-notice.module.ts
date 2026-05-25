@@ -3,9 +3,6 @@ import { PrivacyNoticeInfrastructureModule } from './infrastructure/privacy-noti
 import { PrivacyNoticePresentationModule } from './presentation/privacy-notice-presentation.module';
 
 @Module({
-  imports: [
-    PrivacyNoticeInfrastructureModule,
-    PrivacyNoticePresentationModule,
-  ],
+  imports: [PrivacyNoticeInfrastructureModule, PrivacyNoticePresentationModule],
 })
 export class PrivacyNoticeModule {}

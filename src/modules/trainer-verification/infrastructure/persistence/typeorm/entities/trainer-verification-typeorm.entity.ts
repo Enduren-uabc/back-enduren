@@ -25,7 +25,11 @@ export class TrainerVerificationTypeormEntity {
   @Column('uuid', { name: 'user_id', unique: true })
   userId!: string;
 
-  @Column('varchar', { name: 'verification_status', length: 20, default: 'pending' })
+  @Column('varchar', {
+    name: 'verification_status',
+    length: 20,
+    default: 'pending',
+  })
   verificationStatus!: string;
 
   @Column('integer', { name: 'years_of_experience' })

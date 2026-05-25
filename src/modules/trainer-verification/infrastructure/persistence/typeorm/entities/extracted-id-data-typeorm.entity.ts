@@ -19,7 +19,12 @@ export class ExtractedIdDataTypeormEntity {
   @Column({ name: 'document_type', type: 'varchar', length: 50 })
   documentType!: string;
 
-  @Column({ name: 'issuing_country', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'issuing_country',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   issuingCountry!: string | null;
 
   @Column({ name: 'birth_date', type: 'date', nullable: true })
@@ -28,7 +33,12 @@ export class ExtractedIdDataTypeormEntity {
   @Column({ name: 'expiration_date', type: 'date', nullable: true })
   expirationDate!: Date | null;
 
-  @Column({ name: 'document_identifier', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'document_identifier',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   documentIdentifier!: string | null;
 
   @Column({ name: 'ocr_confidence', type: 'float' })
