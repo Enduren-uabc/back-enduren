@@ -35,7 +35,11 @@ describe('ReviewTrainerVerificationUseCase', () => {
   let stateMachine: jest.Mocked<TrainerVerificationStateMachineService>;
   let flowConfig: jest.Mocked<TrainerFlowConfigPort>;
 
-  const adminActor: CurrentActor = { userId: 'admin-1', role: 'admin', email: 'admin@endure.com' };
+  const adminActor: CurrentActor = {
+    userId: 'admin-1',
+    role: 'admin',
+    email: 'admin@endure.com',
+  };
 
   function createMockVerification(
     overrides: Record<string, unknown> = {},

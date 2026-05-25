@@ -161,6 +161,10 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           verification.extractedCertificateData.competencyStandardCode ?? null;
         extractedEntity.competencyStandardName =
           verification.extractedCertificateData.competencyStandardName ?? null;
+        extractedEntity.hasVeracityCode =
+          verification.extractedCertificateData.hasVeracityCode ?? null;
+        extractedEntity.veracityCode =
+          verification.extractedCertificateData.veracityCode ?? null;
         extractedEntity.createdAt = new Date();
         await manager
           .getRepository(ExtractedCertificateDataTypeormEntity)
@@ -444,6 +448,10 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             verification.extractedCertificateData.folioNumber ?? undefined,
           qrUrl: verification.extractedCertificateData.qrUrl ?? undefined,
           ocrConfidence: verification.extractedCertificateData.ocrConfidence,
+          hasVeracityCode:
+            verification.extractedCertificateData.hasVeracityCode ?? undefined,
+          veracityCode:
+            verification.extractedCertificateData.veracityCode ?? undefined,
         }
       : null;
 
@@ -628,6 +636,8 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
               extractedCertData.competencyStandardCode ?? undefined,
             competencyStandardName:
               extractedCertData.competencyStandardName ?? undefined,
+            hasVeracityCode: extractedCertData.hasVeracityCode ?? undefined,
+            veracityCode: extractedCertData.veracityCode ?? undefined,
           })
         : null,
       extractedIdData: extractedId

@@ -14,7 +14,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (normalizedCert === normalizedId) {
       return {
         level: 'exact',
-        score: 23,
+        score: 20,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -40,7 +40,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     ) {
       return {
         level: 'strong',
-        score: 20,
+        score: 17,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -67,7 +67,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (similarity >= 0.8) {
       return {
         level: 'strong',
-        score: 20,
+        score: 17,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -75,7 +75,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (similarity >= 0.5) {
       return {
         level: 'partial',
-        score: 14,
+        score: 12,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -83,7 +83,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (similarity >= 0.2) {
       return {
         level: 'low',
-        score: 6,
+        score: 5,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -101,8 +101,14 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     certCurp: string | undefined,
     idCurp: string | undefined,
   ): CurpComparisonResult {
-    const normalizedCert = (certCurp ?? '').toUpperCase().trim();
-    const normalizedId = (idCurp ?? '').toUpperCase().trim();
+    const normalizedCert = (certCurp ?? '')
+      .toUpperCase()
+      .replace(/\s+/g, '')
+      .trim();
+    const normalizedId = (idCurp ?? '')
+      .toUpperCase()
+      .replace(/\s+/g, '')
+      .trim();
 
     if (!normalizedCert || !normalizedId) {
       return {

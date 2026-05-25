@@ -10,9 +10,7 @@ import { AzureDocumentIntelligenceService } from './azure-document-intelligence.
 import { OpenAIDocumentExtractor } from './openai-document-extractor.service';
 
 @Injectable()
-export class CompositeDocumentExtractionService
-  implements DocumentExtractionPort
-{
+export class CompositeDocumentExtractionService implements DocumentExtractionPort {
   private readonly strategy: string;
 
   constructor(
@@ -32,13 +30,19 @@ export class CompositeDocumentExtractionService
     originalName: string,
   ): Promise<ExtractionResult<ExtractedCertificateData>> {
     if (this.strategy === 'openai_only') {
-      return this.openaiService.extractCertificate(buffer, mimeType, originalName);
+      return this.openaiService.extractCertificate(
+        buffer,
+        mimeType,
+        originalName,
+      );
     }
 
     if (this.strategy === 'openai_primary') {
       return this.extractWithFallback(
-        () => this.openaiService.extractCertificate(buffer, mimeType, originalName),
-        () => this.azureService.extractCertificate(buffer, mimeType, originalName),
+        () =>
+          this.openaiService.extractCertificate(buffer, mimeType, originalName),
+        () =>
+          this.azureService.extractCertificate(buffer, mimeType, originalName),
         this.isCertificateSufficient,
         this.mergeCertificateData.bind(this),
       );
@@ -46,8 +50,10 @@ export class CompositeDocumentExtractionService
 
     // di_primary (default) o cualquier otro valor
     return this.extractWithFallback(
-      () => this.azureService.extractCertificate(buffer, mimeType, originalName),
-      () => this.openaiService.extractCertificate(buffer, mimeType, originalName),
+      () =>
+        this.azureService.extractCertificate(buffer, mimeType, originalName),
+      () =>
+        this.openaiService.extractCertificate(buffer, mimeType, originalName),
       this.isCertificateSufficient,
       this.mergeCertificateData.bind(this),
     );
@@ -59,13 +65,19 @@ export class CompositeDocumentExtractionService
     originalName: string,
   ): Promise<ExtractionResult<ExtractedIdData>> {
     if (this.strategy === 'openai_only') {
-      return this.openaiService.extractIdDocument(buffer, mimeType, originalName);
+      return this.openaiService.extractIdDocument(
+        buffer,
+        mimeType,
+        originalName,
+      );
     }
 
     if (this.strategy === 'openai_primary') {
       return this.extractWithFallback(
-        () => this.openaiService.extractIdDocument(buffer, mimeType, originalName),
-        () => this.azureService.extractIdDocument(buffer, mimeType, originalName),
+        () =>
+          this.openaiService.extractIdDocument(buffer, mimeType, originalName),
+        () =>
+          this.azureService.extractIdDocument(buffer, mimeType, originalName),
         this.isIdSufficient,
         this.mergeIdData.bind(this),
       );
@@ -74,7 +86,8 @@ export class CompositeDocumentExtractionService
     // di_primary (default) o cualquier otro valor
     return this.extractWithFallback(
       () => this.azureService.extractIdDocument(buffer, mimeType, originalName),
-      () => this.openaiService.extractIdDocument(buffer, mimeType, originalName),
+      () =>
+        this.openaiService.extractIdDocument(buffer, mimeType, originalName),
       this.isIdSufficient,
       this.mergeIdData.bind(this),
     );
@@ -88,7 +101,11 @@ export class CompositeDocumentExtractionService
   ): Promise<ExtractionResult<T>> {
     const primaryResult = await primaryFn();
 
-    if (primaryResult.success && primaryResult.data && isSufficient(primaryResult.data)) {
+    if (
+      primaryResult.success &&
+      primaryResult.data &&
+      isSufficient(primaryResult.data)
+    ) {
       return primaryResult;
     }
 
@@ -110,9 +127,7 @@ export class CompositeDocumentExtractionService
   private isCertificateSufficient(data: ExtractedCertificateData): boolean {
     const hasName = !!data.fullName && data.fullName.length >= 5;
     const hasKeyField =
-      !!data.folioNumber ||
-      !!data.competencyStandardCode ||
-      !!data.curp;
+      !!data.folioNumber || !!data.competencyStandardCode || !!data.curp;
     const confidenceOk = data.ocrConfidence >= 0.4;
     return hasName && hasKeyField && confidenceOk;
   }
@@ -128,8 +143,18 @@ export class CompositeDocumentExtractionService
     di: ExtractedCertificateData,
     openai: ExtractedCertificateData,
   ): ExtractedCertificateData {
-    const pick = <T>(diVal: T | undefined, aiVal: T | undefined): T | undefined => {
-      if (diVal !== undefined && diVal !== null && diVal !== '' && diVal !== 'Unknown' && diVal !== 'Unknown Certificate' && diVal !== 'Unknown Organization') {
+    const pick = <T>(
+      diVal: T | undefined,
+      aiVal: T | undefined,
+    ): T | undefined => {
+      if (
+        diVal !== undefined &&
+        diVal !== null &&
+        diVal !== '' &&
+        diVal !== 'Unknown' &&
+        diVal !== 'Unknown Certificate' &&
+        diVal !== 'Unknown Organization'
+      ) {
         return diVal;
       }
       return aiVal;
@@ -137,8 +162,12 @@ export class CompositeDocumentExtractionService
 
     return ExtractedCertificateData.create({
       fullName: pick(di.fullName, openai.fullName) ?? 'Unknown',
-      certificateName: pick(di.certificateName, openai.certificateName) ?? 'Unknown Certificate',
-      issuingOrganization: pick(di.issuingOrganization, openai.issuingOrganization) ?? 'Unknown Organization',
+      certificateName:
+        pick(di.certificateName, openai.certificateName) ??
+        'Unknown Certificate',
+      issuingOrganization:
+        pick(di.issuingOrganization, openai.issuingOrganization) ??
+        'Unknown Organization',
       issueDate: di.issueDate ?? openai.issueDate,
       expirationDate: di.expirationDate ?? openai.expirationDate,
       folioNumber: pick(di.folioNumber, openai.folioNumber),
@@ -146,9 +175,18 @@ export class CompositeDocumentExtractionService
       ocrConfidence: Math.max(di.ocrConfidence, openai.ocrConfidence),
       curp: pick(di.curp, openai.curp),
       documentType: pick(di.documentType, openai.documentType) ?? 'certificate',
-      certifyingInstitution: pick(di.certifyingInstitution, openai.certifyingInstitution),
-      competencyStandardCode: pick(di.competencyStandardCode, openai.competencyStandardCode),
-      competencyStandardName: pick(di.competencyStandardName, openai.competencyStandardName),
+      certifyingInstitution: pick(
+        di.certifyingInstitution,
+        openai.certifyingInstitution,
+      ),
+      competencyStandardCode: pick(
+        di.competencyStandardCode,
+        openai.competencyStandardCode,
+      ),
+      competencyStandardName: pick(
+        di.competencyStandardName,
+        openai.competencyStandardName,
+      ),
     });
   }
 
@@ -156,8 +194,16 @@ export class CompositeDocumentExtractionService
     di: ExtractedIdData,
     openai: ExtractedIdData,
   ): ExtractedIdData {
-    const pick = <T>(diVal: T | undefined, aiVal: T | undefined): T | undefined => {
-      if (diVal !== undefined && diVal !== null && diVal !== '' && diVal !== 'Unknown') {
+    const pick = <T>(
+      diVal: T | undefined,
+      aiVal: T | undefined,
+    ): T | undefined => {
+      if (
+        diVal !== undefined &&
+        diVal !== null &&
+        diVal !== '' &&
+        diVal !== 'Unknown'
+      ) {
         return diVal;
       }
       return aiVal;
@@ -169,7 +215,10 @@ export class CompositeDocumentExtractionService
       issuingCountry: pick(di.issuingCountry, openai.issuingCountry),
       birthDate: di.birthDate ?? openai.birthDate,
       expirationDate: di.expirationDate ?? openai.expirationDate,
-      documentIdentifier: pick(di.documentIdentifier, openai.documentIdentifier),
+      documentIdentifier: pick(
+        di.documentIdentifier,
+        openai.documentIdentifier,
+      ),
       ocrConfidence: Math.max(di.ocrConfidence, openai.ocrConfidence),
       curp: pick(di.curp, openai.curp),
     });

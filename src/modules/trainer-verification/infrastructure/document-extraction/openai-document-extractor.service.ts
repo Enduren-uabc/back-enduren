@@ -62,12 +62,15 @@ Tu tarea es analizar la imagen de un certificado y devolver ÚNICAMENTE un objet
 - competencyStandardCode: código del estándar (ej: EC0474) (string) o null
 - competencyStandardName: nombre completo del estándar de competencia (string) o null
 - qrUrl: URL de verificación o QR detectado (string) o null
+- hasVeracityCode: booleano que indica si el certificado tiene un código de veracidad o autenticidad impreso (true/false)
+- veracityCode: el código de veracidad o autenticidad impreso en el certificado (string) o null
 
 REGLAS IMPORTANTES:
 1. Ignora COMPLETAMENTE cualquier marca de agua, texto de prueba, o sello que diga "INVALIDO", "SAMPLE", "SPECIMEN", "NO VALIDO", "ESTE ARCHIVO ES INVALIDO", o similares. Extrae ÚNICAMENTE los datos reales del certificado.
 2. Si un campo no está visible en la imagen, usa null.
 3. No agregues markdown, explicaciones, comentarios ni texto adicional. Solo el JSON puro.
-4. Para fechas en español como "15 de junio de 2023", conviértelas a "2023-06-15".`;
+4. Para fechas en español como "15 de junio de 2023", conviértelas a "2023-06-15".
+5. El código de veracidad puede aparecer como "Código de verificación", "Código de autenticidad", "Código de veracidad" o similar. Si existe, marca hasVeracityCode como true y extrae el valor.`;
 
     return this.callOpenAI(prompt, imageUrl, 'certificate');
   }
@@ -145,8 +148,7 @@ REGLAS IMPORTANTES:
                 },
                 {
                   type: 'text',
-                  text:
-                    'Extrae los datos solicitados de esta imagen y devuélvelos ÚNICAMENTE como JSON puro.',
+                  text: 'Extrae los datos solicitados de esta imagen y devuélvelos ÚNICAMENTE como JSON puro.',
                 },
               ],
             },
@@ -219,7 +221,10 @@ REGLAS IMPORTANTES:
     const trimmed = this.endpoint.trim();
 
     // Si el endpoint ya incluye la ruta completa de chat completions, úsalo directamente
-    if (trimmed.includes('/openai/deployments/') && trimmed.includes('/chat/completions')) {
+    if (
+      trimmed.includes('/openai/deployments/') &&
+      trimmed.includes('/chat/completions')
+    ) {
       return trimmed;
     }
 
@@ -244,11 +249,9 @@ REGLAS IMPORTANTES:
         parsed.folioNumber != null
           ? String(parsed.folioNumber).trim()
           : undefined,
-      qrUrl:
-        parsed.qrUrl != null ? String(parsed.qrUrl).trim() : undefined,
+      qrUrl: parsed.qrUrl != null ? String(parsed.qrUrl).trim() : undefined,
       ocrConfidence: 0.75,
-      curp:
-        parsed.curp != null ? String(parsed.curp).trim() : undefined,
+      curp: parsed.curp != null ? String(parsed.curp).trim() : undefined,
       documentType: 'certificate',
       certifyingInstitution:
         parsed.certifyingInstitution != null
@@ -261,6 +264,12 @@ REGLAS IMPORTANTES:
       competencyStandardName:
         parsed.competencyStandardName != null
           ? String(parsed.competencyStandardName).trim()
+          : undefined,
+      hasVeracityCode:
+        parsed.hasVeracityCode === true || parsed.hasVeracityCode === 'true',
+      veracityCode:
+        parsed.veracityCode != null
+          ? String(parsed.veracityCode).trim()
           : undefined,
     });
 
@@ -282,8 +291,7 @@ REGLAS IMPORTANTES:
           ? String(parsed.documentIdentifier).trim()
           : undefined,
       ocrConfidence: 0.75,
-      curp:
-        parsed.curp != null ? String(parsed.curp).trim() : undefined,
+      curp: parsed.curp != null ? String(parsed.curp).trim() : undefined,
     });
 
     return { success: true, data };
@@ -326,9 +334,7 @@ REGLAS IMPORTANTES:
       noviembre: 10,
       diciembre: 11,
     };
-    const spanishMatch = str.match(
-      /(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i,
-    );
+    const spanishMatch = str.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
     if (spanishMatch) {
       const [, day, monthStr, year] = spanishMatch;
       const month = months[monthStr.toLowerCase()];

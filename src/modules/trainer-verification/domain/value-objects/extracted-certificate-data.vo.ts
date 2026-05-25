@@ -12,6 +12,8 @@ export interface ExtractedCertificateDataProps {
   certifyingInstitution?: string;
   competencyStandardCode?: string;
   competencyStandardName?: string;
+  hasVeracityCode?: boolean;
+  veracityCode?: string;
 }
 
 export class ExtractedCertificateData {
@@ -28,6 +30,8 @@ export class ExtractedCertificateData {
   public readonly certifyingInstitution?: string;
   public readonly competencyStandardCode?: string;
   public readonly competencyStandardName?: string;
+  public readonly hasVeracityCode?: boolean;
+  public readonly veracityCode?: string;
 
   private constructor(props: ExtractedCertificateDataProps) {
     this.fullName = props.fullName;

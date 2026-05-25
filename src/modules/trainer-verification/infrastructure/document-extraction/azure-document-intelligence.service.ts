@@ -95,7 +95,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       !!s && s.length >= 5 && !s.includes('|') && !s.includes('  ');
 
     return ExtractedCertificateData.create({
-      fullName: isValid(layout.fullName) ? layout.fullName : queryFields.fullName,
+      fullName: isValid(layout.fullName)
+        ? layout.fullName
+        : queryFields.fullName,
       certificateName:
         layout.certificateName !== 'Unknown Certificate'
           ? layout.certificateName

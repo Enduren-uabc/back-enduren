@@ -77,6 +77,21 @@ export class ExtractedCertificateDataTypeormEntity {
   })
   competencyStandardName!: string | null;
 
+  @Column({
+    name: 'has_veracity_code',
+    type: 'boolean',
+    nullable: true,
+  })
+  hasVeracityCode!: boolean | null;
+
+  @Column({
+    name: 'veracity_code',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  veracityCode!: string | null;
+
   @Column({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

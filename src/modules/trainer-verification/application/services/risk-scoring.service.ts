@@ -165,7 +165,7 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'DOCUMENT_EXTRACTION_FAILED',
           severity: 'high',
-          message: 'Certificate data not available',
+          message: 'No se pudo extraer la información del certificado',
         }),
       );
       return 0;
@@ -179,9 +179,9 @@ export class RiskScoringService {
     } else {
       alerts.push(
         RiskAlert.create({
-          code: 'CERTIFICATE_WITHOUT_FOLIO',
+          code: 'CERTIFICATE_WITHOUT_NAME',
           severity: 'medium',
-          message: 'Certificate holder name missing',
+          message: 'El certificado no contiene nombre del titular',
         }),
       );
     }
@@ -192,9 +192,9 @@ export class RiskScoringService {
     } else {
       alerts.push(
         RiskAlert.create({
-          code: 'CERTIFICATE_WITHOUT_QR',
+          code: 'UNKNOWN_INSTITUTION',
           severity: 'medium',
-          message: 'Issuing organization missing',
+          message: 'No se detectó institución emisora en el certificado',
         }),
       );
     }
@@ -210,7 +210,8 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'DOCUMENT_NOT_RELATED_TO_FITNESS',
           severity: 'high',
-          message: 'Certificate not related to fitness, training or health',
+          message:
+            'El certificado no está relacionado con fitness, entrenamiento o salud',
         }),
       );
     }
@@ -237,7 +238,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'DOCUMENT_EXTRACTION_FAILED',
             severity: 'medium',
-            message: 'ID extraction failed',
+            message: 'No se pudo extraer la información de la identificación',
           }),
         );
       }
@@ -267,7 +268,7 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'EXPIRED_ID',
           severity: 'critical',
-          message: 'ID document has expired',
+          message: 'La identificación está vencida',
         }),
       );
     }
@@ -283,7 +284,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'UNDERAGE_USER',
             severity: 'critical',
-            message: 'User is underage',
+            message: 'El usuario es menor de edad',
           }),
         );
       }
@@ -308,9 +309,9 @@ export class RiskScoringService {
       if (!certName)
         alerts.push(
           RiskAlert.create({
-            code: 'CERTIFICATE_WITHOUT_FOLIO',
+            code: 'CERTIFICATE_WITHOUT_NAME',
             severity: 'medium',
-            message: 'No certificate name to compare',
+            message: 'No hay nombre en el certificado para comparar',
           }),
         );
       if (!idName)
@@ -318,7 +319,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'DOCUMENT_EXTRACTION_FAILED',
             severity: 'medium',
-            message: 'No ID name to compare',
+            message: 'No hay nombre en la identificación para comparar',
           }),
         );
       return 0;
@@ -335,7 +336,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'PARTIAL_NAME_MATCH',
             severity: 'info',
-            message: 'Name has minor differences after normalization',
+            message: 'El nombre tiene pequeñas diferencias tras normalización',
           }),
         );
         break;
@@ -344,7 +345,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'PARTIAL_NAME_MATCH',
             severity: 'medium',
-            message: 'Name partially matches',
+            message: 'El nombre coincide parcialmente',
           }),
         );
         break;
@@ -353,7 +354,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'LOW_NAME_MATCH',
             severity: 'high',
-            message: 'Name has low match',
+            message: 'El nombre tiene baja coincidencia',
           }),
         );
         break;
@@ -362,7 +363,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'NO_NAME_MATCH',
             severity: 'critical',
-            message: 'Names do not match',
+            message: 'Los nombres no coinciden',
           }),
         );
         break;
@@ -379,7 +380,7 @@ export class RiskScoringService {
           RiskAlert.create({
             code: 'CURP_MISMATCH',
             severity: 'critical',
-            message: `CURP del certificado (${curpResult.normalizedCertCurp}) no coincide con CURP de INE (${curpResult.normalizedIdCurp})`,
+            message: `El CURP del certificado no coincide con el CURP de la INE`,
           }),
         );
       }
@@ -388,7 +389,8 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'ID_WITHOUT_CURP',
           severity: 'medium',
-          message: 'No se pudo extraer CURP de la INE para comparar',
+          message:
+            'No se pudo extraer el CURP de la identificación para comparar',
         }),
       );
     }
@@ -413,20 +415,20 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'CERTIFICATE_WITHOUT_FOLIO',
           severity: 'medium',
-          message: 'Certificate has no detectable folio number',
+          message: 'El certificado no tiene folio detectable',
         }),
       );
     }
 
-    if (data.qrUrl) {
+    if (data.qrUrl || data.hasVeracityCode) {
       score += 3;
-      positive.push('Certificado con QR o URL de verificación');
+      positive.push('Certificado con QR o código de veracidad detectado');
     } else {
       alerts.push(
         RiskAlert.create({
           code: 'CERTIFICATE_WITHOUT_QR',
           severity: 'info',
-          message: 'Certificate has no QR or verification URL',
+          message: 'El certificado no tiene QR ni URL de validación',
         }),
       );
     }
@@ -438,7 +440,7 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'UNKNOWN_INSTITUTION',
           severity: 'medium',
-          message: 'Issuing institution unknown',
+          message: 'Institución emisora desconocida',
         }),
       );
     }
@@ -468,7 +470,7 @@ export class RiskScoringService {
         RiskAlert.create({
           code: 'LOW_OCR_CONFIDENCE',
           severity: 'medium',
-          message: 'OCR confidence is low',
+          message: 'La confianza OCR es baja',
         }),
       );
     }
@@ -508,7 +510,7 @@ export class RiskScoringService {
     totalScore: number,
     riskLevel: RiskLevel,
   ): string {
-    return `Score ${totalScore}/100 (cert:${certScore} id:${idScore} name:${nameScore} verif:${verifScore} ops:${opsScore}) — Risk: ${riskLevel}`;
+    return `Puntaje ${totalScore}/100 (cert:${certScore} id:${idScore} nombre:${nameScore} verif:${verifScore} ops:${opsScore}) — Riesgo: ${riskLevel}`;
   }
 
   private isFitnessRelated(data: ExtractedCertificateData): boolean {
