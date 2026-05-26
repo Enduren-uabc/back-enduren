@@ -26,6 +26,17 @@ export class UpdateOwnProfileUseCase {
       );
     }
 
+    if (input.handle !== undefined && input.handle !== null) {
+      const existing = await this.profileRepository.findByHandle(input.handle);
+      if (existing && existing.userId !== actor.userId) {
+        throw new ProfileDomainError(
+          ProfileErrorCode.PROFILE_HANDLE_ALREADY_EXISTS,
+          `Handle "${input.handle}" is already taken`,
+          { handle: input.handle },
+        );
+      }
+    }
+
     const updated = profile.updateOwn({
       displayName: input.displayName,
       bio: input.bio,
@@ -33,6 +44,7 @@ export class UpdateOwnProfileUseCase {
         input.avatarUrl !== undefined
           ? ProfileAvatarUrl.create(input.avatarUrl)
           : undefined,
+      handle: input.handle,
     });
 
     const saved = await this.profileRepository.save(updated);

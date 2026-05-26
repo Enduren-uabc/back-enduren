@@ -2,6 +2,7 @@ import { SocialProfile } from '../../../domain/entities/social-profile.entity';
 import { ProfileDomainError } from '../../../domain/errors/profile-domain.error';
 import { ProfileFollowRepository } from '../../../domain/repositories/profile-follow.repository';
 import { SocialProfileRepository } from '../../../domain/repositories/social-profile.repository';
+import { UserRepository } from '../../../../users/domain/repositories/user.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { GetPublicProfileUseCase } from './get-public-profile.use-case';
 
@@ -9,6 +10,7 @@ describe('GetPublicProfileUseCase', () => {
   let useCase: GetPublicProfileUseCase;
   let profileRepository: SocialProfileRepository;
   let followRepository: ProfileFollowRepository;
+  let userRepository: UserRepository;
   const actor: CurrentActor = { userId: 'viewer-1' };
 
   beforeEach(() => {
@@ -16,6 +18,7 @@ describe('GetPublicProfileUseCase', () => {
       save: jest.fn(),
       findByUserId: jest.fn(),
       findByUserIds: jest.fn(),
+      findByHandle: jest.fn(),
       searchByQuery: jest.fn(),
     };
     followRepository = {
@@ -27,7 +30,17 @@ describe('GetPublicProfileUseCase', () => {
       countFollowersOf: jest.fn(),
       countFollowingOf: jest.fn(),
     };
-    useCase = new GetPublicProfileUseCase(profileRepository, followRepository);
+    userRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      findByUsername: jest.fn(),
+      existsByEmail: jest.fn(),
+      existsByUsername: jest.fn(),
+      findByTrainerCode: jest.fn(),
+      findBySocialId: jest.fn(),
+    };
+    useCase = new GetPublicProfileUseCase(profileRepository, followRepository, userRepository);
   });
 
   it('returns public profile with follow counters', async () => {

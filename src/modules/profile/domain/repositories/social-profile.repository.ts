@@ -4,5 +4,6 @@ export interface SocialProfileRepository {
   save(profile: SocialProfile): Promise<SocialProfile>;
   findByUserId(userId: string): Promise<SocialProfile | null>;
   findByUserIds(userIds: string[]): Promise<SocialProfile[]>;
+  findByHandle(handle: string): Promise<SocialProfile | null>;
   searchByQuery(query: string): Promise<SocialProfile[]>;
 }

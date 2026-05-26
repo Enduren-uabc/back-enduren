@@ -114,6 +114,7 @@ export class ProfileController {
     this.listPublicationsUseCase = new ListProfilePublicationsUseCase(
       profileRepository,
       publicationQuery,
+      userRepository,
     );
   }
 

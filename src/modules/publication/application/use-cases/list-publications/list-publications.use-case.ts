@@ -4,6 +4,7 @@ import {
 } from '../../../domain/errors/publication-domain.error';
 import { PublicationRepository } from '../../../domain/repositories/publication.repository';
 import { PublicationMediaRepository } from '../../../domain/repositories/publication-media.repository';
+import { PublicationReactionRepository } from '../../../domain/repositories/publication-reaction.repository';
 import { AuthorProfileQueryPort } from '../../ports/author-profile-query.port';
 import { ListPublicationsDto } from '../../dto/list-publications.dto';
 import { PublicationDto } from '../../dto/publication.dto';
@@ -15,6 +16,9 @@ export const DEFAULT_PUBLICATION_FEED_LIMIT = 20;
 export const MAX_PUBLICATION_FEED_LIMIT = 50;
 export const PUBLICATION_FOLLOWED_USERS_QUERY_PORT = Symbol(
   'PUBLICATION_FOLLOWED_USERS_QUERY_PORT',
+);
+export const PUBLICATION_REACTION_REPOSITORY_PORT = Symbol(
+  'PUBLICATION_REACTION_REPOSITORY_PORT',
 );
 
 export interface ListPublicationsOutput {
@@ -31,6 +35,7 @@ export class ListPublicationsUseCase {
     private readonly publicationMediaRepository?: PublicationMediaRepository,
     private readonly followedUsersQuery?: FollowedUsersQueryPort,
     private readonly authorProfileQuery?: AuthorProfileQueryPort,
+    private readonly reactionRepository?: PublicationReactionRepository,
   ) {}
 
   public async execute(
@@ -122,11 +127,37 @@ export class ListPublicationsUseCase {
       mediaMap.set(id, media);
     });
 
+    // Batch load reaction counts and recent reactors
+    const [reactionCounts, recentReactorUserIdsMap] = await Promise.all([
+      this.reactionRepository?.countByPublicationIds(publicationIds) ??
+        Promise.resolve(new Map<string, number>()),
+      this.reactionRepository?.findRecentAuthorUserIdsByPublicationIds(
+        publicationIds,
+        3,
+      ) ?? Promise.resolve(new Map<string, string[]>()),
+    ]);
+
+    // Resolve display names for recent reactors
+    const allReactorIds = [
+      ...new Set(
+        [...recentReactorUserIdsMap.values()].flat(),
+      ),
+    ];
+    const reactorProfiles =
+      (await this.authorProfileQuery?.ensureProfilesExist(allReactorIds)) ?? [];
+    const reactorNameMap = new Map(
+      reactorProfiles.map((p) => [p.userId, p.displayName]),
+    );
+
     return {
       items: publications.map((publication) => {
         const dto = PublicationApplicationMapper.toDto(
           publication,
           mediaMap.get(publication.id) ?? [],
+          reactionCounts.get(publication.id) ?? 0,
+          (recentReactorUserIdsMap.get(publication.id) ?? []).map(
+            (uid) => reactorNameMap.get(uid) ?? 'Usuario',
+          ),
         );
         const profile = profileMap.get(publication.authorUserId);
         if (profile) {

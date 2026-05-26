@@ -17,6 +17,7 @@ describe('UpdateOwnProfileUseCase', () => {
       save: jest.fn((profile: SocialProfile) => Promise.resolve(profile)),
       findByUserId: jest.fn(),
       findByUserIds: jest.fn(),
+      findByHandle: jest.fn(),
       searchByQuery: jest.fn(),
     };
     useCase = new UpdateOwnProfileUseCase(profileRepository);

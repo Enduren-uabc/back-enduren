@@ -48,6 +48,8 @@ export interface PublicationDto {
   media: PublicationMediaDto[];
   workoutSessionId: string | null;
   exerciseSummary: ExerciseSummaryDto | null;
+  reactionCount: number;
+  recentReactorNames: string[];
   createdAt: Date;
   updatedAt: Date;
 }

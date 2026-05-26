@@ -10,11 +10,15 @@ import {
   Query,
   UploadedFile,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from '../../../../../shared/storage/domain/services/storage.service';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
+import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
+import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 import { FollowedUsersQueryPort } from '../../../application/ports/followed-users-query.port';
 import {
   WORKOUT_SESSION_QUERY_PORT,
@@ -42,7 +46,6 @@ import { RemovePublicationReactionUseCase } from '../../../application/use-cases
 import { UpdatePublicationUseCase } from '../../../application/use-cases/update-publication/update-publication.use-case';
 import {
   CreatePublicationUseCase,
-  PUBLICATION_CURRENT_ACTOR_PORT,
   PUBLICATION_REPOSITORY_PORT,
 } from '../../../application/use-cases/create-publication/create-publication.use-case';
 import { CreateWorkoutPublicationUseCase } from '../../../application/use-cases/create-workout-publication/create-workout-publication.use-case';
@@ -77,6 +80,7 @@ import {
 } from '../responses/publication-interaction.response';
 
 @Controller('publications')
+@UseGuards(JwtAuthGuard)
 @UseFilters(PublicationDomainErrorFilter)
 export class PublicationController {
   private readonly createPublicationUseCase: CreatePublicationUseCase;
@@ -102,8 +106,6 @@ export class PublicationController {
     followedUsersQuery: FollowedUsersQueryPort,
     @Inject(AUTHOR_PROFILE_QUERY_PORT)
     authorProfileQuery: AuthorProfileQueryPort,
-    @Inject(PUBLICATION_CURRENT_ACTOR_PORT)
-    private readonly currentActor: CurrentActor,
     @Inject(WORKOUT_SESSION_QUERY_PORT)
     private readonly workoutSessionQuery: WorkoutSessionQueryPort,
     @Inject(PUBLICATION_MEDIA_REPOSITORY_PORT)
@@ -133,6 +135,7 @@ export class PublicationController {
       mediaRepository,
       followedUsersQuery,
       authorProfileQuery,
+      reactionRepository,
     );
     this.addReactionUseCase = new AddPublicationReactionUseCase(
       publicationRepository,
@@ -156,12 +159,17 @@ export class PublicationController {
     );
   }
 
+  private getActor(user: JwtPayload): CurrentActor {
+    return { userId: user.sub };
+  }
+
   @Get()
   public async list(
+    @CurrentUser() user: JwtPayload,
     @Query() query: ListPublicationsRequestDto,
   ): Promise<ListPublicationsResponseDto> {
     const publications = await this.listPublicationsUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         limit: query.limit,
         offset: query.offset,
@@ -174,10 +182,11 @@ export class PublicationController {
 
   @Post()
   public async create(
+    @CurrentUser() user: JwtPayload,
     @Body() dto: CreatePublicationRequestDto,
   ): Promise<PublicationResponseDto> {
     const publication = await this.createPublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         title: dto.title,
         content: dto.content,
@@ -191,11 +200,12 @@ export class PublicationController {
 
   @Post('from-workout/:sessionId')
   public async createFromWorkout(
+    @CurrentUser() user: JwtPayload,
     @Param('sessionId') sessionId: string,
     @Body() body: { caption?: string; mediaUrls?: string[] },
   ): Promise<CreateWorkoutPublicationResponseDto> {
     const publication = await this.createWorkoutPublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         caption: body.caption,
         mediaUrls: body.mediaUrls,
@@ -212,7 +222,10 @@ export class PublicationController {
       limits: { fileSize: 20 * 1024 * 1024 },
     }),
   )
-  public async uploadMedia(@UploadedFile() file: Express.Multer.File): Promise<{
+  public async uploadMedia(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{
     id: string;
     url: string;
     fileName: string;
@@ -220,7 +233,7 @@ export class PublicationController {
     mimeType: string;
   }> {
     const result = await this.uploadMediaUseCase.execute({
-      actor: this.currentActor,
+      actor: this.getActor(user),
       file,
       sortOrder: 0,
     });
@@ -228,20 +241,24 @@ export class PublicationController {
   }
 
   @Delete('media/:mediaId')
-  public async deleteMedia(@Param('mediaId') mediaId: string): Promise<void> {
+  public async deleteMedia(
+    @CurrentUser() user: JwtPayload,
+    @Param('mediaId') mediaId: string,
+  ): Promise<void> {
     await this.deleteMediaUseCase.execute({
       mediaId,
-      userId: this.currentActor.userId,
+      userId: this.getActor(user).userId,
     });
   }
 
   @Patch(':publicationId')
   public async update(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
     @Body() dto: UpdatePublicationRequestDto,
   ): Promise<PublicationResponseDto> {
     const publication = await this.updatePublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         publicationId,
         title: dto.title,
@@ -255,10 +272,11 @@ export class PublicationController {
 
   @Delete(':publicationId')
   public async delete(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<DeletePublicationResponseDto> {
     const result = await this.deletePublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { publicationId },
     );
 
@@ -270,9 +288,10 @@ export class PublicationController {
 
   @Post(':publicationId/reactions')
   public async addReaction(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<PublicationReactionResponseDto> {
-    const reaction = await this.addReactionUseCase.execute(this.currentActor, {
+    const reaction = await this.addReactionUseCase.execute(this.getActor(user), {
       publicationId,
     });
 
@@ -281,9 +300,10 @@ export class PublicationController {
 
   @Delete(':publicationId/reactions')
   public async removeReaction(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<DeletePublicationReactionResponseDto> {
-    const result = await this.removeReactionUseCase.execute(this.currentActor, {
+    const result = await this.removeReactionUseCase.execute(this.getActor(user), {
       publicationId,
     });
 
@@ -295,10 +315,11 @@ export class PublicationController {
 
   @Post(':publicationId/comments')
   public async createComment(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
     @Body() dto: CreatePublicationCommentRequestDto,
   ): Promise<PublicationCommentResponseDto> {
-    const comment = await this.createCommentUseCase.execute(this.currentActor, {
+    const comment = await this.createCommentUseCase.execute(this.getActor(user), {
       publicationId,
       content: dto.content,
     });
@@ -308,9 +329,10 @@ export class PublicationController {
 
   @Get(':publicationId/comments')
   public async listComments(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<ListPublicationCommentsResponseDto> {
-    const comments = await this.listCommentsUseCase.execute(this.currentActor, {
+    const comments = await this.listCommentsUseCase.execute(this.getActor(user), {
       publicationId,
     });
 

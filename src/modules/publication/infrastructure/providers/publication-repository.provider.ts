@@ -1,5 +1,4 @@
 import {
-  PUBLICATION_CURRENT_ACTOR_PORT,
   PUBLICATION_REPOSITORY_PORT,
 } from '../../application/use-cases/create-publication/create-publication.use-case';
 import { PUBLICATION_REACTION_REPOSITORY_PORT } from '../../application/use-cases/add-publication-reaction/add-publication-reaction.use-case';
@@ -12,7 +11,6 @@ import { TypeormPublicationRepository } from '../persistence/typeorm/repositorie
 import { TypeormPublicationCommentRepository } from '../persistence/typeorm/repositories/typeorm-publication-comment.repository';
 import { TypeormPublicationReactionRepository } from '../persistence/typeorm/repositories/typeorm-publication-reaction.repository';
 import { TypeormPublicationMediaRepository } from '../persistence/typeorm/repositories/typeorm-publication-media.repository';
-import { DevPublicationActorService } from './publication-current-actor.provider';
 import { PUBLICATION_MEDIA_REPOSITORY_PORT } from '../../domain/repositories/publication-media.repository';
 
 import { AUTHOR_PROFILE_QUERY_PORT } from '../../application/ports/author-profile-query.port';
@@ -26,11 +24,6 @@ export const publicationRepositoryProvider = {
 export const publicationAuthorProfileQueryProvider = {
   provide: AUTHOR_PROFILE_QUERY_PORT,
   useClass: TypeormAuthorProfileQueryAdapter,
-};
-
-export const publicationCurrentActorProvider = {
-  provide: PUBLICATION_CURRENT_ACTOR_PORT,
-  useClass: DevPublicationActorService,
 };
 
 export const publicationReactionRepositoryProvider = {

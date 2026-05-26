@@ -13,6 +13,8 @@ export class PublicationApplicationMapper {
   public static toDto(
     publication: Publication,
     media: PublicationMediaDto[] = [],
+    reactionCount = 0,
+    recentReactorNames: string[] = [],
   ): PublicationDto {
     return {
       id: publication.id,
@@ -48,6 +50,8 @@ export class PublicationApplicationMapper {
             })),
           }
         : null,
+      reactionCount,
+      recentReactorNames,
       createdAt: publication.createdAt,
       updatedAt: publication.updatedAt,
     };

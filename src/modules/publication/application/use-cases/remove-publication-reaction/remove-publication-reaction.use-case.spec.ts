@@ -26,9 +26,11 @@ describe('RemovePublicationReactionUseCase', () => {
       countFeedByAuthorUserIds: jest.fn(),
     };
     reactionRepository = {
-      save: jest.fn(),
+      save: jest.fn((r) => Promise.resolve(r)),
       findByPublicationIdAndAuthorUserId: jest.fn(),
-      delete: jest.fn(() => Promise.resolve()),
+      delete: jest.fn(),
+      countByPublicationIds: jest.fn(),
+      findRecentAuthorUserIdsByPublicationIds: jest.fn(),
     };
     useCase = new RemovePublicationReactionUseCase(
       publicationRepository,

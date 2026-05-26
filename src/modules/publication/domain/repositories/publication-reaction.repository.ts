@@ -7,4 +7,11 @@ export interface PublicationReactionRepository {
     authorUserId: string,
   ): Promise<PublicationReaction | null>;
   delete(reaction: PublicationReaction): Promise<void>;
+  countByPublicationIds(
+    publicationIds: string[],
+  ): Promise<Map<string, number>>;
+  findRecentAuthorUserIdsByPublicationIds(
+    publicationIds: string[],
+    limit: number,
+  ): Promise<Map<string, string[]>>;
 }

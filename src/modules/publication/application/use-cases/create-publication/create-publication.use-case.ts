@@ -16,9 +16,6 @@ import { CurrentActor } from '../../ports/current-actor.port';
 export const PUBLICATION_REPOSITORY_PORT = Symbol(
   'PUBLICATION_REPOSITORY_PORT',
 );
-export const PUBLICATION_CURRENT_ACTOR_PORT = Symbol(
-  'PUBLICATION_CURRENT_ACTOR_PORT',
-);
 
 export class CreatePublicationUseCase {
   constructor(

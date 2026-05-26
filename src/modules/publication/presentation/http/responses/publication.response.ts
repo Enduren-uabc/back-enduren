@@ -15,6 +15,8 @@ export class PublicationResponseDto {
   media!: PublicationMediaDto[];
   workoutSessionId!: string | null;
   exerciseSummary!: ExerciseSummaryDto | null;
+  reactionCount!: number;
+  recentReactorNames!: string[];
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -45,6 +47,8 @@ export class PublicationPresenter {
     response.media = publication.media;
     response.workoutSessionId = publication.workoutSessionId;
     response.exerciseSummary = publication.exerciseSummary;
+    response.reactionCount = publication.reactionCount;
+    response.recentReactorNames = publication.recentReactorNames;
     response.createdAt = publication.createdAt;
     response.updatedAt = publication.updatedAt;
     return response;
@@ -80,6 +84,8 @@ export class CreateWorkoutPublicationResponseDto {
   media!: PublicationMediaDto[];
   workoutSessionId!: string;
   exerciseSummary!: ExerciseSummaryDto;
+  reactionCount!: number;
+  recentReactorNames!: string[];
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -99,6 +105,8 @@ export class WorkoutPublicationPresenter {
     response.media = publication.media;
     response.workoutSessionId = publication.workoutSessionId!;
     response.exerciseSummary = publication.exerciseSummary!;
+    response.reactionCount = publication.reactionCount;
+    response.recentReactorNames = publication.recentReactorNames;
     response.createdAt = publication.createdAt;
     response.updatedAt = publication.updatedAt;
     return response;

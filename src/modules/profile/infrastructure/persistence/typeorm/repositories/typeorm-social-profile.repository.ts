@@ -27,6 +27,13 @@ export class TypeormSocialProfileRepository implements SocialProfileRepository {
       : null;
   }
 
+  public async findByHandle(handle: string): Promise<SocialProfile | null> {
+    const ormEntity = await this.ormRepo.findOne({ where: { handle } });
+    return ormEntity
+      ? SocialProfilePersistenceMapper.toDomain(ormEntity)
+      : null;
+  }
+
   public async findByUserIds(userIds: string[]): Promise<SocialProfile[]> {
     if (userIds.length === 0) {
       return [];

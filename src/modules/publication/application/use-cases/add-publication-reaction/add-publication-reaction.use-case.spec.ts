@@ -33,11 +33,11 @@ describe('AddPublicationReactionUseCase', () => {
       countFeedByAuthorUserIds: jest.fn(),
     };
     reactionRepository = {
-      save: jest.fn((reaction: PublicationReaction) =>
-        Promise.resolve(reaction),
-      ),
+      save: jest.fn((r) => Promise.resolve(r)),
       findByPublicationIdAndAuthorUserId: jest.fn(),
       delete: jest.fn(),
+      countByPublicationIds: jest.fn(),
+      findRecentAuthorUserIdsByPublicationIds: jest.fn(),
     };
     useCase = new AddPublicationReactionUseCase(
       publicationRepository,

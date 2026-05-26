@@ -15,13 +15,11 @@ import { PublicationCommentTypeormEntity } from '../persistence/typeorm/entities
 import { PublicationReactionTypeormEntity } from '../persistence/typeorm/entities/publication-reaction-typeorm.entity';
 import { PublicationMediaTypeormEntity } from '../persistence/typeorm/entities/publication-media-typeorm.entity';
 import {
-  PUBLICATION_CURRENT_ACTOR_PORT,
   PUBLICATION_REPOSITORY_PORT,
 } from '../../application/use-cases/create-publication/create-publication.use-case';
 import {
   publicationAuthorProfileQueryProvider,
   publicationCommentRepositoryProvider,
-  publicationCurrentActorProvider,
   publicationFollowedUsersQueryProvider,
   publicationMediaRepositoryProvider,
   publicationReactionRepositoryProvider,
@@ -47,7 +45,6 @@ import { DeletePublicationMediaUseCase } from '../../application/use-cases/delet
   ],
   providers: [
     publicationRepositoryProvider,
-    publicationCurrentActorProvider,
     publicationReactionRepositoryProvider,
     publicationCommentRepositoryProvider,
     publicationMediaRepositoryProvider,
@@ -59,7 +56,6 @@ import { DeletePublicationMediaUseCase } from '../../application/use-cases/delet
   ],
   exports: [
     PUBLICATION_REPOSITORY_PORT,
-    PUBLICATION_CURRENT_ACTOR_PORT,
     PUBLICATION_REACTION_REPOSITORY_PORT,
     PUBLICATION_COMMENT_REPOSITORY_PORT,
     PUBLICATION_MEDIA_REPOSITORY_PORT,

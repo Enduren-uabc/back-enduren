@@ -97,11 +97,13 @@ export class SocialProfile {
     displayName?: string | null;
     bio?: string | null;
     avatarUrl?: ProfileAvatarUrl;
+    handle?: string | null;
   }): SocialProfile {
     if (
       input.displayName === undefined &&
       input.bio === undefined &&
-      input.avatarUrl === undefined
+      input.avatarUrl === undefined &&
+      input.handle === undefined
     ) {
       throw new ProfileDomainError(
         ProfileErrorCode.PROFILE_UPDATE_EMPTY,
@@ -115,7 +117,9 @@ export class SocialProfile {
       input.displayName !== undefined && input.displayName !== null
         ? input.displayName.trim()
         : this.displayName,
-      this.handle,
+      input.handle !== undefined && input.handle !== null
+        ? input.handle.trim()
+        : this.handle,
       input.bio !== undefined
         ? SocialProfile.normalizeBio(input.bio)
         : this.bio,
