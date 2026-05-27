@@ -7,6 +7,7 @@ import {
 import { PROFILE_QUERY_PORT } from '../infrastructure/adapters/profile-query.adapter';
 import { AddExerciseToRoutineDayUseCase } from './use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from './use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
+import { RemoveDayFromRoutineUseCase } from './use-cases/remove-day-from-routine/remove-day-from-routine.use-case';
 import { ConfigureExerciseUseCase } from './use-cases/configure-exercise/configure-exercise.use-case';
 import { ActivateRoutineUseCase } from './use-cases/activate-routine/activate-routine.use-case';
 import { DeactivateRoutineUseCase } from './use-cases/deactivate-routine/deactivate-routine.use-case';
@@ -65,6 +66,12 @@ const routineUseCaseProviders = [
     inject: [ROUTINE_REPOSITORY_PORT],
     useFactory: (routineRepository) =>
       new RemoveExerciseFromRoutineUseCase(routineRepository),
+  },
+  {
+    provide: RemoveDayFromRoutineUseCase,
+    inject: [ROUTINE_REPOSITORY_PORT],
+    useFactory: (routineRepository) =>
+      new RemoveDayFromRoutineUseCase(routineRepository),
   },
   {
     provide: ConfigureExerciseUseCase,

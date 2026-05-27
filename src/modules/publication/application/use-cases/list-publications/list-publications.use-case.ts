@@ -139,9 +139,7 @@ export class ListPublicationsUseCase {
 
     // Resolve display names for recent reactors
     const allReactorIds = [
-      ...new Set(
-        [...recentReactorUserIdsMap.values()].flat(),
-      ),
+      ...new Set([...recentReactorUserIdsMap.values()].flat()),
     ];
     const reactorProfiles =
       (await this.authorProfileQuery?.ensureProfilesExist(allReactorIds)) ?? [];

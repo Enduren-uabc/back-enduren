@@ -14,9 +14,7 @@ import { PublicationTypeormEntity } from '../persistence/typeorm/entities/public
 import { PublicationCommentTypeormEntity } from '../persistence/typeorm/entities/publication-comment-typeorm.entity';
 import { PublicationReactionTypeormEntity } from '../persistence/typeorm/entities/publication-reaction-typeorm.entity';
 import { PublicationMediaTypeormEntity } from '../persistence/typeorm/entities/publication-media-typeorm.entity';
-import {
-  PUBLICATION_REPOSITORY_PORT,
-} from '../../application/use-cases/create-publication/create-publication.use-case';
+import { PUBLICATION_REPOSITORY_PORT } from '../../application/use-cases/create-publication/create-publication.use-case';
 import {
   publicationAuthorProfileQueryProvider,
   publicationCommentRepositoryProvider,

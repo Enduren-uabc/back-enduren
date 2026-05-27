@@ -14,7 +14,38 @@ export class TypeormRoutineRepository implements RoutineRepository {
   ) {}
 
   public async save(routine: Routine): Promise<Routine> {
+    const existing = await this.ormRepo.findOne({
+      where: { id: routine.id },
+      relations: ['days', 'days.exercises', 'days.exercises.sets'],
+    });
+
     const ormEntity = RoutineMapper.toOrm(routine);
+
+    if (existing) {
+      const orphanedDays = existing.days.filter(
+        (existingDay) =>
+          !ormEntity.days.some((newDay) => newDay.id === existingDay.id),
+      );
+      if (orphanedDays.length > 0) {
+        await this.ormRepo.manager.remove(orphanedDays);
+      }
+
+      for (const existingDay of existing.days) {
+        const newDay = ormEntity.days.find(
+          (nd) => nd.id === existingDay.id,
+        );
+        if (!newDay) continue;
+
+        const orphanedExercises = existingDay.exercises.filter(
+          (existingEx) =>
+            !newDay.exercises.some((newEx) => newEx.id === existingEx.id),
+        );
+        if (orphanedExercises.length > 0) {
+          await this.ormRepo.manager.remove(orphanedExercises);
+        }
+      }
+    }
+
     const saved = await this.ormRepo.save(ormEntity);
     return RoutineMapper.toDomain(saved);
   }

@@ -40,7 +40,11 @@ describe('GetPublicProfileUseCase', () => {
       findByTrainerCode: jest.fn(),
       findBySocialId: jest.fn(),
     };
-    useCase = new GetPublicProfileUseCase(profileRepository, followRepository, userRepository);
+    useCase = new GetPublicProfileUseCase(
+      profileRepository,
+      followRepository,
+      userRepository,
+    );
   });
 
   it('returns public profile with follow counters', async () => {

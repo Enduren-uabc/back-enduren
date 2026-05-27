@@ -243,6 +243,43 @@ export class Routine {
   }
 
   /**
+   * Removes a day from the routine.
+   * Enforces: day must exist, cannot remove the last day.
+   * Returns a new Routine with the day removed.
+   */
+  public removeDay(dayOfWeek: string): Routine {
+    const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
+    if (dayIndex === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_DAY_NOT_FOUND,
+        `Day "${dayOfWeek}" not found in routine`,
+        { dayOfWeek },
+      );
+    }
+
+    if (this.days.length <= 1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_CANNOT_REMOVE_LAST_DAY,
+        'Cannot remove the last day from the routine',
+        { dayOfWeek },
+      );
+    }
+
+    const updatedDays = this.days.filter((_, i) => i !== dayIndex);
+
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      updatedDays,
+      this.isActive,
+      this.trainingStrategyKey,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
    * Configures an exercise within a specific day of the routine.
    * Enforces: day must exist, exercise must exist in day (RF-11.0.5).
    * Returns a new Routine with the configured exercise.

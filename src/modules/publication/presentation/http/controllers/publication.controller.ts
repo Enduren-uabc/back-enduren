@@ -291,9 +291,12 @@ export class PublicationController {
     @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<PublicationReactionResponseDto> {
-    const reaction = await this.addReactionUseCase.execute(this.getActor(user), {
-      publicationId,
-    });
+    const reaction = await this.addReactionUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+      },
+    );
 
     return PublicationInteractionPresenter.reactionToHttp(reaction);
   }
@@ -303,9 +306,12 @@ export class PublicationController {
     @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<DeletePublicationReactionResponseDto> {
-    const result = await this.removeReactionUseCase.execute(this.getActor(user), {
-      publicationId,
-    });
+    const result = await this.removeReactionUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+      },
+    );
 
     const response = new DeletePublicationReactionResponseDto();
     response.publicationId = result.publicationId;
@@ -319,10 +325,13 @@ export class PublicationController {
     @Param('publicationId') publicationId: string,
     @Body() dto: CreatePublicationCommentRequestDto,
   ): Promise<PublicationCommentResponseDto> {
-    const comment = await this.createCommentUseCase.execute(this.getActor(user), {
-      publicationId,
-      content: dto.content,
-    });
+    const comment = await this.createCommentUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+        content: dto.content,
+      },
+    );
 
     return PublicationInteractionPresenter.commentToHttp(comment);
   }
@@ -332,9 +341,12 @@ export class PublicationController {
     @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<ListPublicationCommentsResponseDto> {
-    const comments = await this.listCommentsUseCase.execute(this.getActor(user), {
-      publicationId,
-    });
+    const comments = await this.listCommentsUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+      },
+    );
 
     return PublicationInteractionPresenter.commentsToHttp(comments);
   }

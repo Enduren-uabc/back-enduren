@@ -12,6 +12,7 @@ import {
 import { CreateRoutineUseCase } from '../../../application/use-cases/create-routine/create-routine.use-case';
 import { AddExerciseToRoutineDayUseCase } from '../../../application/use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
+import { RemoveDayFromRoutineUseCase } from '../../../application/use-cases/remove-day-from-routine/remove-day-from-routine.use-case';
 import { ConfigureExerciseUseCase } from '../../../application/use-cases/configure-exercise/configure-exercise.use-case';
 import { ActivateRoutineUseCase } from '../../../application/use-cases/activate-routine/activate-routine.use-case';
 import { DeactivateRoutineUseCase } from '../../../application/use-cases/deactivate-routine/deactivate-routine.use-case';
@@ -65,6 +66,7 @@ export class RoutineController {
     private readonly setRoutineTrainingStrategyUseCase: SetRoutineTrainingStrategyUseCase,
     private readonly generateExerciseSetsUseCase: GenerateExerciseSetsUseCase,
     private readonly updateRoutineNameUseCase: UpdateRoutineNameUseCase,
+    private readonly removeDayFromRoutineUseCase: RemoveDayFromRoutineUseCase,
   ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
@@ -214,6 +216,27 @@ export class RoutineController {
     const result = await this.deactivateRoutineUseCase.execute(
       this.getActor(user),
       { routineId },
+    );
+
+    return this.mapToResponse(result);
+  }
+
+  @Delete(':routineId/days/:dayOfWeek')
+  public async removeDay(
+    @CurrentUser() user: JwtPayload,
+    @Param('routineId') routineId: string,
+    @Param('dayOfWeek') dayOfWeek: string,
+  ): Promise<RoutineResponseDto> {
+    if (!isValidDayOfWeek(dayOfWeek)) {
+      throw new Error(`Invalid day of week: ${dayOfWeek}`);
+    }
+
+    const result = await this.removeDayFromRoutineUseCase.execute(
+      this.getActor(user),
+      {
+        routineId,
+        dayOfWeek,
+      },
     );
 
     return this.mapToResponse(result);

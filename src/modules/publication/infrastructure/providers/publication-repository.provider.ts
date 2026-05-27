@@ -1,6 +1,4 @@
-import {
-  PUBLICATION_REPOSITORY_PORT,
-} from '../../application/use-cases/create-publication/create-publication.use-case';
+import { PUBLICATION_REPOSITORY_PORT } from '../../application/use-cases/create-publication/create-publication.use-case';
 import { PUBLICATION_REACTION_REPOSITORY_PORT } from '../../application/use-cases/add-publication-reaction/add-publication-reaction.use-case';
 import { PUBLICATION_COMMENT_REPOSITORY_PORT } from '../../application/use-cases/create-publication-comment/create-publication-comment.use-case';
 import { PUBLICATION_FOLLOWED_USERS_QUERY_PORT } from '../../application/use-cases/list-publications/list-publications.use-case';

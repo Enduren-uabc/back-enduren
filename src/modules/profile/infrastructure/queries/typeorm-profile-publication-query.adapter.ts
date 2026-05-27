@@ -80,9 +80,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
             [allReactorIds],
           )
         : [];
-    const reactorNameMap = new Map(
-      userRows.map((u) => [u.id, u.username]),
-    );
+    const reactorNameMap = new Map(userRows.map((u) => [u.id, u.username]));
 
     const items: ProfilePublicationItem[] = publications.map((publication) => ({
       id: publication.id,

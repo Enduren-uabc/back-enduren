@@ -33,7 +33,8 @@ export class UpdateOwnProfileRequestDto {
   @MinLength(2)
   @MaxLength(60)
   @Matches(HANDLE_REGEX, {
-    message: 'El handle solo puede contener letras minúsculas, números, puntos y guiones bajos',
+    message:
+      'El handle solo puede contener letras minúsculas, números, puntos y guiones bajos',
   })
   handle?: string | null;
 }

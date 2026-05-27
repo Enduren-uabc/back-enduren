@@ -1,4 +1,11 @@
-import { Controller, Delete, Inject, Param, UseFilters, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Inject,
+  Param,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { DeletePublicationCommentUseCase } from '../../../application/use-cases/delete-publication-comment/delete-publication-comment.use-case';
 import { PUBLICATION_COMMENT_REPOSITORY_PORT } from '../../../application/use-cases/create-publication-comment/create-publication-comment.use-case';
@@ -33,9 +40,12 @@ export class PublicationCommentController {
     @CurrentUser() user: JwtPayload,
     @Param('commentId') commentId: string,
   ): Promise<DeletePublicationCommentResponseDto> {
-    const result = await this.deleteCommentUseCase.execute(this.getActor(user), {
-      commentId,
-    });
+    const result = await this.deleteCommentUseCase.execute(
+      this.getActor(user),
+      {
+        commentId,
+      },
+    );
 
     const response = new DeletePublicationCommentResponseDto();
     response.id = result.id;

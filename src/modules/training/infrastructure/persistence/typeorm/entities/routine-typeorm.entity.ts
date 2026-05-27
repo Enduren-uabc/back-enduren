@@ -34,6 +34,7 @@ export class RoutineTypeormEntity {
   @OneToMany(() => RoutineDayTypeormEntity, (day) => day.routine, {
     cascade: true,
     eager: true,
+    orphanedRowAction: 'delete',
   })
   days!: RoutineDayTypeormEntity[];
 }
