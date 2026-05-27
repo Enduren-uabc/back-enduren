@@ -1,4 +1,5 @@
 import {
+  CommentPreviewDto,
   PublicationDto,
   ExerciseSummaryDto,
   PublicationMediaDto,
@@ -17,6 +18,9 @@ export class PublicationResponseDto {
   exerciseSummary!: ExerciseSummaryDto | null;
   reactionCount!: number;
   recentReactorNames!: string[];
+  commentCount!: number;
+  recentComments!: CommentPreviewDto[];
+  likedByMe!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -49,6 +53,9 @@ export class PublicationPresenter {
     response.exerciseSummary = publication.exerciseSummary;
     response.reactionCount = publication.reactionCount;
     response.recentReactorNames = publication.recentReactorNames;
+    response.commentCount = publication.commentCount;
+    response.recentComments = publication.recentComments;
+    response.likedByMe = publication.likedByMe;
     response.createdAt = publication.createdAt;
     response.updatedAt = publication.updatedAt;
     return response;
@@ -86,6 +93,9 @@ export class CreateWorkoutPublicationResponseDto {
   exerciseSummary!: ExerciseSummaryDto;
   reactionCount!: number;
   recentReactorNames!: string[];
+  commentCount!: number;
+  recentComments!: CommentPreviewDto[];
+  likedByMe!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -107,6 +117,9 @@ export class WorkoutPublicationPresenter {
     response.exerciseSummary = publication.exerciseSummary!;
     response.reactionCount = publication.reactionCount;
     response.recentReactorNames = publication.recentReactorNames;
+    response.commentCount = publication.commentCount;
+    response.recentComments = publication.recentComments;
+    response.likedByMe = publication.likedByMe;
     response.createdAt = publication.createdAt;
     response.updatedAt = publication.updatedAt;
     return response;

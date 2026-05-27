@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { PublicationReaction } from '../../../../domain/entities/publication-reaction.entity';
 import { PublicationReactionRepository } from '../../../../domain/repositories/publication-reaction.repository';
 import { PublicationReactionPersistenceMapper } from '../../../mappers/publication-reaction.mapper';
@@ -38,25 +38,35 @@ export class TypeormPublicationReactionRepository implements PublicationReaction
     await this.ormRepo.delete({ id: reaction.id });
   }
 
+  public async findPublicationIdsWithReactionByAuthorUserId(
+    publicationIds: string[],
+    authorUserId: string,
+  ): Promise<Set<string>> {
+    if (publicationIds.length === 0) return new Set();
+
+    const rows = await this.ormRepo.find({
+      where: { publicationId: In(publicationIds), authorUserId },
+      select: { publicationId: true },
+    });
+
+    return new Set(rows.map((r) => r.publicationId));
+  }
+
   public async countByPublicationIds(
     publicationIds: string[],
   ): Promise<Map<string, number>> {
     if (publicationIds.length === 0) return new Map();
 
-    const rows = await this.ormRepo
-      .createQueryBuilder('r')
-      .select('r.publication_id', 'publicationId')
-      .addSelect('COUNT(*)', 'count')
-      .where('r.publication_id IN (:...publicationIds)', { publicationIds })
-      .groupBy('r.publication_id')
-      .getRawMany();
+    const rows: { publicationid: string; count: string }[] =
+      await this.ormRepo.query(
+        `SELECT r.publication_id AS publicationid, COUNT(*)::text AS count
+         FROM publication_reactions r
+         WHERE r.publication_id = ANY($1)
+         GROUP BY r.publication_id`,
+        [publicationIds],
+      );
 
-    return new Map(
-      rows.map((row: { publicationid: string; count: string }) => [
-        row.publicationid,
-        parseInt(row.count, 10),
-      ]),
-    );
+    return new Map(rows.map((r) => [r.publicationid, parseInt(r.count, 10)]));
   }
 
   public async findRecentAuthorUserIdsByPublicationIds(
@@ -67,7 +77,7 @@ export class TypeormPublicationReactionRepository implements PublicationReaction
 
     const rows: { publicationid: string; authoruserid: string }[] =
       await this.ormRepo.query(
-        `SELECT r.publication_id, r.author_user_id
+        `SELECT r.publication_id AS publicationid, r.author_user_id AS authoruserid
          FROM publication_reactions r
          WHERE r.publication_id = ANY($1)
          ORDER BY r.created_at DESC`,

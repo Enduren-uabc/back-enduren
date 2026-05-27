@@ -31,9 +31,7 @@ export class TypeormRoutineRepository implements RoutineRepository {
       }
 
       for (const existingDay of existing.days) {
-        const newDay = ormEntity.days.find(
-          (nd) => nd.id === existingDay.id,
-        );
+        const newDay = ormEntity.days.find((nd) => nd.id === existingDay.id);
         if (!newDay) continue;
 
         const orphanedExercises = existingDay.exercises.filter(

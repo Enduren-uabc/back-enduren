@@ -3,6 +3,7 @@ import { PublicationComment } from '../../domain/entities/publication-comment.en
 import { PublicationReaction } from '../../domain/entities/publication-reaction.entity';
 import { PublicationCommentDto } from '../dto/publication-comment.dto';
 import {
+  CommentPreviewDto,
   PublicationDto,
   ExerciseSummaryDto,
   PublicationMediaDto,
@@ -15,6 +16,9 @@ export class PublicationApplicationMapper {
     media: PublicationMediaDto[] = [],
     reactionCount = 0,
     recentReactorNames: string[] = [],
+    commentCount = 0,
+    recentComments: CommentPreviewDto[] = [],
+    likedByMe = false,
   ): PublicationDto {
     return {
       id: publication.id,
@@ -52,6 +56,9 @@ export class PublicationApplicationMapper {
         : null,
       reactionCount,
       recentReactorNames,
+      commentCount,
+      recentComments,
+      likedByMe,
       createdAt: publication.createdAt,
       updatedAt: publication.updatedAt,
     };
@@ -75,6 +82,20 @@ export class PublicationApplicationMapper {
       id: comment.id,
       publicationId: comment.publicationId,
       authorUserId: comment.authorUserId,
+      content: comment.content.value,
+      createdAt: comment.createdAt,
+    };
+  }
+
+  public static commentToPreviewDto(
+    comment: PublicationComment,
+    authorDisplayName?: string,
+  ): CommentPreviewDto {
+    return {
+      id: comment.id,
+      publicationId: comment.publicationId,
+      authorUserId: comment.authorUserId,
+      authorDisplayName,
       content: comment.content.value,
       createdAt: comment.createdAt,
     };

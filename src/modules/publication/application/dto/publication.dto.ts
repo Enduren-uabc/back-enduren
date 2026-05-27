@@ -27,6 +27,15 @@ export interface WorkoutSetSummaryDto {
   completed: boolean;
 }
 
+export interface CommentPreviewDto {
+  id: string;
+  publicationId: string;
+  authorUserId: string;
+  authorDisplayName?: string;
+  content: string;
+  createdAt: Date;
+}
+
 export interface PublicationMediaDto {
   id: string;
   url: string;
@@ -50,6 +59,9 @@ export interface PublicationDto {
   exerciseSummary: ExerciseSummaryDto | null;
   reactionCount: number;
   recentReactorNames: string[];
+  commentCount: number;
+  recentComments: CommentPreviewDto[];
+  likedByMe: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

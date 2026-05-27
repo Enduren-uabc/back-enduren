@@ -2,7 +2,10 @@ import {
   ProfileDto,
   PublicProfileDto,
 } from '../../../application/dto/profile.dto';
-import { ProfilePublicationPage } from '../../../application/ports/profile-publication-query.port';
+import {
+  ProfilePublicationCommentPreview,
+  ProfilePublicationPage,
+} from '../../../application/ports/profile-publication-query.port';
 
 export class ProfileResponseDto {
   userId!: string;
@@ -48,6 +51,9 @@ export class ProfilePublicationResponseDto {
   exerciseSummary?: Record<string, unknown> | null;
   reactionCount!: number;
   recentReactorNames!: string[];
+  commentCount!: number;
+  recentComments!: ProfilePublicationCommentPreview[];
+  likedByMe!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -110,6 +116,9 @@ export class ProfilePresenter {
       exerciseSummary: publication.exerciseSummary,
       reactionCount: publication.reactionCount,
       recentReactorNames: publication.recentReactorNames,
+      commentCount: publication.commentCount,
+      recentComments: publication.recentComments,
+      likedByMe: publication.likedByMe,
       createdAt: publication.createdAt,
       updatedAt: publication.updatedAt,
     }));

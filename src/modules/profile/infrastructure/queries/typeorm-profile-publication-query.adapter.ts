@@ -21,6 +21,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     authorUserId: string;
     limit: number;
     offset: number;
+    currentUserId?: string;
   }): Promise<ProfilePublicationPage> {
     const [publications, total] = await this.publicationRepo.findAndCount({
       where: { authorUserId: input.authorUserId },
@@ -35,7 +36,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     const countRows: { publicationid: string; count: string }[] =
       publicationIds.length > 0
         ? await this.dataSource.query(
-            `SELECT r.publication_id, COUNT(*)::text as count
+            `SELECT r.publication_id AS publicationid, COUNT(*)::text as count
              FROM publication_reactions r
              WHERE r.publication_id = ANY($1)
              GROUP BY r.publication_id`,
@@ -50,7 +51,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     const reactorRows: { publicationid: string; authoruserid: string }[] =
       publicationIds.length > 0
         ? await this.dataSource.query(
-            `SELECT r.publication_id, r.author_user_id
+            `SELECT r.publication_id AS publicationid, r.author_user_id AS authoruserid
              FROM publication_reactions r
              WHERE r.publication_id = ANY($1)
              ORDER BY r.created_at DESC`,
@@ -82,21 +83,108 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
         : [];
     const reactorNameMap = new Map(userRows.map((u) => [u.id, u.username]));
 
-    const items: ProfilePublicationItem[] = publications.map((publication) => ({
-      id: publication.id,
-      authorUserId: publication.authorUserId,
-      title: publication.title,
-      content: publication.content,
-      mediaUrls: publication.mediaUrls ?? [],
-      workoutSessionId: publication.workoutSessionId,
-      exerciseSummary: publication.exerciseSummary,
-      reactionCount: reactionCounts.get(publication.id) ?? 0,
-      recentReactorNames: (recentReactors.get(publication.id) ?? []).map(
-        (uid) => reactorNameMap.get(uid) ?? 'Usuario',
-      ),
-      createdAt: publication.createdAt,
-      updatedAt: publication.updatedAt,
-    }));
+    // Check which publications the current user has reacted to
+    let reactedPublicationIds = new Set<string>();
+    if (input.currentUserId && publicationIds.length > 0) {
+      const reactorCheckRows: { publication_id: string }[] =
+        await this.dataSource.query(
+          `SELECT r.publication_id
+           FROM publication_reactions r
+           WHERE r.publication_id = ANY($1) AND r.author_user_id = $2`,
+          [publicationIds, input.currentUserId],
+        );
+      reactedPublicationIds = new Set(
+        reactorCheckRows.map((r) => r.publication_id),
+      );
+    }
+
+    // Batch load comment counts
+    const commentCountRows: { publicationid: string; count: string }[] =
+      publicationIds.length > 0
+        ? await this.dataSource.query(
+            `SELECT c.publication_id AS publicationid, COUNT(*)::text as count
+             FROM publication_comments c
+             WHERE c.publication_id = ANY($1)
+             GROUP BY c.publication_id`,
+            [publicationIds],
+          )
+        : [];
+    const commentCounts = new Map(
+      commentCountRows.map((r) => [r.publicationid, parseInt(r.count, 10)]),
+    );
+
+    // Batch load recent comments (up to 2 per publication)
+    const commentRows: {
+      id: string;
+      publication_id: string;
+      author_user_id: string;
+      content: string;
+      created_at: Date;
+    }[] =
+      publicationIds.length > 0
+        ? await this.dataSource.query(
+            `SELECT c.id, c.publication_id, c.author_user_id, c.content, c.created_at
+             FROM publication_comments c
+             WHERE c.publication_id = ANY($1)
+             ORDER BY c.created_at DESC`,
+            [publicationIds],
+          )
+        : [];
+
+    const recentCommentMap = new Map<string, typeof commentRows>();
+    const commentCounters = new Map<string, number>();
+    for (const row of commentRows) {
+      const pubId = row.publication_id;
+      const cnt = commentCounters.get(pubId) ?? 0;
+      if (cnt >= 2) continue;
+      if (!recentCommentMap.has(pubId)) recentCommentMap.set(pubId, []);
+      recentCommentMap.get(pubId)!.push(row);
+      commentCounters.set(pubId, cnt + 1);
+    }
+
+    // Resolve display names for comment authors
+    const allCommentAuthorIds = [
+      ...new Set(commentRows.map((r) => r.author_user_id)),
+    ];
+    const commentAuthorRows: { id: string; username: string }[] =
+      allCommentAuthorIds.length > 0
+        ? await this.dataSource.query(
+            `SELECT u.id, u.username FROM users u WHERE u.id = ANY($1)`,
+            [allCommentAuthorIds],
+          )
+        : [];
+    const commentAuthorNameMap = new Map(
+      commentAuthorRows.map((u) => [u.id, u.username]),
+    );
+
+    const items: ProfilePublicationItem[] = publications.map((publication) => {
+      const rawComments = recentCommentMap.get(publication.id) ?? [];
+      return {
+        id: publication.id,
+        authorUserId: publication.authorUserId,
+        title: publication.title,
+        content: publication.content,
+        mediaUrls: publication.mediaUrls ?? [],
+        workoutSessionId: publication.workoutSessionId,
+        exerciseSummary: publication.exerciseSummary,
+        reactionCount: reactionCounts.get(publication.id) ?? 0,
+        recentReactorNames: (recentReactors.get(publication.id) ?? []).map(
+          (uid) => reactorNameMap.get(uid) ?? 'Usuario',
+        ),
+        likedByMe: reactedPublicationIds.has(publication.id),
+        commentCount: commentCounts.get(publication.id) ?? 0,
+        recentComments: rawComments.map((rc) => ({
+          id: rc.id,
+          publicationId: rc.publication_id,
+          authorUserId: rc.author_user_id,
+          authorDisplayName: commentAuthorNameMap.get(rc.author_user_id),
+          content: rc.content,
+          createdAt: rc.created_at,
+        })),
+        createdAt: publication.createdAt,
+        updatedAt: publication.updatedAt,
+      };
+    });
 
     return {
       items,

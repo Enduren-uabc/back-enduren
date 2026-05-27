@@ -5,4 +5,9 @@ export interface PublicationCommentRepository {
   findById(id: string): Promise<PublicationComment | null>;
   findByPublicationId(publicationId: string): Promise<PublicationComment[]>;
   delete(comment: PublicationComment): Promise<void>;
+  countByPublicationIds(publicationIds: string[]): Promise<Map<string, number>>;
+  findRecentByPublicationIds(
+    publicationIds: string[],
+    limit: number,
+  ): Promise<Map<string, PublicationComment[]>>;
 }

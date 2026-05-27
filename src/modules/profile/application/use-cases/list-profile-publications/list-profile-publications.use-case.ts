@@ -33,7 +33,7 @@ export class ListProfilePublicationsUseCase {
   ) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: ListProfilePublicationsInput,
   ): Promise<ProfilePublicationPage> {
     let profile = await this.profileRepository.findByUserId(input.userId);
@@ -72,6 +72,7 @@ export class ListProfilePublicationsUseCase {
       authorUserId: input.userId,
       limit,
       offset,
+      currentUserId: actor.userId,
     });
   }
 }

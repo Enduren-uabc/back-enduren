@@ -136,6 +136,7 @@ export class PublicationController {
       followedUsersQuery,
       authorProfileQuery,
       reactionRepository,
+      commentRepository,
     );
     this.addReactionUseCase = new AddPublicationReactionUseCase(
       publicationRepository,

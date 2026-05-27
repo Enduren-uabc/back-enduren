@@ -12,4 +12,8 @@ export interface PublicationReactionRepository {
     publicationIds: string[],
     limit: number,
   ): Promise<Map<string, string[]>>;
+  findPublicationIdsWithReactionByAuthorUserId(
+    publicationIds: string[],
+    authorUserId: string,
+  ): Promise<Set<string>>;
 }
