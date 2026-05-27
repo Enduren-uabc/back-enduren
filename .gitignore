@@ -63,3 +63,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /uploads
 /media
 /storage
+
+# Database migration reports
+/migration-reports
+/database-backups

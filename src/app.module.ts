@@ -22,6 +22,7 @@ import { PrivacyNoticeModule } from './modules/privacy-notice/privacy-notice.mod
 import { StorageSmokeTestModule } from './modules/storage-smoke-test/storage-smoke-test.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
 import { ObservabilityModule } from './shared/observability/observability.module';
+import { createTypeOrmModuleOptions } from './database/typeorm-options';
 
 @Module({
   imports: [
@@ -33,18 +34,40 @@ import { ObservabilityModule } from './shared/observability/observability.module
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres' as const,
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 5432),
-        username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'postgres'),
-        database: configService.get<string>('DB_DATABASE', 'endure'),
-        synchronize: false,
-        autoLoadEntities: true,
-        migrations: [__dirname + '/migrations/*{.ts,.js}'],
-        migrationsRun: true,
-      }),
+      useFactory: (configService: ConfigService) =>
+        createTypeOrmModuleOptions({
+          DB_USE_AZURE: configService.get<string | boolean>('DB_USE_AZURE'),
+          DB_HOST: configService.get<string>('DB_HOST'),
+          DB_PORT: configService.get<string | number>('DB_PORT'),
+          DB_USERNAME: configService.get<string>('DB_USERNAME'),
+          DB_PASSWORD: configService.get<string>('DB_PASSWORD'),
+          DB_DATABASE: configService.get<string>('DB_DATABASE'),
+          DB_SSL: configService.get<string | boolean>('DB_SSL'),
+          DB_SSL_REJECT_UNAUTHORIZED: configService.get<string | boolean>(
+            'DB_SSL_REJECT_UNAUTHORIZED',
+          ),
+          DB_MIGRATIONS_RUN: configService.get<string | boolean>(
+            'DB_MIGRATIONS_RUN',
+          ),
+          DB_HOST_CLOUD: configService.get<string>('DB_HOST_CLOUD'),
+          DB_PORT_CLOUD: configService.get<string | number>('DB_PORT_CLOUD'),
+          DB_USERNAME_CLOUD: configService.get<string>('DB_USERNAME_CLOUD'),
+          DB_PASSWORD_CLOUD: configService.get<string>('DB_PASSWORD_CLOUD'),
+          DB_DATABASE_CLOUD: configService.get<string>('DB_DATABASE_CLOUD'),
+          DB_SSL_CLOUD: configService.get<string | boolean>('DB_SSL_CLOUD'),
+          DB_SSL_REJECT_UNAUTHORIZED_CLOUD: configService.get<string | boolean>(
+            'DB_SSL_REJECT_UNAUTHORIZED_CLOUD',
+          ),
+          AZURE_DB_HOST: configService.get<string>('AZURE_DB_HOST'),
+          AZURE_DB_PORT: configService.get<string | number>('AZURE_DB_PORT'),
+          AZURE_DB_USERNAME: configService.get<string>('AZURE_DB_USERNAME'),
+          AZURE_DB_PASSWORD: configService.get<string>('AZURE_DB_PASSWORD'),
+          AZURE_DB_DATABASE: configService.get<string>('AZURE_DB_DATABASE'),
+          AZURE_DB_SSL: configService.get<string | boolean>('AZURE_DB_SSL'),
+          AZURE_DB_SSL_REJECT_UNAUTHORIZED: configService.get<string | boolean>(
+            'AZURE_DB_SSL_REJECT_UNAUTHORIZED',
+          ),
+        }),
     }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot({
