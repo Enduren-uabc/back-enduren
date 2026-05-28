@@ -23,6 +23,9 @@ export class ExerciseTypeormEntity {
   @Column('uuid', { name: 'routine_day_id' })
   routineDayId!: string;
 
+  @Column('uuid', { name: 'catalog_id', nullable: true })
+  catalogId!: string | null;
+
   @ManyToOne(() => RoutineDayTypeormEntity, (day) => day.exercises, {
     onDelete: 'CASCADE',
   })

@@ -149,7 +149,7 @@ export class WorkoutSet {
       this.targetWeight,
     );
   }
-  
+
   /**
    * Marks this set as pending (uncomplete).
    * Keeps actual reps and weight values intact for further editing.

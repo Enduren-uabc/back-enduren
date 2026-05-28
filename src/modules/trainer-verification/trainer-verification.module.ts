@@ -132,7 +132,11 @@ import { TrainerVerifiedGuard } from './presentation/http/guards/trainer-verifie
     OnIdDocumentExtractedHandler,
     OnIdDocumentExtractionFailedHandler,
   ],
-  exports: [TRAINER_VERIFICATION_REPOSITORY_PORT, TrainerVerifiedGuard],
+  exports: [
+    TRAINER_VERIFICATION_REPOSITORY_PORT,
+    SPECIALTY_CATALOG_REPOSITORY_PORT,
+    TrainerVerifiedGuard,
+  ],
 })
 export class TrainerVerificationModule implements OnModuleInit {
   constructor(

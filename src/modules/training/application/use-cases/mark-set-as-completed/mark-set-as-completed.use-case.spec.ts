@@ -30,9 +30,12 @@ describe('MarkSetAsCompletedUseCase', () => {
 
   describe('RF-12.0.3: Mark a set as completed', () => {
     it('should mark a set as completed using targets if not yet registered', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise,
-      ]);
+      const session = WorkoutSession.create(
+        'session-1',
+        'user-1',
+        'routine-1',
+        [exercise],
+      );
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,

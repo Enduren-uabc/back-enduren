@@ -40,19 +40,32 @@ export class TypeormTrainerSearchRepository implements TrainerSearchRepositoryPo
     }
 
     const skip = (pagination.page - 1) * pagination.limit;
+
     const [users, total] = await qb
+      .leftJoin('trainer_verifications', 'tv', 'tv.user_id = u.id')
+      .leftJoin('social_profiles', 'sp', 'sp.user_id = u.id')
+      .select([
+        'u.id',
+        'u.trainerCode',
+        'u.username',
+        'u.avatarUrl',
+        'tv.years_of_experience',
+        'tv.short_bio',
+        'sp.display_name',
+        'sp.avatar_url',
+      ])
       .skip(skip)
       .take(pagination.limit)
       .getManyAndCount();
 
-    const results: TrainerSearchResult[] = users.map((user) => ({
+    const results: TrainerSearchResult[] = users.map((user: any) => ({
       userId: user.id,
-      trainerCode: user.trainerCode!,
-      displayName: user.username,
+      trainerCode: user.trainer_code ?? user.trainerCode,
+      displayName: user.display_name ?? user.username,
       specialties: [],
-      yearsOfExperience: 0,
-      shortBio: null,
-      profileImageUrl: null,
+      yearsOfExperience: user.years_of_experience ?? 0,
+      shortBio: user.short_bio ?? null,
+      profileImageUrl: user.avatar_url ?? user.avatarUrl ?? null,
     }));
 
     return {

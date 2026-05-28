@@ -292,7 +292,9 @@ export class WorkoutExercise {
     }
 
     const currentSet = this.workoutSets[setIndex];
-    const updatedSet = currentSet.completed ? currentSet.markAsPending() : currentSet.markAsCompleted();
+    const updatedSet = currentSet.completed
+      ? currentSet.markAsPending()
+      : currentSet.markAsCompleted();
     const updatedSets = [...this.workoutSets];
     updatedSets[setIndex] = updatedSet;
 

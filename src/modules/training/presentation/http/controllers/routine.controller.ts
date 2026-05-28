@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CreateRoutineUseCase } from '../../../application/use-cases/create-routine/create-routine.use-case';
+import { CreateDefaultRoutineUseCase } from '../../../application/use-cases/create-default-routine/create-default-routine.use-case';
 import { AddExerciseToRoutineDayUseCase } from '../../../application/use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from '../../../application/use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
 import { RemoveDayFromRoutineUseCase } from '../../../application/use-cases/remove-day-from-routine/remove-day-from-routine.use-case';
@@ -26,6 +27,7 @@ import { SetRoutineTrainingStrategyUseCase } from '../../../application/use-case
 import { GenerateExerciseSetsUseCase } from '../../../application/use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
+import { CreateDefaultRoutineRequestDto } from '../dtos/create-default-routine.request';
 import { AddExerciseRequestDto } from '../dtos/add-exercise.request';
 import { ConfigureExerciseRequestDto } from '../dtos/configure-exercise.request';
 import { SyncRoutineRequestDto } from '../dtos/sync-routine.request';
@@ -53,6 +55,7 @@ import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.st
 export class RoutineController {
   constructor(
     private readonly createRoutineUseCase: CreateRoutineUseCase,
+    private readonly createDefaultRoutineUseCase: CreateDefaultRoutineUseCase,
     private readonly addExerciseUseCase: AddExerciseToRoutineDayUseCase,
     private readonly removeExerciseUseCase: RemoveExerciseFromRoutineUseCase,
     private readonly configureExerciseUseCase: ConfigureExerciseUseCase,
@@ -103,6 +106,26 @@ export class RoutineController {
       {
         name: dto.name,
         dayOfWeeks: dto.dayOfWeeks,
+      },
+    );
+
+    return this.mapToResponse(result);
+  }
+
+  @Post('default')
+  public async createDefault(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateDefaultRoutineRequestDto,
+  ): Promise<RoutineResponseDto> {
+    const result = await this.createDefaultRoutineUseCase.execute(
+      this.getActor(user),
+      {
+        experienceLevel: dto.experienceLevel as
+          | 'beginner'
+          | 'intermediate'
+          | 'advanced',
+        trainingSplitKey: dto.trainingSplitKey as 'ppl' | 'arnold' | undefined,
+        trainingStrategyKey: dto.trainingStrategyKey,
       },
     );
 
@@ -341,6 +364,7 @@ export class RoutineController {
         id: string;
         name: string;
         order: number;
+        catalogId?: string | null;
         sets: Array<{
           id: string;
           setNumber: number;
@@ -368,6 +392,7 @@ export class RoutineController {
         exDto.id = e.id;
         exDto.name = e.name;
         exDto.order = e.order;
+        exDto.catalogId = e.catalogId ?? null;
         exDto.sets = e.sets.map((s) => {
           const setDto = new ExerciseSetResponseDto();
           setDto.id = s.id;

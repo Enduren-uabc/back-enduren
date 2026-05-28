@@ -22,9 +22,7 @@ import {
 } from '../../../domain/repositories/email-verification-token.repository';
 import { EmailVerificationToken } from '../../../domain/entities/email-verification-token.entity';
 import { UserRegisteredEvent } from '../../../../shared/email/domain/events/user-registered.event';
-import {
-  SOCIAL_PROFILE_REPOSITORY_PORT,
-} from '../../../../profile/application/use-cases/follow-profile/follow-profile.use-case';
+import { SOCIAL_PROFILE_REPOSITORY_PORT } from '../../../../profile/application/use-cases/follow-profile/follow-profile.use-case';
 import { SocialProfileRepository } from '../../../../profile/domain/repositories/social-profile.repository';
 import { SocialProfile } from '../../../../profile/domain/entities/social-profile.entity';
 

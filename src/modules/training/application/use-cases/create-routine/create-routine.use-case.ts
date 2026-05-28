@@ -13,9 +13,11 @@ export const CURRENT_ACTOR_PORT = Symbol('CURRENT_ACTOR_PORT');
 export const PROFILE_REPOSITORY_PORT = Symbol('PROFILE_REPOSITORY_PORT');
 
 export interface ProfileRepository {
-  findByUserId(
-    userId: string,
-  ): Promise<{ defaultTrainingStrategyKey: string | null } | null>;
+  findByUserId(userId: string): Promise<{
+    defaultTrainingStrategyKey: string | null;
+    experienceLevel?: string;
+    daysAvailablePerWeek?: number;
+  } | null>;
 }
 
 export interface CreateRoutineInput {

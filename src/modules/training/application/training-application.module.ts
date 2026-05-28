@@ -4,6 +4,8 @@ import {
   CreateRoutineUseCase,
   ROUTINE_REPOSITORY_PORT,
 } from './use-cases/create-routine/create-routine.use-case';
+import { CreateDefaultRoutineUseCase } from './use-cases/create-default-routine/create-default-routine.use-case';
+import { DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT } from '../domain/repositories/default-routine-template.repository';
 import { PROFILE_QUERY_PORT } from '../infrastructure/adapters/profile-query.adapter';
 import { AddExerciseToRoutineDayUseCase } from './use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from './use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
@@ -54,6 +56,27 @@ const routineUseCaseProviders = [
     inject: [ROUTINE_REPOSITORY_PORT, PROFILE_QUERY_PORT],
     useFactory: (routineRepository, profileRepository) =>
       new CreateRoutineUseCase(routineRepository, profileRepository),
+  },
+  {
+    provide: CreateDefaultRoutineUseCase,
+    inject: [
+      ROUTINE_REPOSITORY_PORT,
+      TRAINING_STRATEGY_REPOSITORY_PORT,
+      PROFILE_QUERY_PORT,
+      DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT,
+    ],
+    useFactory: (
+      routineRepository,
+      trainingStrategyRepository,
+      profileRepository,
+      templateRepository,
+    ) =>
+      new CreateDefaultRoutineUseCase(
+        routineRepository,
+        trainingStrategyRepository,
+        profileRepository,
+        templateRepository,
+      ),
   },
   {
     provide: AddExerciseToRoutineDayUseCase,

@@ -11,10 +11,14 @@ import { WorkoutSessionExerciseTypeormEntity } from '../persistence/typeorm/enti
 import { WorkoutSessionSetTypeormEntity } from '../persistence/typeorm/entities/workout-session-set-typeorm.entity';
 import { ExerciseCatalogTypeormEntity } from '../persistence/typeorm/entities/exercise-catalog-typeorm.entity';
 import { TrainingStrategyTypeormEntity } from '../persistence/typeorm/entities/training-strategy-typeorm.entity';
+import { DefaultRoutineTemplateTypeormEntity } from '../persistence/typeorm/entities/default-routine-template-typeorm.entity';
+import { DefaultRoutineTemplateExerciseTypeormEntity } from '../persistence/typeorm/entities/default-routine-template-exercise-typeorm.entity';
 import { TypeormRoutineRepository } from '../persistence/typeorm/repositories/typeorm-routine.repository';
 import { TypeormWorkoutSessionRepository } from '../persistence/typeorm/repositories/typeorm-workout-session.repository';
 import { TypeormExerciseCatalogRepository } from '../persistence/typeorm/repositories/typeorm-exercise-catalog.repository';
 import { TypeormTrainingStrategyRepository } from '../persistence/typeorm/repositories/typeorm-training-strategy.repository';
+import { TypeormDefaultRoutineTemplateRepository } from '../persistence/typeorm/repositories/typeorm-default-routine-template.repository';
+import { DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT } from '../../domain/repositories/default-routine-template.repository';
 import { ROUTINE_REPOSITORY_PORT } from '../../application/use-cases/create-routine/create-routine.use-case';
 import { WORKOUT_SESSION_REPOSITORY_PORT } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
@@ -37,6 +41,8 @@ import {
       WorkoutSessionSetTypeormEntity,
       ExerciseCatalogTypeormEntity,
       TrainingStrategyTypeormEntity,
+      DefaultRoutineTemplateTypeormEntity,
+      DefaultRoutineTemplateExerciseTypeormEntity,
     ]),
     ProfileModule,
   ],
@@ -65,6 +71,10 @@ import {
       provide: PROFILE_QUERY_PORT,
       useClass: ProfileQueryAdapter,
     },
+    {
+      provide: DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT,
+      useClass: TypeormDefaultRoutineTemplateRepository,
+    },
   ],
   exports: [
     ROUTINE_REPOSITORY_PORT,
@@ -73,6 +83,7 @@ import {
     EXERCISE_CATALOG_REPOSITORY_PORT,
     TRAINING_STRATEGY_REPOSITORY_PORT,
     PROFILE_QUERY_PORT,
+    DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT,
   ],
 })
 export class TrainingInfrastructureModule {}

@@ -20,7 +20,13 @@ export class RoutineMapper {
             s.restSeconds,
           ),
         );
-        return Exercise.reconstitute(ex.id, ex.name, ex.order, sets);
+        return Exercise.reconstitute(
+          ex.id,
+          ex.name,
+          ex.order,
+          sets,
+          ex.catalogId ?? null,
+        );
       });
       return RoutineDay.reconstitute(
         day.dayOfWeek as
@@ -69,6 +75,7 @@ export class RoutineMapper {
         exOrm.id = exercise.id;
         exOrm.name = exercise.name;
         exOrm.order = exercise.order;
+        exOrm.catalogId = exercise.catalogId;
         exOrm.routineDayId = dayOrm.id;
 
         exOrm.sets = exercise.sets.map((set) => {

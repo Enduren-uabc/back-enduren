@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
+import { ProfileModule } from '../profile/profile.module';
 import { TrainerVerificationModule } from '../trainer-verification/trainer-verification.module';
 import { TrainingModule } from '../training/training.module';
 import { TrainingRemindersInfrastructureModule } from '../training-reminders/infrastructure/providers/training-reminders-infrastructure.module';
@@ -43,6 +44,7 @@ import { TrainerLinkErrorFilter } from './presentation/http/filters/trainer-link
 @Module({
   imports: [
     UsersModule,
+    ProfileModule,
     TrainerVerificationModule,
     TrainingModule,
     TrainingRemindersInfrastructureModule,

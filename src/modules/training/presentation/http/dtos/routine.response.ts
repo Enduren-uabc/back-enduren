@@ -10,6 +10,7 @@ export class ExerciseResponseDto {
   id!: string;
   name!: string;
   order!: number;
+  catalogId!: string | null;
   sets!: ExerciseSetResponseDto[];
 }
 
