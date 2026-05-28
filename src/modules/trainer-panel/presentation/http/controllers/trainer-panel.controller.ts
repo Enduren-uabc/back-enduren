@@ -17,6 +17,7 @@ import { AssignRoutineRequestDto } from '../dtos/assign-routine-request.dto';
 import { ReplaceRoutineRequestDto } from '../dtos/replace-routine-request.dto';
 import { UpdateNotesRequestDto } from '../dtos/update-notes-request.dto';
 import { EditAssignedRoutineContentRequestDto } from '../dtos/edit-assigned-routine-content-request.dto';
+import { StartAssignedRoutineWorkoutRequestDto } from '../dtos/start-assigned-routine-workout-request.dto';
 import {
   AssignedRoutineResponseDto,
   AssignedRoutineListItemDto,
@@ -30,6 +31,11 @@ import { ReplaceAssignedRoutineUseCase } from '../../../application/use-cases/re
 import { UpdateAssignedRoutineNotesUseCase } from '../../../application/use-cases/update-assigned-routine-notes/update-assigned-routine-notes.use-case';
 import { GetAssignedRoutineDetailUseCase } from '../../../application/use-cases/get-assigned-routine-detail/get-assigned-routine-detail.use-case';
 import { EditAssignedRoutineContentUseCase } from '../../../application/use-cases/edit-assigned-routine-content/edit-assigned-routine-content.use-case';
+import {
+  StartAssignedRoutineWorkoutUseCase,
+  type StartAssignedRoutineWorkoutInput,
+} from '../../../application/use-cases/start-assigned-routine-workout/start-assigned-routine-workout.use-case';
+import type { StartWorkoutSessionOutput } from '../../../../training/application/use-cases/start-workout-session/start-workout-session.use-case';
 
 @Controller('trainer')
 @UseGuards(JwtAuthGuard, TrainerVerifiedGuard)
@@ -58,6 +64,7 @@ export class TrainerPanelController {
       estimatedDuration: number;
       exerciseCount: number;
       isActive: boolean;
+      targetAudience: 'client';
     }>;
   }> {
     const result = await this.getAssignableRoutinesUseCase.execute({
@@ -223,6 +230,7 @@ export class TrainerPanelController {
 export class ClientAssignedRoutineController {
   constructor(
     private readonly getMyAssignedRoutinesUseCase: GetMyAssignedRoutinesUseCase,
+    private readonly startAssignedRoutineWorkoutUseCase: StartAssignedRoutineWorkoutUseCase,
   ) {}
 
   @Get('assigned-routine')
@@ -233,5 +241,19 @@ export class ClientAssignedRoutineController {
       clientId: user.sub,
     });
     return { items: result.items };
+  }
+
+  @Post('assigned-routine/:assignedId/start')
+  async startAssignedRoutineWorkout(
+    @CurrentUser() user: JwtPayload,
+    @Param('assignedId') assignedId: string,
+    @Body() dto: StartAssignedRoutineWorkoutRequestDto,
+  ): Promise<StartWorkoutSessionOutput> {
+    const input: StartAssignedRoutineWorkoutInput = {
+      clientId: user.sub,
+      assignedId,
+      dayOfWeek: dto.dayOfWeek,
+    };
+    return this.startAssignedRoutineWorkoutUseCase.execute(input);
   }
 }

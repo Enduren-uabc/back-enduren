@@ -5,6 +5,7 @@ import { RoutineRepository } from '../../../../domain/repositories/routine.repos
 import { Routine } from '../../../../domain/entities/routine.entity';
 import { RoutineTypeormEntity } from '../entities/routine-typeorm.entity';
 import { RoutineMapper } from '../../../mappers/routine.mapper';
+import type { RoutineTargetAudience } from '../../../../domain/value-objects/routine-target-audience.value-object';
 
 @Injectable()
 export class TypeormRoutineRepository implements RoutineRepository {
@@ -67,6 +68,17 @@ export class TypeormRoutineRepository implements RoutineRepository {
     return ormEntities.map((e) => RoutineMapper.toDomain(e));
   }
 
+  public async findByUserIdAndTargetAudience(
+    userId: string,
+    targetAudience: RoutineTargetAudience,
+  ): Promise<Routine[]> {
+    const ormEntities = await this.ormRepo.find({
+      where: { userId, targetAudience },
+      relations: ['days', 'days.exercises', 'days.exercises.sets'],
+    });
+    return ormEntities.map((e) => RoutineMapper.toDomain(e));
+  }
+
   public async existsByNameForUser(
     name: string,
     userId: string,
@@ -81,9 +93,16 @@ export class TypeormRoutineRepository implements RoutineRepository {
     return this.ormRepo.count({ where: { userId } });
   }
 
+  public async countByUserIdAndTargetAudience(
+    userId: string,
+    targetAudience: RoutineTargetAudience,
+  ): Promise<number> {
+    return this.ormRepo.count({ where: { userId, targetAudience } });
+  }
+
   public async findActiveByUserId(userId: string): Promise<Routine | null> {
     const ormEntity = await this.ormRepo.findOne({
-      where: { userId, isActive: true },
+      where: { userId, isActive: true, targetAudience: 'self' },
       relations: ['days', 'days.exercises', 'days.exercises.sets'],
     });
     if (!ormEntity) {

@@ -6,6 +6,10 @@ import { RoutineTypeormEntity } from '../persistence/typeorm/entities/routine-ty
 import { RoutineDayTypeormEntity } from '../persistence/typeorm/entities/routine-day-typeorm.entity';
 import { ExerciseTypeormEntity } from '../persistence/typeorm/entities/exercise-typeorm.entity';
 import { ExerciseSetTypeormEntity } from '../persistence/typeorm/entities/exercise-set-typeorm.entity';
+import {
+  isRoutineTargetAudience,
+  type RoutineTargetAudience,
+} from '../../domain/value-objects/routine-target-audience.value-object';
 
 export class RoutineMapper {
   public static toDomain(ormEntity: RoutineTypeormEntity): Routine {
@@ -42,6 +46,12 @@ export class RoutineMapper {
       );
     });
 
+    const targetAudience: RoutineTargetAudience = isRoutineTargetAudience(
+      ormEntity.targetAudience,
+    )
+      ? ormEntity.targetAudience
+      : 'self';
+
     return Routine.reconstitute(
       ormEntity.id,
       ormEntity.name,
@@ -51,6 +61,7 @@ export class RoutineMapper {
       ormEntity.trainingStrategyKey ?? null,
       ormEntity.createdAt,
       ormEntity.updatedAt,
+      targetAudience,
     );
   }
 
@@ -61,6 +72,7 @@ export class RoutineMapper {
     ormEntity.userId = domain.userId;
     ormEntity.isActive = domain.isActive;
     ormEntity.trainingStrategyKey = domain.trainingStrategyKey;
+    ormEntity.targetAudience = domain.targetAudience;
     ormEntity.createdAt = domain.createdAt;
     ormEntity.updatedAt = domain.updatedAt;
 

@@ -1,4 +1,5 @@
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
+import type { RoutineTargetAudience } from '../../../domain/value-objects/routine-target-audience.value-object';
 import { CurrentActor } from '../../ports/current-actor.port';
 
 export interface ListRoutinesOutput {
@@ -7,6 +8,7 @@ export interface ListRoutinesOutput {
   userId: string;
   isActive: boolean;
   trainingStrategyKey: string | null;
+  targetAudience: RoutineTargetAudience;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -38,6 +40,7 @@ export class ListRoutinesUseCase {
       userId: routine.userId,
       isActive: routine.isActive,
       trainingStrategyKey: routine.trainingStrategyKey,
+      targetAudience: routine.targetAudience,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

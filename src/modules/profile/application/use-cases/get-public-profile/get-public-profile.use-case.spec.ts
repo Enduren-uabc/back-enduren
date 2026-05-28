@@ -53,12 +53,35 @@ describe('GetPublicProfileUseCase', () => {
     );
     (followRepository.countFollowersOf as jest.Mock).mockResolvedValue(3);
     (followRepository.countFollowingOf as jest.Mock).mockResolvedValue(5);
+    (followRepository.findByFollowerAndFollowed as jest.Mock).mockResolvedValue(
+      null,
+    );
 
     const result = await useCase.execute(actor, { userId: 'user-1' });
 
     expect(result.userId).toBe('user-1');
     expect(result.followersCount).toBe(3);
     expect(result.followingCount).toBe(5);
+    expect(result.isFollowing).toBe(false);
+  });
+
+  it('returns public profile with isFollowing true when actor follows target', async () => {
+    (profileRepository.findByUserId as jest.Mock).mockResolvedValue(
+      SocialProfile.create('user-1', 'Usuario Uno', 'usuario_uno'),
+    );
+    (followRepository.countFollowersOf as jest.Mock).mockResolvedValue(3);
+    (followRepository.countFollowingOf as jest.Mock).mockResolvedValue(5);
+    (followRepository.findByFollowerAndFollowed as jest.Mock).mockResolvedValue(
+      {
+        id: 'follow-1',
+        followerUserId: 'viewer-1',
+        followedUserId: 'user-1',
+      } as any,
+    );
+
+    const result = await useCase.execute(actor, { userId: 'user-1' });
+
+    expect(result.isFollowing).toBe(true);
   });
 
   it('rejects missing public profile', async () => {

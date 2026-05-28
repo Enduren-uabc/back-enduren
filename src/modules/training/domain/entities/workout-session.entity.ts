@@ -8,6 +8,7 @@ import {
   WorkoutSessionDomainError,
   WorkoutSessionErrorCode,
 } from '../errors/workout-session-domain.error';
+import type { WorkoutSessionSourceType } from '../value-objects/workout-session-source.value-object';
 
 /**
  * WorkoutSession domain entity — aggregate root.
@@ -20,6 +21,8 @@ export class WorkoutSession {
   public readonly id: string;
   public readonly userId: string;
   public readonly routineId: string;
+  public readonly sourceType: WorkoutSessionSourceType;
+  public readonly assignedRoutineId: string | null;
   public readonly dayOfWeek: DayOfWeek;
   public readonly status: WorkoutSessionStatus;
   public readonly exercises: WorkoutExercise[];
@@ -31,6 +34,8 @@ export class WorkoutSession {
     id: string,
     userId: string,
     routineId: string,
+    sourceType: WorkoutSessionSourceType,
+    assignedRoutineId: string | null,
     dayOfWeek: DayOfWeek,
     status: WorkoutSessionStatus,
     exercises: WorkoutExercise[],
@@ -41,6 +46,8 @@ export class WorkoutSession {
     this.id = id;
     this.userId = userId;
     this.routineId = routineId;
+    this.sourceType = sourceType;
+    this.assignedRoutineId = assignedRoutineId;
     this.dayOfWeek = dayOfWeek;
     this.status = status;
     this.exercises = exercises;
@@ -60,6 +67,8 @@ export class WorkoutSession {
     routineId: string,
     exercises: WorkoutExercise[],
     dayOfWeek: DayOfWeek = 'monday',
+    sourceType: WorkoutSessionSourceType = 'personal',
+    assignedRoutineId: string | null = null,
   ): WorkoutSession {
     if (!userId || userId.trim().length === 0) {
       throw new WorkoutSessionDomainError(
@@ -85,11 +94,21 @@ export class WorkoutSession {
       );
     }
 
+    if (sourceType === 'trainer_assigned' && !assignedRoutineId) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
+        'Assigned routine ID is required for trainer-assigned sessions',
+        { sourceType, assignedRoutineId },
+      );
+    }
+
     const now = new Date();
     return new WorkoutSession(
       id,
       userId,
       routineId,
+      sourceType,
+      assignedRoutineId,
       dayOfWeek,
       WorkoutSessionStatus.IN_PROGRESS,
       [...exercises],
@@ -112,11 +131,15 @@ export class WorkoutSession {
     startedAt: Date,
     finishedAt: Date | null,
     dayOfWeek: DayOfWeek = 'monday',
+    sourceType: WorkoutSessionSourceType = 'personal',
+    assignedRoutineId: string | null = null,
   ): WorkoutSession {
     return new WorkoutSession(
       id,
       userId,
       routineId,
+      sourceType,
+      assignedRoutineId,
       dayOfWeek,
       status,
       [...exercises],
@@ -144,6 +167,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       WorkoutSessionStatus.FINISHED,
       [...this.exercises],
@@ -179,6 +204,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       WorkoutSessionStatus.DISCARDED,
       [...this.exercises],
@@ -252,6 +279,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       this.status,
       updatedExercises,
@@ -301,6 +330,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       this.status,
       updatedExercises,
@@ -350,6 +381,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       this.status,
       updatedExercises,
@@ -398,6 +431,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       this.status,
       updatedExercises,
@@ -445,6 +480,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       this.status,
       updatedExercises,
@@ -505,6 +542,8 @@ export class WorkoutSession {
       this.id,
       this.userId,
       this.routineId,
+      this.sourceType,
+      this.assignedRoutineId,
       this.dayOfWeek,
       this.status,
       [...this.exercises],

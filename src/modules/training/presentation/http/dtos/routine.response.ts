@@ -25,6 +25,7 @@ export class RoutineResponseDto {
   userId!: string;
   isActive!: boolean;
   trainingStrategyKey!: string | null;
+  targetAudience!: 'self' | 'client';
   dayOfWeeks!: string[];
   days!: RoutineDayResponseDto[];
   createdAt!: Date;

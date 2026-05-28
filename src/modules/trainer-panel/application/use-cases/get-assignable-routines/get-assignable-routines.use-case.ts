@@ -19,6 +19,7 @@ export interface AssignableRoutineItem {
   estimatedDuration: number;
   exerciseCount: number;
   isActive: boolean;
+  targetAudience: 'client';
 }
 
 export interface GetAssignableRoutinesOutput {
@@ -46,7 +47,14 @@ export class GetAssignableRoutinesUseCase {
       throw new ForbiddenException('No active link with this client');
     }
 
-    const routines = await this.routineRepository.findByUserId(input.trainerId);
+    const routines = this.routineRepository.findByUserIdAndTargetAudience
+      ? await this.routineRepository.findByUserIdAndTargetAudience(
+          input.trainerId,
+          'client',
+        )
+      : (await this.routineRepository.findByUserId(input.trainerId)).filter(
+          (routine) => routine.targetAudience === 'client',
+        );
 
     return {
       items: routines.map((r) => {
@@ -62,6 +70,7 @@ export class GetAssignableRoutinesUseCase {
           estimatedDuration: 45,
           exerciseCount: totalExercises,
           isActive: r.isActive,
+          targetAudience: 'client',
         };
       }),
     };

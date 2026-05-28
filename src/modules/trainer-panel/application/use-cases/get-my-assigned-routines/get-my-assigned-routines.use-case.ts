@@ -27,6 +27,17 @@ export interface MyAssignedRoutineItem {
     restSeconds: number;
     order: number;
   }>;
+  days: Array<{
+    dayOfWeek: string;
+    exercises: Array<{
+      exerciseId: string;
+      name: string;
+      sets: number;
+      reps: number;
+      restSeconds: number;
+      order: number;
+    }>;
+  }>;
 }
 
 export interface GetMyAssignedRoutinesOutput {
@@ -70,6 +81,17 @@ export class GetMyAssignedRoutinesUseCase {
             reps: e.reps,
             restSeconds: e.restSeconds,
             order: e.order,
+          })),
+          days: active.routineSnapshot.days.map((d) => ({
+            dayOfWeek: d.dayOfWeek,
+            exercises: d.exercises.map((e) => ({
+              exerciseId: e.exerciseId,
+              name: e.name,
+              sets: e.sets,
+              reps: e.reps,
+              restSeconds: e.restSeconds,
+              order: e.order,
+            })),
           })),
         },
       ],

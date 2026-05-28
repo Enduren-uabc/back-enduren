@@ -6,6 +6,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
@@ -25,6 +26,8 @@ import { DeleteRoutineUseCase } from '../../../application/use-cases/delete-rout
 import { SyncRoutineUseCase } from '../../../application/use-cases/sync-routine/sync-routine.use-case';
 import { SetRoutineTrainingStrategyUseCase } from '../../../application/use-cases/set-routine-training-strategy/set-routine-training-strategy.use-case';
 import { GenerateExerciseSetsUseCase } from '../../../application/use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
+import { ListRoutineTemplatesUseCase } from '../../../application/use-cases/list-routine-templates/list-routine-templates.use-case';
+import { GetRoutineTemplateDetailUseCase } from '../../../application/use-cases/get-routine-template-detail/get-routine-template-detail.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { CreateRoutineRequestDto } from '../dtos/create-routine.request';
 import { CreateDefaultRoutineRequestDto } from '../dtos/create-default-routine.request';
@@ -70,10 +73,12 @@ export class RoutineController {
     private readonly generateExerciseSetsUseCase: GenerateExerciseSetsUseCase,
     private readonly updateRoutineNameUseCase: UpdateRoutineNameUseCase,
     private readonly removeDayFromRoutineUseCase: RemoveDayFromRoutineUseCase,
+    private readonly listRoutineTemplatesUseCase: ListRoutineTemplatesUseCase,
+    private readonly getRoutineTemplateDetailUseCase: GetRoutineTemplateDetailUseCase,
   ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
-    return { userId: user.sub };
+    return { userId: user.sub, role: user.role };
   }
 
   @Get()
@@ -82,6 +87,62 @@ export class RoutineController {
   ): Promise<RoutineResponseDto[]> {
     const results = await this.listRoutinesUseCase.execute(this.getActor(user));
     return results.map((r) => this.mapToResponse(r));
+  }
+
+  @Get('templates')
+  public async listTemplates(
+    @Query('level') level?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    templates: Array<{
+      id: string;
+      experienceLevel: string;
+      splitKey: string | null;
+      name: string;
+      dayCount: number;
+      exerciseCount: number;
+      totalSets: number;
+      description: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const validLevels = ['beginner', 'intermediate', 'advanced'];
+    const sanitizedLevel = level && validLevels.includes(level) ? level : undefined;
+    const result = await this.listRoutineTemplatesUseCase.execute({
+      level: sanitizedLevel,
+      page: page ? Math.max(1, Number(page)) : undefined,
+      limit: limit ? Math.min(50, Math.max(1, Number(limit))) : undefined,
+    });
+    return result;
+  }
+
+  @Get('templates/:templateId')
+  public async getTemplateDetail(
+    @Param('templateId') templateId: string,
+  ): Promise<{
+    id: string;
+    experienceLevel: string;
+    splitKey: string | null;
+    name: string;
+    description: string;
+    days: Array<{
+      dayOfWeek: string;
+      name: string;
+      displayOrder: number;
+      exercises: Array<{
+        catalogId: string;
+        name: string;
+        setsCount: number;
+        initialReps: number;
+        initialWeight: number;
+        order: number;
+      }>;
+    }>;
+  }> {
+    return this.getRoutineTemplateDetailUseCase.execute(templateId);
   }
 
   @Get(':routineId')
@@ -106,6 +167,7 @@ export class RoutineController {
       {
         name: dto.name,
         dayOfWeeks: dto.dayOfWeeks,
+        targetAudience: dto.targetAudience ?? 'self',
       },
     );
 
@@ -358,6 +420,7 @@ export class RoutineController {
     userId: string;
     isActive: boolean;
     trainingStrategyKey?: string | null;
+    targetAudience?: 'self' | 'client';
     days: Array<{
       dayOfWeek: string;
       exercises: Array<{
@@ -383,6 +446,7 @@ export class RoutineController {
     response.userId = result.userId;
     response.isActive = result.isActive;
     response.trainingStrategyKey = result.trainingStrategyKey ?? null;
+    response.targetAudience = result.targetAudience ?? 'self';
     response.dayOfWeeks = result.days.map((d) => d.dayOfWeek);
     response.days = result.days.map((d) => {
       const dayDto = new RoutineDayResponseDto();

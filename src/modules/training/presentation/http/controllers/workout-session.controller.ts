@@ -141,6 +141,8 @@ export class WorkoutSessionController {
       const s = new WorkoutSessionSummaryResponseDto();
       s.id = r.id;
       s.routineId = r.routineId;
+      s.sourceType = r.sourceType;
+      s.assignedRoutineId = r.assignedRoutineId;
       s.routineName = r.routineName ?? 'Unknown Routine';
       s.dayOfWeek = r.dayOfWeek;
       s.startedAt = r.startedAt;
@@ -340,6 +342,8 @@ export class WorkoutSessionController {
     id: string;
     userId: string;
     routineId: string;
+    sourceType?: string;
+    assignedRoutineId?: string | null;
     dayOfWeek: string;
     status: string;
     currentExerciseIndex: number;
@@ -368,6 +372,8 @@ export class WorkoutSessionController {
     response.id = result.id;
     response.userId = result.userId;
     response.routineId = result.routineId;
+    response.sourceType = result.sourceType ?? 'personal';
+    response.assignedRoutineId = result.assignedRoutineId ?? null;
     response.dayOfWeek = result.dayOfWeek;
     response.status = result.status;
     response.currentExerciseIndex = result.currentExerciseIndex;
@@ -404,6 +410,8 @@ export class WorkoutSessionController {
     id: string;
     userId: string;
     routineId: string;
+    sourceType?: string;
+    assignedRoutineId?: string | null;
     dayOfWeek: string;
     routineName: string;
     status: string;
@@ -434,6 +442,8 @@ export class WorkoutSessionController {
     response.id = result.id;
     response.userId = result.userId;
     response.routineId = result.routineId;
+    response.sourceType = result.sourceType ?? 'personal';
+    response.assignedRoutineId = result.assignedRoutineId ?? null;
     response.dayOfWeek = result.dayOfWeek;
     response.routineName = result.routineName;
     response.status = result.status;

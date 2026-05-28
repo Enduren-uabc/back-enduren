@@ -62,6 +62,14 @@ export class StartWorkoutSessionUseCase {
       );
     }
 
+    if (routine.targetAudience !== 'self') {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
+        'Only personal routines can be started directly',
+        { routineId: input.routineId, targetAudience: routine.targetAudience },
+      );
+    }
+
     // Validate that no other session is in progress for the user (RF-12)
     const existingSession =
       await this.workoutSessionRepository.findInProgressByUserId(actor.userId);

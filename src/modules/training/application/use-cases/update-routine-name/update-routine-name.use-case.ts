@@ -20,6 +20,7 @@ export interface UpdateRoutineNameOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  targetAudience: 'self' | 'client';
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -76,6 +77,7 @@ export class UpdateRoutineNameUseCase {
       name: routine.name,
       userId: routine.userId,
       isActive: routine.isActive,
+      targetAudience: routine.targetAudience,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

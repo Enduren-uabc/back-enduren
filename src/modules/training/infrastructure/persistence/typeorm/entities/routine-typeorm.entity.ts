@@ -25,6 +25,9 @@ export class RoutineTypeormEntity {
   @Column('varchar', { name: 'training_strategy_key', nullable: true })
   trainingStrategyKey!: string | null;
 
+  @Column('varchar', { name: 'target_audience', default: 'self' })
+  targetAudience!: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

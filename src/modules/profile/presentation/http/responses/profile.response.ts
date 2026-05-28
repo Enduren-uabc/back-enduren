@@ -18,6 +18,7 @@ export class ProfileResponseDto {
 export class PublicProfileResponseDto extends ProfileResponseDto {
   followersCount!: number;
   followingCount!: number;
+  isFollowing!: boolean;
 }
 
 export class FollowProfileResponseDto {
@@ -88,6 +89,7 @@ export class ProfilePresenter {
     response.avatarUrl = profile.avatarUrl;
     response.followersCount = profile.followersCount;
     response.followingCount = profile.followingCount;
+    response.isFollowing = profile.isFollowing;
     return response;
   }
 

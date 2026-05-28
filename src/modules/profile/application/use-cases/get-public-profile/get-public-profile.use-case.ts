@@ -22,7 +22,7 @@ export class GetPublicProfileUseCase {
   ) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: GetPublicProfileInput,
   ): Promise<PublicProfileDto> {
     let profile = await this.profileRepository.findByUserId(input.userId);
@@ -40,9 +40,13 @@ export class GetPublicProfileUseCase {
       await this.profileRepository.save(profile);
     }
 
-    const [followersCount, followingCount] = await Promise.all([
+    const [followersCount, followingCount, followRelation] = await Promise.all([
       this.followRepository.countFollowersOf(input.userId),
       this.followRepository.countFollowingOf(input.userId),
+      this.followRepository.findByFollowerAndFollowed(
+        actor.userId,
+        input.userId,
+      ),
     ]);
 
     return {
@@ -53,6 +57,7 @@ export class GetPublicProfileUseCase {
       avatarUrl: profile.avatarUrl.value,
       followersCount,
       followingCount,
+      isFollowing: followRelation !== null,
     };
   }
 }

@@ -22,6 +22,12 @@ export class WorkoutSessionTypeormEntity {
   @Column('uuid', { name: 'routine_id' })
   routineId!: string;
 
+  @Column('varchar', { name: 'source_type', default: 'personal' })
+  sourceType!: string;
+
+  @Column('uuid', { name: 'assigned_routine_id', nullable: true })
+  assignedRoutineId!: string | null;
+
   @Column('varchar', { name: 'day_of_week', default: 'monday' })
   dayOfWeek!: string;
 

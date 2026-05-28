@@ -12,6 +12,7 @@ import {
 } from '../../../domain/repositories/default-routine-template.repository';
 import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
 import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
+import type { RoutineTargetAudience } from '../../../domain/value-objects/routine-target-audience.value-object';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { MAX_ROUTINES_PER_USER } from '../create-routine/create-routine.use-case';
 
@@ -26,6 +27,7 @@ export interface CreateDefaultRoutineOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  targetAudience: RoutineTargetAudience;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -109,9 +111,12 @@ export class CreateDefaultRoutineUseCase {
     }
 
     // 3. Enforce routine limit
-    const currentCount = await this.routineRepository.countByUserId(
-      actor.userId,
-    );
+    const currentCount = this.routineRepository.countByUserIdAndTargetAudience
+      ? await this.routineRepository.countByUserIdAndTargetAudience(
+          actor.userId,
+          'self',
+        )
+      : await this.routineRepository.countByUserId(actor.userId);
     if (currentCount >= MAX_ROUTINES_PER_USER) {
       throw new RoutineDomainError(
         RoutineErrorCode.ROUTINE_LIMIT_EXCEEDED,
@@ -193,6 +198,7 @@ export class CreateDefaultRoutineUseCase {
       name: saved.name,
       userId: saved.userId,
       isActive: saved.isActive,
+      targetAudience: saved.targetAudience,
       days: saved.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

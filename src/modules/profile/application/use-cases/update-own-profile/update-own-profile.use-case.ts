@@ -8,9 +8,13 @@ import { ProfileDto } from '../../dto/profile.dto';
 import { UpdateOwnProfileDto } from '../../dto/update-own-profile.dto';
 import { ProfileApplicationMapper } from '../../mappers/profile.mapper';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { UserRepository } from '../../../../users/domain/repositories/user.repository';
 
 export class UpdateOwnProfileUseCase {
-  constructor(private readonly profileRepository: SocialProfileRepository) {}
+  constructor(
+    private readonly profileRepository: SocialProfileRepository,
+    private readonly userRepository: UserRepository,
+  ) {}
 
   public async execute(
     actor: CurrentActor,
@@ -46,6 +50,14 @@ export class UpdateOwnProfileUseCase {
           : undefined,
       handle: input.handle,
     });
+
+    if (input.handle !== undefined && input.handle !== null) {
+      const user = await this.userRepository.findById(actor.userId);
+      if (user) {
+        user.username = input.handle.trim();
+        await this.userRepository.save(user);
+      }
+    }
 
     const saved = await this.profileRepository.save(updated);
     return ProfileApplicationMapper.toDto(saved);

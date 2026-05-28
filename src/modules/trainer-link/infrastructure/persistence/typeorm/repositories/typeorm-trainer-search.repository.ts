@@ -63,7 +63,7 @@ export class TypeormTrainerSearchRepository implements TrainerSearchRepositoryPo
       trainerCode: user.trainer_code ?? user.trainerCode,
       displayName: user.display_name ?? user.username,
       specialties: [],
-      yearsOfExperience: user.years_of_experience ?? 0,
+      yearsOfExperience: user['years_of_experience'] ?? 0,
       shortBio: user.short_bio ?? null,
       profileImageUrl: user.avatar_url ?? user.avatarUrl ?? null,
     }));

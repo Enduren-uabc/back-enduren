@@ -1,4 +1,11 @@
-import { IsString, IsArray, ArrayMinSize, IsIn, Length } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  ArrayMinSize,
+  IsIn,
+  IsOptional,
+  Length,
+} from 'class-validator';
 
 export const VALID_DAYS = [
   'monday',
@@ -19,4 +26,8 @@ export class CreateRoutineRequestDto {
   @ArrayMinSize(1)
   @IsIn(VALID_DAYS, { each: true })
   dayOfWeeks!: string[];
+
+  @IsOptional()
+  @IsIn(['self', 'client'])
+  targetAudience?: 'self' | 'client';
 }

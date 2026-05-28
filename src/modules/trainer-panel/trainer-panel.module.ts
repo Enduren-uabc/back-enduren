@@ -16,6 +16,7 @@ import { ReplaceAssignedRoutineUseCase } from './application/use-cases/replace-a
 import { UpdateAssignedRoutineNotesUseCase } from './application/use-cases/update-assigned-routine-notes/update-assigned-routine-notes.use-case';
 import { GetAssignedRoutineDetailUseCase } from './application/use-cases/get-assigned-routine-detail/get-assigned-routine-detail.use-case';
 import { EditAssignedRoutineContentUseCase } from './application/use-cases/edit-assigned-routine-content/edit-assigned-routine-content.use-case';
+import { StartAssignedRoutineWorkoutUseCase } from './application/use-cases/start-assigned-routine-workout/start-assigned-routine-workout.use-case';
 import {
   TrainerPanelController,
   ClientAssignedRoutineController,
@@ -44,6 +45,7 @@ import {
     UpdateAssignedRoutineNotesUseCase,
     GetAssignedRoutineDetailUseCase,
     EditAssignedRoutineContentUseCase,
+    StartAssignedRoutineWorkoutUseCase,
   ],
   exports: [TRAINER_ASSIGNED_ROUTINE_REPOSITORY_PORT],
 })

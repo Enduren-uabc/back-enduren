@@ -6,10 +6,12 @@ import {
 import { SocialProfileRepository } from '../../../domain/repositories/social-profile.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { UpdateOwnProfileUseCase } from './update-own-profile.use-case';
+import { UserRepository } from '../../../../users/domain/repositories/user.repository';
 
 describe('UpdateOwnProfileUseCase', () => {
   let useCase: UpdateOwnProfileUseCase;
   let profileRepository: SocialProfileRepository;
+  let userRepository: UserRepository;
   const actor: CurrentActor = { userId: 'user-1' };
 
   beforeEach(() => {
@@ -20,7 +22,17 @@ describe('UpdateOwnProfileUseCase', () => {
       findByHandle: jest.fn(),
       searchByQuery: jest.fn(),
     };
-    useCase = new UpdateOwnProfileUseCase(profileRepository);
+    userRepository = {
+      save: jest.fn((user) => Promise.resolve(user)),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      findByUsername: jest.fn(),
+      existsByEmail: jest.fn(),
+      existsByUsername: jest.fn(),
+      findByTrainerCode: jest.fn(),
+      findBySocialId: jest.fn(),
+    };
+    useCase = new UpdateOwnProfileUseCase(profileRepository, userRepository);
   });
 
   it('updates only the current actor profile bio and avatar URL', async () => {

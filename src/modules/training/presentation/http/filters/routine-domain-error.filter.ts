@@ -19,6 +19,8 @@ export class RoutineDomainErrorFilter implements ExceptionFilter {
         throw new NotFoundException(host.message);
       case RoutineErrorCode.ROUTINE_NOT_OWNED:
         throw new ForbiddenException(host.message);
+      case RoutineErrorCode.ROUTINE_TARGET_AUDIENCE_FORBIDDEN:
+        throw new ForbiddenException(host.message);
       case RoutineErrorCode.ROUTINE_DUPLICATE_NAME:
         throw new ConflictException(host.message);
       case RoutineErrorCode.ROUTINE_LIMIT_EXCEEDED:

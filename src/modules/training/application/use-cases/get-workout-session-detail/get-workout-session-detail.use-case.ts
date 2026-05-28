@@ -14,6 +14,8 @@ export interface WorkoutSessionDetailOutput {
   id: string;
   userId: string;
   routineId: string;
+  sourceType: string;
+  assignedRoutineId: string | null;
   dayOfWeek: string;
   routineName: string;
   status: string;
@@ -95,6 +97,8 @@ export class GetWorkoutSessionDetailUseCase {
       id: session.id,
       userId: session.userId,
       routineId: session.routineId,
+      sourceType: session.sourceType,
+      assignedRoutineId: session.assignedRoutineId,
       dayOfWeek: session.dayOfWeek,
       routineName,
       status: session.status,

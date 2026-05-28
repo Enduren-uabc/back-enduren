@@ -163,6 +163,7 @@ export class ForkWorkoutToRoutineUseCase {
         routine.trainingStrategyKey,
         routine.createdAt,
         new Date(),
+        routine.targetAudience,
       );
     } else {
       for (const exercise of forkedExercises) {

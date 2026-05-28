@@ -28,6 +28,7 @@ export interface SetRoutineTrainingStrategyOutput {
   userId: string;
   isActive: boolean;
   trainingStrategyKey: string | null;
+  targetAudience: 'self' | 'client';
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -100,6 +101,7 @@ export class SetRoutineTrainingStrategyUseCase {
       userId: saved.userId,
       isActive: saved.isActive,
       trainingStrategyKey: saved.trainingStrategyKey,
+      targetAudience: saved.targetAudience,
       days: saved.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

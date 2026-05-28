@@ -4,6 +4,7 @@ import {
 } from '../errors/routine-domain.error';
 import { RoutineDay } from '../value-objects/routine-day.value-object';
 import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-object';
+import type { RoutineTargetAudience } from '../value-objects/routine-target-audience.value-object';
 import { Exercise } from './exercise.entity';
 
 export class Routine {
@@ -13,6 +14,7 @@ export class Routine {
   public readonly days: RoutineDay[];
   public readonly isActive: boolean;
   public readonly trainingStrategyKey: string | null;
+  public readonly targetAudience: RoutineTargetAudience;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -23,6 +25,7 @@ export class Routine {
     days: RoutineDay[],
     isActive: boolean,
     trainingStrategyKey: string | null,
+    targetAudience: RoutineTargetAudience,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -32,6 +35,7 @@ export class Routine {
     this.days = days;
     this.isActive = isActive;
     this.trainingStrategyKey = trainingStrategyKey;
+    this.targetAudience = targetAudience;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -49,6 +53,7 @@ export class Routine {
     days: RoutineDay[],
     isActive: boolean = false,
     trainingStrategyKey: string | null = null,
+    targetAudience: RoutineTargetAudience = 'self',
   ): Routine {
     if (!name || name.trim().length === 0) {
       throw new RoutineDomainError(
@@ -74,6 +79,7 @@ export class Routine {
       [...days],
       isActive,
       trainingStrategyKey,
+      targetAudience,
       now,
       now,
     );
@@ -91,6 +97,7 @@ export class Routine {
     trainingStrategyKey: string | null,
     createdAt: Date,
     updatedAt: Date,
+    targetAudience: RoutineTargetAudience = 'self',
   ): Routine {
     return new Routine(
       id,
@@ -99,6 +106,7 @@ export class Routine {
       [...days],
       isActive,
       trainingStrategyKey,
+      targetAudience,
       createdAt,
       updatedAt,
     );
@@ -124,6 +132,7 @@ export class Routine {
       this.days,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -141,6 +150,7 @@ export class Routine {
       this.days,
       true,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -158,6 +168,7 @@ export class Routine {
       this.days,
       false,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -175,6 +186,7 @@ export class Routine {
       this.days,
       this.isActive,
       key,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -206,6 +218,7 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -237,6 +250,7 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -274,6 +288,7 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -309,6 +324,7 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );

@@ -112,6 +112,7 @@ export class ProfileController {
     this.searchProfilesUseCase = new SearchProfilesUseCase(profileRepository);
     this.updateOwnProfileUseCase = new UpdateOwnProfileUseCase(
       profileRepository,
+      userRepository,
     );
     this.listPublicationsUseCase = new ListProfilePublicationsUseCase(
       profileRepository,
@@ -199,7 +200,12 @@ export class ProfileController {
   ): Promise<SocialProfileResponseDto> {
     const profile = await this.updateOwnProfileUseCase.execute(
       this.getActor(user),
-      { bio: dto.bio, avatarUrl: dto.avatarUrl },
+      {
+        displayName: dto.displayName,
+        bio: dto.bio,
+        avatarUrl: dto.avatarUrl,
+        handle: dto.handle,
+      },
     );
     return ProfilePresenter.toHttp(profile);
   }

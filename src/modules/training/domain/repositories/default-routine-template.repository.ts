@@ -7,6 +7,7 @@ export interface DefaultRoutineTemplateDayDto {
     setsCount: number;
     initialReps: number;
     initialWeight: number;
+    order: number;
   }>;
 }
 
@@ -19,4 +20,16 @@ export interface DefaultRoutineTemplateRepository {
     experienceLevel: string,
     splitKey?: string | null,
   ): Promise<DefaultRoutineTemplateDayDto[]>;
+
+  findAllGrouped(level?: string): Promise<
+    Array<{
+      experienceLevel: string;
+      splitKey: string | null;
+      name: string;
+      dayOfWeek: string;
+      displayOrder: number;
+      exerciseCount: number;
+      totalSets: number;
+    }>
+  >;
 }

@@ -21,6 +21,8 @@ import { SetRoutineTrainingStrategyUseCase } from './use-cases/set-routine-train
 import { ForkWorkoutToRoutineUseCase } from './use-cases/fork-workout-to-routine/fork-workout-to-routine.use-case';
 import { GenerateExerciseSetsUseCase } from './use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
 import { UpdateRoutineNameUseCase } from './use-cases/update-routine-name/update-routine-name.use-case';
+import { ListRoutineTemplatesUseCase } from './use-cases/list-routine-templates/list-routine-templates.use-case';
+import { GetRoutineTemplateDetailUseCase } from './use-cases/get-routine-template-detail/get-routine-template-detail.use-case';
 import {
   StartWorkoutSessionUseCase,
   WORKOUT_SESSION_REPOSITORY_PORT,
@@ -167,6 +169,18 @@ const routineUseCaseProviders = [
         routineRepository,
         workoutSessionRepository,
       ),
+  },
+  {
+    provide: ListRoutineTemplatesUseCase,
+    inject: [DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT],
+    useFactory: (templateRepository) =>
+      new ListRoutineTemplatesUseCase(templateRepository),
+  },
+  {
+    provide: GetRoutineTemplateDetailUseCase,
+    inject: [DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT],
+    useFactory: (templateRepository) =>
+      new GetRoutineTemplateDetailUseCase(templateRepository),
   },
 ];
 

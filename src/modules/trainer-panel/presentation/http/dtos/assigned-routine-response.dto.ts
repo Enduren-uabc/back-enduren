@@ -59,4 +59,5 @@ export class MyAssignedRoutineItemDto {
   notes: string | null;
   originLabel: string;
   exercises: ExerciseSnapshotDto[];
+  days: RoutineDaySnapshotDto[];
 }

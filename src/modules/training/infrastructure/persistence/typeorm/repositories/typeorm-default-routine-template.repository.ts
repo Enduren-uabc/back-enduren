@@ -45,7 +45,57 @@ export class TypeormDefaultRoutineTemplateRepository implements DefaultRoutineTe
           setsCount: ex.setsCount,
           initialReps: ex.initialReps,
           initialWeight: Number(ex.initialWeight),
+          order: ex.exerciseOrder,
         })),
+    }));
+  }
+
+  public async findAllGrouped(level?: string): Promise<
+    Array<{
+      experienceLevel: string;
+      splitKey: string | null;
+      name: string;
+      dayOfWeek: string;
+      displayOrder: number;
+      exerciseCount: number;
+      totalSets: number;
+    }>
+  > {
+    let query = this.ormRepo
+      .createQueryBuilder('t')
+      .leftJoin('t.exercises', 'e')
+      .select([
+        't.experienceLevel',
+        't.splitKey',
+        't.name',
+        't.dayOfWeek',
+        't.displayOrder',
+      ])
+      .addSelect('COUNT(e.id)', 'exerciseCount')
+      .addSelect('COALESCE(SUM(e.setsCount), 0)', 'totalSets')
+      .groupBy('t.id')
+      .addGroupBy('t.experienceLevel')
+      .addGroupBy('t.splitKey')
+      .addGroupBy('t.name')
+      .addGroupBy('t.dayOfWeek')
+      .addGroupBy('t.displayOrder')
+      .orderBy('t.experienceLevel', 'ASC')
+      .addOrderBy('t.displayOrder', 'ASC');
+
+    if (level) {
+      query = query.where('t.experienceLevel = :level', { level });
+    }
+
+    const results = await query.getRawMany();
+
+    return results.map((r: any) => ({
+      experienceLevel: r.t_experience_level,
+      splitKey: r.t_split_key,
+      name: r.t_name,
+      dayOfWeek: r.t_day_of_week,
+      displayOrder: Number(r.t_display_order),
+      exerciseCount: Number(r.exerciseCount ?? 0),
+      totalSets: Number(r.totalSets ?? 0),
     }));
   }
 }

@@ -16,6 +16,7 @@ export interface RemoveDayFromRoutineOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  targetAudience: 'self' | 'client';
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -64,6 +65,7 @@ export class RemoveDayFromRoutineUseCase {
       name: routine.name,
       userId: routine.userId,
       isActive: routine.isActive,
+      targetAudience: routine.targetAudience,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

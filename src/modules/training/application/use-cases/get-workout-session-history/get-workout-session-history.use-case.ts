@@ -5,6 +5,8 @@ import { CurrentActor } from '../../ports/current-actor.port';
 export interface WorkoutSessionSummaryOutput {
   id: string;
   routineId: string;
+  sourceType: string;
+  assignedRoutineId: string | null;
   dayOfWeek: string;
   routineName: string;
   startedAt: Date;
@@ -66,6 +68,8 @@ export class GetWorkoutSessionHistoryUseCase {
       return {
         id: session.id,
         routineId: session.routineId,
+        sourceType: session.sourceType,
+        assignedRoutineId: session.assignedRoutineId,
         dayOfWeek: session.dayOfWeek,
         routineName: routineNames.get(session.routineId) ?? '',
         startedAt: session.startedAt,

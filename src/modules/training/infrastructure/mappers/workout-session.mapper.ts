@@ -3,6 +3,7 @@ import { WorkoutSessionStatus } from '../../domain/value-objects/workout-session
 import { WorkoutExercise } from '../../domain/value-objects/workout-exercise.value-object';
 import { WorkoutSet } from '../../domain/value-objects/workout-set.value-object';
 import type { DayOfWeek } from '../../domain/value-objects/routine-day.value-object';
+import type { WorkoutSessionSourceType } from '../../domain/value-objects/workout-session-source.value-object';
 import { WorkoutSessionTypeormEntity } from '../persistence/typeorm/entities/workout-session-typeorm.entity';
 import { WorkoutSessionExerciseTypeormEntity } from '../persistence/typeorm/entities/workout-session-exercise-typeorm.entity';
 import { WorkoutSessionSetTypeormEntity } from '../persistence/typeorm/entities/workout-session-set-typeorm.entity';
@@ -54,6 +55,8 @@ export class WorkoutSessionMapper {
       ormEntity.startedAt,
       ormEntity.finishedAt,
       (ormEntity.dayOfWeek ?? 'monday') as DayOfWeek,
+      (ormEntity.sourceType ?? 'personal') as WorkoutSessionSourceType,
+      ormEntity.assignedRoutineId ?? null,
     );
   }
 
@@ -62,6 +65,8 @@ export class WorkoutSessionMapper {
     ormEntity.id = domain.id;
     ormEntity.userId = domain.userId;
     ormEntity.routineId = domain.routineId;
+    ormEntity.sourceType = domain.sourceType;
+    ormEntity.assignedRoutineId = domain.assignedRoutineId;
     ormEntity.dayOfWeek = domain.dayOfWeek;
     ormEntity.status = domain.status;
     ormEntity.currentExerciseIndex = domain.currentExerciseIndex;

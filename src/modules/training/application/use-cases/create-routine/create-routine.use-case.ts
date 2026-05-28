@@ -5,6 +5,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
+import type { RoutineTargetAudience } from '../../../domain/value-objects/routine-target-audience.value-object';
 import { CurrentActor } from '../../ports/current-actor.port';
 
 export const ROUTINE_REPOSITORY_PORT = Symbol('ROUTINE_REPOSITORY_PORT');
@@ -23,6 +24,7 @@ export interface ProfileRepository {
 export interface CreateRoutineInput {
   name: string;
   dayOfWeeks: string[];
+  targetAudience?: RoutineTargetAudience;
 }
 
 export interface CreateRoutineOutput {
@@ -30,6 +32,7 @@ export interface CreateRoutineOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  targetAudience: RoutineTargetAudience;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -50,6 +53,7 @@ export interface CreateRoutineOutput {
 }
 
 export const MAX_ROUTINES_PER_USER = 5;
+export const MAX_CLIENT_ROUTINES_PER_TRAINER = 20;
 
 export class CreateRoutineUseCase {
   constructor(
@@ -78,6 +82,16 @@ export class CreateRoutineUseCase {
       );
     }
 
+    const targetAudience = input.targetAudience ?? 'self';
+
+    if (targetAudience === 'client' && actor.role !== 'trainer') {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_TARGET_AUDIENCE_FORBIDDEN,
+        'Only trainers can create routines for clients',
+        { userId: actor.userId, role: actor.role ?? null },
+      );
+    }
+
     // RF-09.0.1: Validate name uniqueness for user
     const nameExists = await this.routineRepository.existsByNameForUser(
       input.name.trim(),
@@ -91,16 +105,24 @@ export class CreateRoutineUseCase {
       );
     }
 
-    // RF-09.0.5: Validate routine count limit (max 5)
-    // RF-09.0.6: Enhanced error message informing user to delete/modify
-    const currentCount = await this.routineRepository.countByUserId(
-      actor.userId,
-    );
-    if (currentCount >= MAX_ROUTINES_PER_USER) {
+    const limit =
+      targetAudience === 'client'
+        ? MAX_CLIENT_ROUTINES_PER_TRAINER
+        : MAX_ROUTINES_PER_USER;
+    const currentCount = this.routineRepository.countByUserIdAndTargetAudience
+      ? await this.routineRepository.countByUserIdAndTargetAudience(
+          actor.userId,
+          targetAudience,
+        )
+      : (await this.routineRepository.findByUserId(actor.userId)).filter(
+          (routine) => routine.targetAudience === targetAudience,
+        ).length;
+
+    if (currentCount >= limit) {
       throw new RoutineDomainError(
         RoutineErrorCode.ROUTINE_LIMIT_EXCEEDED,
-        `You have reached the maximum of ${MAX_ROUTINES_PER_USER} routines. Please delete or modify an existing routine before creating a new one.`,
-        { currentCount, limit: MAX_ROUTINES_PER_USER, userId: actor.userId },
+        `You have reached the maximum of ${limit} routines. Please delete or modify an existing routine before creating a new one.`,
+        { currentCount, limit, userId: actor.userId, targetAudience },
       );
     }
 
@@ -111,7 +133,7 @@ export class CreateRoutineUseCase {
     const id = crypto.randomUUID();
 
     // RF-09.0.3: Auto-assign first routine as active when user has 0 existing routines
-    const isActive = currentCount === 0;
+    const isActive = targetAudience === 'self' && currentCount === 0;
 
     // Auto-assign training strategy from user's profile default
     const profile = await this.profileRepository.findByUserId(actor.userId);
@@ -125,6 +147,7 @@ export class CreateRoutineUseCase {
       days,
       isActive,
       defaultTrainingStrategyKey,
+      targetAudience,
     );
 
     const saved = await this.routineRepository.save(routine);
@@ -134,6 +157,7 @@ export class CreateRoutineUseCase {
       name: saved.name,
       userId: saved.userId,
       isActive: saved.isActive,
+      targetAudience: saved.targetAudience,
       days: saved.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

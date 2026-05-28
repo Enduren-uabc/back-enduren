@@ -42,6 +42,7 @@ export interface SyncRoutineOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  targetAudience: 'self' | 'client';
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -183,6 +184,7 @@ export class SyncRoutineUseCase {
       routine.trainingStrategyKey,
       routine.createdAt,
       new Date(),
+      routine.targetAudience,
     );
 
     const saved = await this.routineRepository.save(updatedRoutine);
@@ -196,6 +198,7 @@ export class SyncRoutineUseCase {
       name: routine.name,
       userId: routine.userId,
       isActive: routine.isActive,
+      targetAudience: routine.targetAudience,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

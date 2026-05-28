@@ -85,6 +85,12 @@ export class ReplaceAssignedRoutineUseCase {
       );
     }
 
+    if (newRoutine.targetAudience !== 'client') {
+      throw new ForbiddenException(
+        'Only routines marked for clients can be assigned',
+      );
+    }
+
     const days = newRoutine.days.map((day) =>
       RoutineDaySnapshot.create({
         dayOfWeek: day.dayOfWeek,

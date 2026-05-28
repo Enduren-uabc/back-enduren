@@ -19,6 +19,7 @@ export interface ActivateRoutineOutput {
   name: string;
   userId: string;
   isActive: boolean;
+  targetAudience: 'self' | 'client';
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -63,6 +64,14 @@ export class ActivateRoutineUseCase {
       );
     }
 
+    if (routine.targetAudience !== 'self') {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_TARGET_AUDIENCE_FORBIDDEN,
+        'Only personal routines can be activated for workouts',
+        { routineId: input.routineId, targetAudience: routine.targetAudience },
+      );
+    }
+
     // Idempotent: if already active, return unchanged
     if (routine.isActive) {
       return this.mapToOutput(routine);
@@ -91,6 +100,7 @@ export class ActivateRoutineUseCase {
       name: routine.name,
       userId: routine.userId,
       isActive: routine.isActive,
+      targetAudience: routine.targetAudience,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

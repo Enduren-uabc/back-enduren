@@ -30,6 +30,16 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
       skip: input.offset,
     });
 
+    // Resolve author profile once since all publications belong to the same author
+    const authorProfileRows: {
+      display_name: string;
+      avatar_url: string | null;
+    }[] = await this.dataSource.query(
+      `SELECT display_name, avatar_url FROM social_profiles WHERE user_id = $1`,
+      [input.authorUserId],
+    );
+    const authorProfile = authorProfileRows[0];
+
     const publicationIds = publications.map((p) => p.id);
 
     // Batch load reaction counts
@@ -162,6 +172,8 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
       return {
         id: publication.id,
         authorUserId: publication.authorUserId,
+        authorDisplayName: authorProfile?.display_name,
+        authorAvatarUrl: authorProfile?.avatar_url ?? undefined,
         title: publication.title,
         content: publication.content,
         mediaUrls: publication.mediaUrls ?? [],
