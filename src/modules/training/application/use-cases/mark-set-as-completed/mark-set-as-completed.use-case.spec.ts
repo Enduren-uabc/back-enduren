@@ -29,11 +29,10 @@ describe('MarkSetAsCompletedUseCase', () => {
   });
 
   describe('RF-12.0.3: Mark a set as completed', () => {
-    it('should mark a set as completed after registering reps and weight', async () => {
+    it('should mark a set as completed using targets if not yet registered', async () => {
       let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
         exercise,
       ]);
-      session = session.registerSetRepsAndWeight(0, 1, 10, 50);
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
@@ -49,6 +48,31 @@ describe('MarkSetAsCompletedUseCase', () => {
       });
 
       expect(result.exercises[0].workoutSets[0].completed).toBe(true);
+      expect(result.exercises[0].workoutSets[0].repsPerformed).toBe(10);
+      expect(result.exercises[0].workoutSets[0].weightUsed).toBe(50);
+    });
+
+    it('should unmark a set (completed = false) when called on an already completed set (toggle behavior)', async () => {
+      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
+        exercise,
+      ]);
+      session = session.registerSetRepsAndWeight(0, 1, 10, 50);
+
+      (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
+        session,
+      );
+      (workoutSessionRepository.save as jest.Mock).mockImplementation(
+        (s: WorkoutSession) => Promise.resolve(s),
+      );
+
+      // Al ejecutar el caso de uso de nuevo, debería desmarcarlo (completed = false)
+      const result = await useCase.execute(actor, {
+        sessionId: 'session-1',
+        exerciseIndex: 0,
+        setNumber: 1,
+      });
+
+      expect(result.exercises[0].workoutSets[0].completed).toBe(false);
       expect(result.exercises[0].workoutSets[0].repsPerformed).toBe(10);
       expect(result.exercises[0].workoutSets[0].weightUsed).toBe(50);
     });

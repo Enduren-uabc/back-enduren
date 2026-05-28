@@ -311,6 +311,55 @@ export class WorkoutSession {
   }
 
   /**
+   * Toggles the completion status for a specific set in a specific exercise.
+   * If completed, marks it as pending. If pending, marks it as completed.
+   * Validates session is IN_PROGRESS, exerciseIndex is valid.
+   * Returns a new WorkoutSession with updated exercises.
+   */
+  public toggleSetCompleted(
+    exerciseIndex: number,
+    setNumber: number,
+  ): WorkoutSession {
+    if (this.status === WorkoutSessionStatus.FINISHED) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
+        'Cannot toggle a set completion for a finished session',
+        { sessionId: this.id },
+      );
+    }
+
+    if (
+      !Number.isInteger(exerciseIndex) ||
+      exerciseIndex < 0 ||
+      exerciseIndex >= this.exercises.length
+    ) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_EXERCISE_INDEX_INVALID,
+        `Exercise index ${exerciseIndex} is invalid for this session`,
+        { exerciseIndex, exerciseCount: this.exercises.length },
+      );
+    }
+
+    const updatedExercise =
+      this.exercises[exerciseIndex].toggleSetCompleted(setNumber);
+
+    const updatedExercises = [...this.exercises];
+    updatedExercises[exerciseIndex] = updatedExercise;
+
+    return new WorkoutSession(
+      this.id,
+      this.userId,
+      this.routineId,
+      this.dayOfWeek,
+      this.status,
+      updatedExercises,
+      this.currentExerciseIndex,
+      this.startedAt,
+      this.finishedAt,
+    );
+  }
+
+  /**
    * Adds a new set to a specific exercise in the session.
    * Validates session is IN_PROGRESS, exerciseIndex is valid.
    * Delegates to WorkoutExercise.addSet().

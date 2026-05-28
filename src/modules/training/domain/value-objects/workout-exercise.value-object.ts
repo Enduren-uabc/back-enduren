@@ -275,6 +275,37 @@ export class WorkoutExercise {
   }
 
   /**
+   * Toggles completion status for a specific set in this exercise.
+   * If completed, marks it as pending. If pending, marks it as completed.
+   * Returns a new WorkoutExercise with the updated sets array.
+   */
+  public toggleSetCompleted(setNumber: number): WorkoutExercise {
+    const setIndex = this.workoutSets.findIndex(
+      (ws) => ws.setNumber === setNumber,
+    );
+    if (setIndex === -1) {
+      throw new WorkoutSessionDomainError(
+        WorkoutSessionErrorCode.SESSION_SET_NOT_FOUND,
+        `Set number ${setNumber} not found in exercise ${this.exerciseName}`,
+        { setNumber, exerciseId: this.exerciseId },
+      );
+    }
+
+    const currentSet = this.workoutSets[setIndex];
+    const updatedSet = currentSet.completed ? currentSet.markAsPending() : currentSet.markAsCompleted();
+    const updatedSets = [...this.workoutSets];
+    updatedSets[setIndex] = updatedSet;
+
+    return new WorkoutExercise(
+      this.exerciseId,
+      this.exerciseName,
+      this.order,
+      this.targetSets,
+      updatedSets,
+    );
+  }
+
+  /**
    * Checks if all sets in this exercise are completed.
    */
   public areAllSetsCompleted(): boolean {

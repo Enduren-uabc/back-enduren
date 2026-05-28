@@ -35,7 +35,7 @@ export class GetPublicProfileUseCase {
       profile = SocialProfile.create(
         user.id,
         user.username,
-        `@user_${user.id.slice(0, 8)}`,
+        `@${user.username}`,
       );
       await this.profileRepository.save(profile);
     }

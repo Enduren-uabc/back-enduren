@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
@@ -21,6 +21,7 @@ import { TrainingRemindersModule } from './modules/training-reminders/training-r
 import { PrivacyNoticeModule } from './modules/privacy-notice/privacy-notice.module';
 import { StorageSmokeTestModule } from './modules/storage-smoke-test/storage-smoke-test.module';
 import { JwtAuthGuard } from './modules/auth/presentation/http/guards/jwt-auth.guard';
+import { GlobalExceptionFilter } from './shared/exceptions/global-exception.filter';
 import { ObservabilityModule } from './shared/observability/observability.module';
 import { createTypeOrmModuleOptions } from './database/typeorm-options';
 
@@ -104,6 +105,10 @@ import { createTypeOrmModuleOptions } from './database/typeorm-options';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
     },
   ],
 })

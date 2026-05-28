@@ -1,4 +1,4 @@
-import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Inject, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
@@ -22,6 +22,11 @@ import {
 } from '../../../domain/repositories/email-verification-token.repository';
 import { EmailVerificationToken } from '../../../domain/entities/email-verification-token.entity';
 import { UserRegisteredEvent } from '../../../../shared/email/domain/events/user-registered.event';
+import {
+  SOCIAL_PROFILE_REPOSITORY_PORT,
+} from '../../../../profile/application/use-cases/follow-profile/follow-profile.use-case';
+import { SocialProfileRepository } from '../../../../profile/domain/repositories/social-profile.repository';
+import { SocialProfile } from '../../../../profile/domain/entities/social-profile.entity';
 
 export interface RegisterInput {
   email: string;
@@ -56,6 +61,8 @@ export class RegisterUserUseCase {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(SOCIAL_PROFILE_REPOSITORY_PORT)
+    private readonly socialProfileRepository: SocialProfileRepository,
   ) {}
 
   async execute(input: RegisterInput): Promise<RegisterOutput> {
@@ -64,12 +71,20 @@ export class RegisterUserUseCase {
 
     const emailExists = await this.userRepository.existsByEmail(email);
     if (emailExists) {
-      throw new UnauthorizedException('Email already registered');
+      throw new ConflictException({
+        statusCode: 409,
+        code: 'USER_EMAIL_ALREADY_EXISTS',
+        message: 'Este correo electrónico ya está registrado.',
+      });
     }
 
     const usernameExists = await this.userRepository.existsByUsername(username);
     if (usernameExists) {
-      throw new UnauthorizedException('Username already taken');
+      throw new ConflictException({
+        statusCode: 409,
+        code: 'USER_USERNAME_ALREADY_EXISTS',
+        message: 'Este nombre de usuario ya está en uso.',
+      });
     }
 
     const passwordHash = await this.passwordHasher.hash(input.password);
@@ -82,6 +97,13 @@ export class RegisterUserUseCase {
       role,
     );
     const saved = await this.userRepository.save(user);
+
+    const socialProfile = SocialProfile.create(
+      saved.id,
+      username,
+      `@${username}`,
+    );
+    await this.socialProfileRepository.save(socialProfile);
 
     const tokenValue = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);

@@ -54,6 +54,7 @@ import { SocialAuthCodeTypeormEntity } from './infrastructure/persistence/typeor
 import { TypeormSocialAuthCodeRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-social-auth-code.repository';
 import { AuthController } from './presentation/http/controllers/auth.controller';
 import { UsersModule } from '../users/users.module';
+import { ProfileModule } from '../profile/profile.module';
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { UsersModule } from '../users/users.module';
     ]),
     EventEmitterModule,
     UsersModule,
+    ProfileModule,
   ],
   providers: [
     JwtStrategy,

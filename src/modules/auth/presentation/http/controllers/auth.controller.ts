@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Inject,
   Logger,
+  UseFilters,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Response, Request } from 'express';
@@ -34,6 +35,7 @@ import { ResetPasswordUseCase } from '../../../application/use-cases/reset-passw
 import { ValidateResetTokenUseCase } from '../../../application/use-cases/validate-reset-token/validate-reset-token.use-case';
 import { SocialLoginUseCase } from '../../../application/use-cases/social-login/social-login.use-case';
 import { SocialExchangeCodeUseCase } from '../../../application/use-cases/social-exchange-code/social-exchange-code.use-case';
+import { UserDomainErrorFilter } from '../filters/user-domain-error.filter';
 import { RegisterDto } from '../dtos/register.dto';
 import { LoginDto } from '../dtos/login.dto';
 import { PasswordRecoveryDto } from '../dtos/password-recovery.dto';
@@ -72,6 +74,7 @@ function generateTempCode(length = 32): string {
 }
 
 @Controller('auth')
+@UseFilters(UserDomainErrorFilter)
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 

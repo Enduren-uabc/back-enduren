@@ -42,6 +42,7 @@ import { SearchProfilesUseCase } from '../../../application/use-cases/search-pro
 import { UnfollowProfileUseCase } from '../../../application/use-cases/unfollow-profile/unfollow-profile.use-case';
 import { UpdateOwnProfileUseCase } from '../../../application/use-cases/update-own-profile/update-own-profile.use-case';
 import { UploadAvatarUseCase } from '../../../application/use-cases/upload-avatar/upload-avatar.use-case';
+import { SetupSocialProfileUseCase } from '../../../application/use-cases/setup-social-profile/setup-social-profile.use-case';
 import { ProfileFollowRepository } from '../../../domain/repositories/profile-follow.repository';
 import { SocialProfileRepository } from '../../../domain/repositories/social-profile.repository';
 import { CreateProfileRequestDto } from '../dtos/create-profile.request';
@@ -85,6 +86,7 @@ export class ProfileController {
     private readonly getProfileUseCase: GetProfileUseCase,
     private readonly checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
     private readonly uploadAvatarUseCase: UploadAvatarUseCase,
+    private readonly setupSocialProfileUseCase: SetupSocialProfileUseCase,
   ) {
     this.followProfileUseCase = new FollowProfileUseCase(
       profileRepository,
@@ -159,6 +161,23 @@ export class ProfileController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ completed: boolean }> {
     return this.checkOnboardingStatusUseCase.execute(user.sub);
+  }
+
+  @Post('onboarding/social')
+  @UseInterceptors(FileInterceptor('avatar'))
+  public async setupSocialProfile(
+    @CurrentUser() user: JwtPayload,
+    @Body('displayName') displayName: string,
+    @Body('bio') bio?: string,
+    @UploadedFile() avatarFile?: Express.Multer.File,
+  ): Promise<{ completed: boolean }> {
+    await this.setupSocialProfileUseCase.execute({
+      userId: user.sub,
+      displayName,
+      bio,
+      avatarFile,
+    });
+    return { completed: true };
   }
 
   @Get('profiles/search')
