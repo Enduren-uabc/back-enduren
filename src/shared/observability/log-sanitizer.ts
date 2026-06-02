@@ -62,7 +62,7 @@ function sanitizeValue(value: unknown, depth: number): unknown {
   }
 
   if (typeof value === 'object') {
-    return sanitizeObject(value, depth);
+    return sanitizeObject(value as Record<string, unknown>, depth);
   }
 
   return String(value);
