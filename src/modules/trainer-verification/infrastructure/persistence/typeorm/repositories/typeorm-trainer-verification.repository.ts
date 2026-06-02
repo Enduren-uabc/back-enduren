@@ -9,13 +9,12 @@ import { TrainerIdDocument } from '../../../../domain/entities/trainer-id-docume
 import { TrainerVerification } from '../../../../domain/entities/trainer-verification.entity';
 import { ExtractedCertificateData } from '../../../../domain/value-objects/extracted-certificate-data.vo';
 import { ExtractedIdData } from '../../../../domain/value-objects/extracted-id-data.vo';
-import { ScoringResult } from '../../../../domain/value-objects/scoring-result.vo';
+import { ScoringResult, RecommendedAction } from '../../../../domain/value-objects/scoring-result.vo';
 import { RiskAlert } from '../../../../domain/value-objects/risk-alert.vo';
 import { AdvancedVerificationStatus } from '../../../../domain/value-objects/advanced-verification-status.vo';
 import { DocumentType } from '../../../../domain/value-objects/document-type.vo';
 import { VerificationStatus } from '../../../../domain/value-objects/verification-status.vo';
 import { RiskLevel } from '../../../../domain/value-objects/risk-level.vo';
-import { RecommendedAction } from '../../../../domain/value-objects/scoring-result.vo';
 import {
   AlertCode,
   AlertSeverity,
@@ -567,11 +566,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       expirationDate: idData.expirationDate
         ? idData.expirationDate.toISOString()
         : undefined,
-      documentIdentifier: rawDocId
-        ? rawDocId.length > 8
-          ? rawDocId.slice(0, 4) + '****' + rawDocId.slice(-4)
-          : '****'
-        : undefined,
+      documentIdentifier: this.maskDocumentId(rawDocId),
       ocrConfidence: idData.ocrConfidence,
     };
   }
@@ -622,6 +617,16 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     entity.createdAt = verification.createdAt;
     entity.updatedAt = verification.updatedAt;
     return entity;
+  }
+
+  private maskDocumentId(
+    rawDocId: string | undefined | null,
+  ): string | undefined {
+    if (!rawDocId) return undefined;
+    if (rawDocId.length > 8) {
+      return rawDocId.slice(0, 4) + '****' + rawDocId.slice(-4);
+    }
+    return '****';
   }
 
   private toDomain(

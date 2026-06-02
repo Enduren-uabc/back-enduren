@@ -74,8 +74,8 @@ export class TrainerLinkRequestController {
     const result = await this.listSentLinkRequestsUseCase.execute({
       actorId: user.sub,
       status: query.status as LinkRequestStatus | undefined,
-      page: query.page ? parseInt(query.page, 10) : 1,
-      limit: query.limit ? parseInt(query.limit, 10) : 10,
+      page: query.page ? Number.parseInt(query.page, 10) : 1,
+      limit: query.limit ? Number.parseInt(query.limit, 10) : 10,
     });
 
     return {
@@ -95,8 +95,8 @@ export class TrainerLinkRequestController {
     const result = await this.listReceivedLinkRequestsUseCase.execute({
       actorId: user.sub,
       status: query.status as LinkRequestStatus | undefined,
-      page: query.page ? parseInt(query.page, 10) : 1,
-      limit: query.limit ? parseInt(query.limit, 10) : 10,
+      page: query.page ? Number.parseInt(query.page, 10) : 1,
+      limit: query.limit ? Number.parseInt(query.limit, 10) : 10,
     });
 
     return {

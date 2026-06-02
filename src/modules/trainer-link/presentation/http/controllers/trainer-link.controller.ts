@@ -99,8 +99,8 @@ export class TrainerClientsController {
   }> {
     const result = await this.getActiveLinksUseCase.execute({
       actorId: user.sub,
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 10,
+      page: page ? Number.parseInt(page, 10) : 1,
+      limit: limit ? Number.parseInt(limit, 10) : 10,
     });
 
     return {

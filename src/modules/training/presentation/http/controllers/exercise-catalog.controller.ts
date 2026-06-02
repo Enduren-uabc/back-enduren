@@ -29,8 +29,8 @@ export class ExerciseCatalogController {
       category,
       primaryMuscleGroup,
       equipment,
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      page: page ? Number.parseInt(page, 10) : undefined,
+      limit: limit ? Number.parseInt(limit, 10) : undefined,
     });
 
     return {

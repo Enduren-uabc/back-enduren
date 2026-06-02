@@ -56,7 +56,7 @@ export class RefreshTokenUseCase {
 
     // Rotate refresh token
     const newRefreshTokenValue = crypto.randomUUID();
-    const refreshExpiresDays = parseInt(
+    const refreshExpiresDays = Number.parseInt(
       this.configService
         .get<string>('JWT_REFRESH_EXPIRATION', '7d')
         .replace('d', ''),

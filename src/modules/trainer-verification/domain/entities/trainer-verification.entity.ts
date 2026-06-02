@@ -36,6 +36,17 @@ export interface TrainerVerificationProps {
   flowMode?: 'legacy' | 'powerspike';
 }
 
+export interface CreateTrainerVerificationInput {
+  id: string;
+  userId: string;
+  specialtyKeys: string[];
+  yearsOfExperience: number;
+  shortBio: string;
+  idDocumentNumber: string;
+  idDocuments: TrainerIdDocument[];
+  certificates: TrainerCertificate[];
+}
+
 export class TrainerVerification {
   public readonly id: string;
   public readonly userId: string;
@@ -84,27 +95,18 @@ export class TrainerVerification {
     this.validate();
   }
 
-  static create(
-    id: string,
-    userId: string,
-    specialtyKeys: string[],
-    yearsOfExperience: number,
-    shortBio: string,
-    idDocumentNumber: string,
-    idDocuments: TrainerIdDocument[],
-    certificates: TrainerCertificate[],
-  ): TrainerVerification {
+  static create(input: CreateTrainerVerificationInput): TrainerVerification {
     const now = new Date();
     return new TrainerVerification({
-      id,
-      userId,
+      id: input.id,
+      userId: input.userId,
       verificationStatus: 'pending',
-      specialtyKeys,
-      yearsOfExperience,
-      shortBio,
-      idDocumentNumber,
-      idDocuments,
-      certificates,
+      specialtyKeys: input.specialtyKeys,
+      yearsOfExperience: input.yearsOfExperience,
+      shortBio: input.shortBio,
+      idDocumentNumber: input.idDocumentNumber,
+      idDocuments: input.idDocuments,
+      certificates: input.certificates,
       rejectionReason: null,
       verifiedBy: null,
       verifiedAt: null,

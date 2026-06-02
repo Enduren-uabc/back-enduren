@@ -31,16 +31,16 @@ function makeCertificate(): TrainerCertificate {
 
 describe('TrainerVerification domain', () => {
   it('creates a pending verification with valid professional data', () => {
-    const verification = TrainerVerification.create(
-      crypto.randomUUID(),
-      crypto.randomUUID(),
-      ['strength', 'hypertrophy'],
-      5,
-      'Entrenador especializado en fuerza.',
-      'ID-1234',
-      [makeDocument()],
-      [makeCertificate()],
-    );
+    const verification = TrainerVerification.create({
+      id: crypto.randomUUID(),
+      userId: crypto.randomUUID(),
+      specialtyKeys: ['strength', 'hypertrophy'],
+      yearsOfExperience: 5,
+      shortBio: 'Entrenador especializado en fuerza.',
+      idDocumentNumber: 'ID-1234',
+      idDocuments: [makeDocument()],
+      certificates: [makeCertificate()],
+    });
 
     expect(verification.verificationStatus).toBe('pending');
     expect(verification.specialtyKeys).toEqual(['strength', 'hypertrophy']);
@@ -48,30 +48,30 @@ describe('TrainerVerification domain', () => {
 
   it('rejects verifications without required files', () => {
     expect(() =>
-      TrainerVerification.create(
-        crypto.randomUUID(),
-        crypto.randomUUID(),
-        ['strength'],
-        1,
-        'Bio valida',
-        'ID-1234',
-        [],
-        [makeCertificate()],
-      ),
+      TrainerVerification.create({
+        id: crypto.randomUUID(),
+        userId: crypto.randomUUID(),
+        specialtyKeys: ['strength'],
+        yearsOfExperience: 1,
+        shortBio: 'Bio valida',
+        idDocumentNumber: 'ID-1234',
+        idDocuments: [],
+        certificates: [makeCertificate()],
+      }),
     ).toThrow(TrainerVerificationDomainError);
   });
 
   it('supports pending to rejected and rejected to pending transitions', () => {
-    const verification = TrainerVerification.create(
-      crypto.randomUUID(),
-      crypto.randomUUID(),
-      ['strength'],
-      2,
-      'Bio valida',
-      'ID-1234',
-      [makeDocument()],
-      [makeCertificate()],
-    );
+    const verification = TrainerVerification.create({
+      id: crypto.randomUUID(),
+      userId: crypto.randomUUID(),
+      specialtyKeys: ['strength'],
+      yearsOfExperience: 2,
+      shortBio: 'Bio valida',
+      idDocumentNumber: 'ID-1234',
+      idDocuments: [makeDocument()],
+      certificates: [makeCertificate()],
+    });
 
     verification.reject(crypto.randomUUID(), 'Documentos ilegibles');
     expect(verification.verificationStatus).toBe('rejected');
@@ -82,16 +82,16 @@ describe('TrainerVerification domain', () => {
   });
 
   it('does not allow changes after approval', () => {
-    const verification = TrainerVerification.create(
-      crypto.randomUUID(),
-      crypto.randomUUID(),
-      ['strength'],
-      2,
-      'Bio valida',
-      'ID-1234',
-      [makeDocument()],
-      [makeCertificate()],
-    );
+    const verification = TrainerVerification.create({
+      id: crypto.randomUUID(),
+      userId: crypto.randomUUID(),
+      specialtyKeys: ['strength'],
+      yearsOfExperience: 2,
+      shortBio: 'Bio valida',
+      idDocumentNumber: 'ID-1234',
+      idDocuments: [makeDocument()],
+      certificates: [makeCertificate()],
+    });
 
     verification.approve(crypto.randomUUID());
 

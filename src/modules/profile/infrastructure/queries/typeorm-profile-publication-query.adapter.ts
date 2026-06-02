@@ -114,7 +114,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
         [publicationIds],
       );
     return new Map(
-      countRows.map((r) => [r.publicationid, parseInt(r.count, 10)]),
+      countRows.map((r) => [r.publicationid, Number.parseInt(r.count, 10)]),
     );
   }
 
@@ -194,7 +194,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
         [publicationIds],
       );
     return new Map(
-      countRows.map((r) => [r.publicationid, parseInt(r.count, 10)]),
+      countRows.map((r) => [r.publicationid, Number.parseInt(r.count, 10)]),
     );
   }
 

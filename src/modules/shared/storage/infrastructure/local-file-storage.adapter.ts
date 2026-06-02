@@ -14,6 +14,6 @@ export class LocalFileStorageAdapter implements FileStoragePort {
   }
 
   public async delete(_path: string): Promise<void> {
-    return Promise.resolve();
+    return;
   }
 }

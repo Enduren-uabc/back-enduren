@@ -4,7 +4,7 @@ type EventListener = (event: any) => Promise<void> | void;
 
 @Injectable()
 export class InMemoryEventBus {
-  private listeners = new Map<string, EventListener[]>();
+  private readonly listeners = new Map<string, EventListener[]>();
 
   on(eventName: string, listener: EventListener): void {
     const existing = this.listeners.get(eventName) || [];

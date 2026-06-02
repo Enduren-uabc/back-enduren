@@ -1,5 +1,3 @@
-import { IsOptional, IsString, IsBoolean, IsDateString } from 'class-validator';
-
 export class UserResponseDto {
   id!: string;
   email!: string;

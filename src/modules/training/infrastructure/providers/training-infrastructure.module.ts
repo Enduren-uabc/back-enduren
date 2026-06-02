@@ -20,8 +20,7 @@ import { TypeormTrainingStrategyRepository } from '../persistence/typeorm/reposi
 import { TypeormDefaultRoutineTemplateRepository } from '../persistence/typeorm/repositories/typeorm-default-routine-template.repository';
 import { DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT } from '../../domain/repositories/default-routine-template.repository';
 import { ROUTINE_REPOSITORY_PORT } from '../../application/use-cases/create-routine/create-routine.use-case';
-import { WORKOUT_SESSION_REPOSITORY_PORT } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
-import { ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
+import { WORKOUT_SESSION_REPOSITORY_PORT, ROUTINE_REPOSITORY_PORT_FOR_SESSION } from '../../application/use-cases/start-workout-session/start-workout-session.use-case';
 import { EXERCISE_CATALOG_REPOSITORY_PORT } from '../../application/use-cases/list-exercise-catalog/list-exercise-catalog.use-case';
 import { TRAINING_STRATEGY_REPOSITORY_PORT } from '../../application/use-cases/list-training-strategies/list-training-strategies.use-case';
 import {

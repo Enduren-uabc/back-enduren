@@ -3,14 +3,14 @@ import { TrainerVerificationStateMachineService } from './trainer-verification-s
 import { TrainerVerificationDomainError } from '../../domain/errors/trainer-verification.domain-error';
 
 function makeVerification(): TrainerVerification {
-  return TrainerVerification.create(
-    crypto.randomUUID(),
-    crypto.randomUUID(),
-    ['strength'],
-    2,
-    'Bio valida',
-    'ID-1234',
-    [
+  return TrainerVerification.create({
+    id: crypto.randomUUID(),
+    userId: crypto.randomUUID(),
+    specialtyKeys: ['strength'],
+    yearsOfExperience: 2,
+    shortBio: 'Bio valida',
+    idDocumentNumber: 'ID-1234',
+    idDocuments: [
       {
         id: crypto.randomUUID(),
         documentType: 'passport',
@@ -21,7 +21,7 @@ function makeVerification(): TrainerVerification {
         uploadedAt: new Date(),
       },
     ],
-    [
+    certificates: [
       {
         id: crypto.randomUUID(),
         name: 'Cert',
@@ -33,7 +33,7 @@ function makeVerification(): TrainerVerification {
         uploadedAt: new Date(),
       },
     ],
-  );
+  });
 }
 
 describe('TrainerVerificationStateMachineService', () => {

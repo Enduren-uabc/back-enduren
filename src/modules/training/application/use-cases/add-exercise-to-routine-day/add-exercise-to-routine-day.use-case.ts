@@ -68,12 +68,14 @@ export class AddExerciseToRoutineDayUseCase {
     // Determine order: if not provided, place at end of day's exercises
     const dayOfWeek = input.dayOfWeek;
     const existingDay = routine.days.find((d) => d.dayOfWeek === dayOfWeek);
-    const order =
-      input.order !== undefined
-        ? input.order
-        : existingDay
-          ? existingDay.exercises.length
-          : 0;
+    let order: number;
+    if (input.order !== undefined) {
+      order = input.order;
+    } else if (existingDay) {
+      order = existingDay.exercises.length;
+    } else {
+      order = 0;
+    }
 
     // Create exercise domain entity (validates name)
     const exerciseId = crypto.randomUUID();

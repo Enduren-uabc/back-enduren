@@ -242,7 +242,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       const yearRanges = content.matchAll(/(\d{4})\s*[-–]\s*(\d{4})/g);
       let lastEndYear: number | null = null;
       for (const match of yearRanges) {
-        lastEndYear = parseInt(match[2], 10);
+        lastEndYear = Number.parseInt(match[2], 10);
       }
       if (lastEndYear) {
         extracted = new Date(lastEndYear, 11, 31);
@@ -253,9 +253,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       const dateMatch = content.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
       if (dateMatch) {
         const [, day, month, year] = dateMatch;
-        const yearNum = parseInt(year);
+        const yearNum = Number.parseInt(year);
         if (yearNum > 2024) {
-          extracted = new Date(yearNum, parseInt(month) - 1, parseInt(day));
+          extracted = new Date(yearNum, Number.parseInt(month) - 1, Number.parseInt(day));
         }
       }
     }
@@ -431,8 +431,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     const competencyStandardName =
       rawCompetencyStandardName ??
       this.extractByRegex(content, [
-        /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
-        /EC\d{4,5}\s{1,10}([A-Za-zÀ-ÿ,]{2,80}(?:\s[A-Za-zÀ-ÿ,]{1,80}){0,10})/i,
+        /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-ZÀ-ÿ\s,]+?)(?:\n|$)/i,
+        /EC\d{4,5}\s{1,10}([A-ZÀ-ÿ,]{2,80}(?:\s[A-ZÀ-ÿ,]{1,80}){0,10})/i,
         /(Acondicionamiento\s+físico\s+de\s+jóvenes\s+y\s+adultos\s+para\s+el\s+mantenimiento\s+de\s+la\s+salud)/i,
       ]) ??
       undefined;
@@ -493,7 +493,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       this.tryParseDate(
         rawIssueDate ??
           this.extractByRegex(content, [
-            /(?:Issue\s+Date|Date\s+Issued|Fecha\s+de\s+[Ee]misi[oó]n)[:\s]*([0-9]{1,4}[-/][0-9]{1,2}[-/][0-9]{1,4})/i,
+            /Issue\s+Date[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Date\s+Issued[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Fecha\s+de\s+Emisi[oó]n[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
             /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
           ]),
       ) ?? undefined;
@@ -502,7 +504,13 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       this.tryParseDate(
         rawExpirationDate ??
           this.extractByRegex(content, [
-            /(?:Expiration|Expiry|Valid\s+Until|Vigencia|Vence|Expiration\s+Date|Fecha\s+de\s+expiraci[oó]n)[:\s]*([0-9]{1,4}[-/][0-9]{1,2}[-/][0-9]{1,4})/i,
+            /Expiration\s+Date[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Expiration[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Expiry[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Valid\s+Until[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Vigencia[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Vence[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+            /Fecha\s+de\s+expiraci[oó]n[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
             /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
           ]),
       ) ?? undefined;
@@ -596,14 +604,22 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     const issueDateStr =
       fieldMap.get('issueDate') ??
       this.extractByRegex(content, [
-        /(?:Issue\s+Date|Date\s+Issued|Fecha\s+de\s+[Ee]misi[oó]n|Fecha\s+de\s+emisi[oó]n)[:\s]*([0-9]{1,4}[-/][0-9]{1,2}[-/][0-9]{1,4})/i,
+        /Issue\s+Date[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Date\s+Issued[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Fecha\s+de\s+Emisi[oó]n[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
         /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
       ]);
 
     const expirationDateStr =
       fieldMap.get('expirationDate') ??
       this.extractByRegex(content, [
-        /(?:Expiration|Expiry|Valid\s+Until|Vigencia|Vence|Expiration\s+Date|Fecha\s+de\s+expiraci[oó]n)[:\s]*([0-9]{1,4}[-/][0-9]{1,2}[-/][0-9]{1,4})/i,
+        /Expiration\s+Date[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Expiration[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Expiry[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Valid\s+Until[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Vigencia[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Vence[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
+        /Fecha\s+de\s+expiraci[oó]n[:\s]*(\d{1,4}[-/]\d{1,2}[-/]\d{1,4})/i,
         /(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})/i,
       ]);
 
@@ -617,8 +633,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     ]);
 
     const competencyStandardName = this.extractByRegex(content, [
-      /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
-      /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,]+)/i,
+      /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-ZÀ-ÿ\s,]+?)(?:\n|$)/i,
+      /EC\d{4,5}\s+([A-ZÀ-ÿ\s,]+)/i,
       /(Acondicionamiento\s+físico[^.\n]{0,100})/i,
     ]);
 
@@ -788,7 +804,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       const [, day, monthStr, year] = spanishDateMatch;
       const month = months[monthStr.toLowerCase()];
       if (month !== undefined) {
-        const parsed = new Date(parseInt(year), month, parseInt(day));
+        const parsed = new Date(Number.parseInt(year), month, Number.parseInt(day));
         if (!isNaN(parsed.getTime())) return parsed;
       }
     }

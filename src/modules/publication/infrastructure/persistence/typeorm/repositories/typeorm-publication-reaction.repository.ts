@@ -66,7 +66,7 @@ export class TypeormPublicationReactionRepository implements PublicationReaction
         [publicationIds],
       );
 
-    return new Map(rows.map((r) => [r.publicationid, parseInt(r.count, 10)]));
+    return new Map(rows.map((r) => [r.publicationid, Number.parseInt(r.count, 10)]));
   }
 
   public async findRecentAuthorUserIdsByPublicationIds(

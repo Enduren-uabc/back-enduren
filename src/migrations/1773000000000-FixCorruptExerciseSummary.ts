@@ -46,7 +46,7 @@ function normalizeSetsCount(raw: unknown, fallback: number): number {
     }
     const prefixMatch = trimmed.match(/^(\d+)/);
     if (prefixMatch) {
-      const prefix = parseInt(prefixMatch[1], 10);
+      const prefix = Number.parseInt(prefixMatch[1], 10);
       let arrayLengthSum = 0;
       const arrayRegex = /\[.*?\]/g;
       let m;

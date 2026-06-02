@@ -460,7 +460,7 @@ export class AuthController {
     returnTo: string,
     res: Response,
   ): Promise<void> {
-    const ttlSeconds = parseInt(
+    const ttlSeconds = Number.parseInt(
       this.configService.get<string>('MOBILE_OAUTH_CODE_TTL_SECONDS', '120'),
       10,
     );

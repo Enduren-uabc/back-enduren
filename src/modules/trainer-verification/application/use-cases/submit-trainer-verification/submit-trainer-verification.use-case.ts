@@ -158,16 +158,16 @@ export class SubmitTrainerVerificationUseCase {
         }),
       );
 
-      const verification = TrainerVerification.create(
-        crypto.randomUUID(),
-        input.actor.userId,
-        input.specialtyKeys,
-        input.yearsOfExperience,
-        input.shortBio,
-        input.idDocumentNumber,
+      const verification = TrainerVerification.create({
+        id: crypto.randomUUID(),
+        userId: input.actor.userId,
+        specialtyKeys: input.specialtyKeys,
+        yearsOfExperience: input.yearsOfExperience,
+        shortBio: input.shortBio,
+        idDocumentNumber: input.idDocumentNumber,
         idDocuments,
         certificates,
-      );
+      });
 
       const saved = await this.verificationRepository.save(verification);
 

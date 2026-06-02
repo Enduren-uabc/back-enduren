@@ -312,9 +312,9 @@ REGLAS IMPORTANTES:
     if (slashMatch) {
       const [, day, month, year] = slashMatch;
       const parsed = new Date(
-        parseInt(year),
-        parseInt(month) - 1,
-        parseInt(day),
+        Number.parseInt(year),
+        Number.parseInt(month) - 1,
+        Number.parseInt(day),
       );
       if (!isNaN(parsed.getTime())) return parsed;
     }
@@ -339,7 +339,7 @@ REGLAS IMPORTANTES:
       const [, day, monthStr, year] = spanishMatch;
       const month = months[monthStr.toLowerCase()];
       if (month !== undefined) {
-        const parsed = new Date(parseInt(year), month, parseInt(day));
+        const parsed = new Date(Number.parseInt(year), month, Number.parseInt(day));
         if (!isNaN(parsed.getTime())) return parsed;
       }
     }

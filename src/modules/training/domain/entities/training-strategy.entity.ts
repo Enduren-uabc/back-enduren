@@ -87,14 +87,14 @@ export class TrainingStrategy {
       if (this.rules.type === 'wave') {
         const percentages = this.rules.wavePercentages ?? [0];
         const pct = percentages[i % percentages.length];
-        const weight = parseFloat((initialWeight * (1 + pct)).toFixed(2));
+        const weight = Number.parseFloat((initialWeight * (1 + pct)).toFixed(2));
         sets.push({ setNumber, reps: initialReps, weight });
       } else if (this.rules.type === 'percentage') {
         const pct = this.rules.weightPercentage ?? 1;
         const weight =
           i === 0
             ? initialWeight
-            : parseFloat((sets[i - 1].weight * pct).toFixed(2));
+            : Number.parseFloat((sets[i - 1].weight * pct).toFixed(2));
         const reps =
           this.rules.repStep !== null
             ? Math.max(1, initialReps + i * this.rules.repStep)
@@ -104,7 +104,7 @@ export class TrainingStrategy {
         // linear (including straight)
         const weightStep = this.rules.weightStep ?? 0;
         const repStep = this.rules.repStep ?? 0;
-        const weight = parseFloat((initialWeight + i * weightStep).toFixed(2));
+        const weight = Number.parseFloat((initialWeight + i * weightStep).toFixed(2));
         const reps = Math.max(1, initialReps + i * repStep);
         sets.push({ setNumber, reps, weight });
       }

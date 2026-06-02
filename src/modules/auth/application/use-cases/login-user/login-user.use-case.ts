@@ -111,7 +111,7 @@ export class LoginUserUseCase {
     });
 
     const refreshTokenValue = crypto.randomUUID();
-    const refreshExpiresDays = parseInt(
+    const refreshExpiresDays = Number.parseInt(
       this.configService
         .get<string>('JWT_REFRESH_EXPIRATION', '7d')
         .replace('d', ''),

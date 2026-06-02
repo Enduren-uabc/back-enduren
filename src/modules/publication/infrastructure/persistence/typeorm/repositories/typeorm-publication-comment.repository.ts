@@ -60,7 +60,7 @@ export class TypeormPublicationCommentRepository implements PublicationCommentRe
     return new Map(
       rows.map((row: { publicationid: string; count: string }) => [
         row.publicationid,
-        parseInt(row.count, 10),
+        Number.parseInt(row.count, 10),
       ]),
     );
   }

@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TrainingRemindersInfrastructureModule } from '../infrastructure/providers/training-reminders-infrastructure.module';
-import { TRAINING_REMINDER_REPOSITORY_PORT } from '../domain/repositories/training-reminder.repository.port';
+import { TRAINING_REMINDER_REPOSITORY_PORT, type TrainingReminderRepository } from '../domain/repositories/training-reminder.repository.port';
 import {
   CreateReminderUseCase,
   ROUTINE_REPOSITORY_PORT,
+  type RoutineRepository,
 } from './use-cases/create-reminder/create-reminder.use-case';
 import { ListRemindersUseCase } from './use-cases/list-reminders/list-reminders.use-case';
 import { EditReminderUseCase } from './use-cases/edit-reminder/edit-reminder.use-case';
 import { DeleteReminderUseCase } from './use-cases/delete-reminder/delete-reminder.use-case';
-import type { TrainingReminderRepository } from '../domain/repositories/training-reminder.repository.port';
-import type { RoutineRepository } from './use-cases/create-reminder/create-reminder.use-case';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Module({

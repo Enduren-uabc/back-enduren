@@ -25,8 +25,8 @@ export class TrainerSearchController {
   }> {
     const result = await this.searchTrainersUseCase.execute({
       query: query.q,
-      page: query.page ? parseInt(query.page, 10) : 1,
-      limit: query.limit ? parseInt(query.limit, 10) : 10,
+      page: query.page ? Number.parseInt(query.page, 10) : 1,
+      limit: query.limit ? Number.parseInt(query.limit, 10) : 10,
     });
 
     return {
