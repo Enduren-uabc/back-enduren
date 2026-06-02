@@ -34,7 +34,11 @@ export class ListRoutinesUseCase {
   public async execute(actor: CurrentActor): Promise<ListRoutinesOutput[]> {
     const routines = await this.routineRepository.findByUserId(actor.userId);
 
-    return routines.map((routine) => ({
+    return routines.map((routine) => this.mapToOutput(routine));
+  }
+
+  private mapToOutput(routine: Routine): ListRoutinesOutput {
+    return {
       id: routine.id,
       name: routine.name,
       userId: routine.userId,
@@ -58,6 +62,6 @@ export class ListRoutinesUseCase {
       })),
       createdAt: routine.createdAt,
       updatedAt: routine.updatedAt,
-    }));
+    };
   }
 }

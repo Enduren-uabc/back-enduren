@@ -58,35 +58,46 @@ function sanitizeValue(value: unknown, depth: number): unknown {
   }
 
   if (Array.isArray(value)) {
-    const items = value
-      .slice(0, MAX_ARRAY_LENGTH)
-      .map((item) => sanitizeValue(item, depth + 1));
-    if (value.length > MAX_ARRAY_LENGTH) {
-      items.push(`[${value.length - MAX_ARRAY_LENGTH} more items]`);
-    }
-    return items;
+    return sanitizeArray(value, depth);
   }
 
   if (typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    const entries = Object.entries(record).slice(0, MAX_OBJECT_KEYS);
-    const sanitized: Record<string, unknown> = {};
-
-    for (const [key, item] of entries) {
-      sanitized[key] = isSensitiveKey(key)
-        ? REDACTED
-        : sanitizeValue(item, depth + 1);
-    }
-
-    const omittedKeys = Object.keys(record).length - entries.length;
-    if (omittedKeys > 0) {
-      sanitized.__omittedKeys = omittedKeys;
-    }
-
-    return sanitized;
+    return sanitizeObject(value, depth);
   }
 
   return String(value);
+}
+
+function sanitizeArray(value: unknown[], depth: number): unknown[] {
+  const items = value
+    .slice(0, MAX_ARRAY_LENGTH)
+    .map((item) => sanitizeValue(item, depth + 1));
+  if (value.length > MAX_ARRAY_LENGTH) {
+    items.push(`[${value.length - MAX_ARRAY_LENGTH} more items]`);
+  }
+  return items;
+}
+
+function sanitizeObject(
+  value: Record<string, unknown>,
+  depth: number,
+): Record<string, unknown> {
+  const record = value as Record<string, unknown>;
+  const entries = Object.entries(record).slice(0, MAX_OBJECT_KEYS);
+  const sanitized: Record<string, unknown> = {};
+
+  for (const [key, item] of entries) {
+    sanitized[key] = isSensitiveKey(key)
+      ? REDACTED
+      : sanitizeValue(item, depth + 1);
+  }
+
+  const omittedKeys = Object.keys(record).length - entries.length;
+  if (omittedKeys > 0) {
+    sanitized.__omittedKeys = omittedKeys;
+  }
+
+  return sanitized;
 }
 
 function isSensitiveKey(key: string): boolean {

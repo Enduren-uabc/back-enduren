@@ -86,47 +86,9 @@ export class SyncRoutineUseCase {
         return day;
       }
 
-      const exercises = dayPayload.exercises.map((exPayload) => {
-        const existingExercise = exPayload.id
-          ? day.exercises.find((e) => e.id === exPayload.id)
-          : undefined;
-
-        const exerciseId = existingExercise?.id ?? crypto.randomUUID();
-
-        let sets: RoutineExerciseSet[];
-        if (exPayload.sets != null && exPayload.sets.length > 0) {
-          const existingSets = existingExercise?.sets ?? [];
-          sets = exPayload.sets.map((s) => {
-            const existing = existingSets.find(
-              (es) => es.setNumber === s.setNumber,
-            );
-            if (existing) {
-              return RoutineExerciseSet.reconstitute(
-                existing.id,
-                s.setNumber,
-                s.reps,
-                s.weight,
-                s.restSeconds ?? null,
-              );
-            }
-            return RoutineExerciseSet.create(
-              s.setNumber,
-              s.reps,
-              s.weight,
-              s.restSeconds,
-            );
-          });
-        } else {
-          sets = existingExercise?.sets ?? [];
-        }
-
-        return Exercise.reconstitute(
-          exerciseId,
-          exPayload.name,
-          exPayload.order,
-          sets,
-        );
-      });
+      const exercises = dayPayload.exercises.map((exPayload) =>
+        this.mapUpdatedExercise(exPayload, day),
+      );
 
       return RoutineDay.reconstitute(day.dayOfWeek, exercises, day.id);
     });
@@ -135,43 +97,7 @@ export class SyncRoutineUseCase {
     const existingDayOfWeeks = new Set(routine.days.map((d) => d.dayOfWeek));
     const newDays = input.days
       .filter((d) => !existingDayOfWeeks.has(d.dayOfWeek as DayOfWeek))
-      .map((dayPayload) => {
-        const dayOfWeek = dayPayload.dayOfWeek;
-        if (!isValidDayOfWeek(dayOfWeek)) {
-          throw new RoutineDomainError(
-            RoutineErrorCode.ROUTINE_DAY_INVALID_DAY_OF_WEEK,
-            `Invalid day of week: ${dayOfWeek}`,
-            { dayOfWeek },
-          );
-        }
-        const exercises = dayPayload.exercises.map((exPayload) => {
-          const exerciseId = exPayload.id ?? crypto.randomUUID();
-          let sets: RoutineExerciseSet[];
-          if (exPayload.sets != null && exPayload.sets.length > 0) {
-            sets = exPayload.sets.map((s) =>
-              RoutineExerciseSet.create(
-                s.setNumber,
-                s.reps,
-                s.weight,
-                s.restSeconds,
-              ),
-            );
-          } else {
-            sets = [];
-          }
-          return Exercise.reconstitute(
-            exerciseId,
-            exPayload.name,
-            exPayload.order,
-            sets,
-          );
-        });
-        return RoutineDay.reconstitute(
-          dayOfWeek,
-          exercises,
-          crypto.randomUUID(),
-        );
-      });
+      .map((dayPayload) => this.createNewDay(dayPayload));
 
     const allDays = [...updatedDays, ...newDays];
 
@@ -190,6 +116,83 @@ export class SyncRoutineUseCase {
     const saved = await this.routineRepository.save(updatedRoutine);
 
     return this.mapToOutput(saved);
+  }
+
+  private mapUpdatedExercise(
+    exPayload: SyncRoutineExerciseInput,
+    day: RoutineDay,
+  ): Exercise {
+    const existingExercise = exPayload.id
+      ? day.exercises.find((e) => e.id === exPayload.id)
+      : undefined;
+
+    const exerciseId = existingExercise?.id ?? crypto.randomUUID();
+    const sets = this.mapUpdatedSets(exPayload, existingExercise);
+
+    return Exercise.reconstitute(exerciseId, exPayload.name, exPayload.order, sets);
+  }
+
+  private mapUpdatedSets(
+    exPayload: SyncRoutineExerciseInput,
+    existingExercise: Exercise | undefined,
+  ): RoutineExerciseSet[] {
+    if (exPayload.sets != null && exPayload.sets.length > 0) {
+      const existingSets = existingExercise?.sets ?? [];
+      return exPayload.sets.map((s) => {
+        const existing = existingSets.find(
+          (es) => es.setNumber === s.setNumber,
+        );
+        if (existing) {
+          return RoutineExerciseSet.reconstitute(
+            existing.id,
+            s.setNumber,
+            s.reps,
+            s.weight,
+            s.restSeconds ?? null,
+          );
+        }
+        return RoutineExerciseSet.create(
+          s.setNumber,
+          s.reps,
+          s.weight,
+          s.restSeconds,
+        );
+      });
+    }
+    return existingExercise?.sets ?? [];
+  }
+
+  private createNewDay(dayPayload: SyncRoutineDayInput): RoutineDay {
+    const dayOfWeek = dayPayload.dayOfWeek;
+    if (!isValidDayOfWeek(dayOfWeek)) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_DAY_INVALID_DAY_OF_WEEK,
+        `Invalid day of week: ${dayOfWeek}`,
+        { dayOfWeek },
+      );
+    }
+    const exercises = dayPayload.exercises.map((exPayload) => {
+      const exerciseId = exPayload.id ?? crypto.randomUUID();
+      const sets = this.createNewSets(exPayload);
+      return Exercise.reconstitute(exerciseId, exPayload.name, exPayload.order, sets);
+    });
+    return RoutineDay.reconstitute(dayOfWeek, exercises, crypto.randomUUID());
+  }
+
+  private createNewSets(
+    exPayload: SyncRoutineExerciseInput,
+  ): RoutineExerciseSet[] {
+    if (exPayload.sets != null && exPayload.sets.length > 0) {
+      return exPayload.sets.map((s) =>
+        RoutineExerciseSet.create(
+          s.setNumber,
+          s.reps,
+          s.weight,
+          s.restSeconds,
+        ),
+      );
+    }
+    return [];
   }
 
   private mapToOutput(routine: Routine): SyncRoutineOutput {

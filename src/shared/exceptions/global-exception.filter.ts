@@ -39,6 +39,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
+    const { status, code, message } = this.resolveError(exception);
+
+    this.sendErrorResponse(response, status, code, message);
+  }
+
+  private resolveError(
+    exception: unknown,
+  ): { status: number; code: string; message: string } {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let code = 'INTERNAL_ERROR';
     let message = 'Tuvimos un problema. Intenta de nuevo en un momento.';
@@ -65,6 +73,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
+    return { status, code, message };
+  }
+
+  private sendErrorResponse(
+    response: Response,
+    status: number,
+    code: string,
+    message: string,
+  ): void {
     response.status(status).json({
       statusCode: status,
       code,
