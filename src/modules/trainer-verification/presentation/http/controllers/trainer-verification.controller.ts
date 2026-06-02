@@ -64,7 +64,7 @@ const VERIFICATION_FILE_INTERCEPTOR = FileFieldsInterceptor(
   ],
   {
     storage: memoryStorage(),
-    limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES },
+    limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES }, // sonarqube:content-length-already-limited
   },
 );
 
@@ -284,7 +284,7 @@ export class TrainerVerificationController {
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'certificateDocument', maxCount: 1 }], {
       storage: memoryStorage(),
-      limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES },
+      limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES }, // sonarqube:content-length-already-limited
     }),
   )
   async uploadPowerspikeCertificate(
@@ -332,7 +332,7 @@ export class TrainerVerificationController {
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'idDocument', maxCount: 1 }], {
       storage: memoryStorage(),
-      limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES },
+      limits: { fileSize: MAX_VERIFICATION_FILE_SIZE_BYTES }, // sonarqube:content-length-already-limited
     }),
   )
   async uploadPowerspikeIdDocument(

@@ -163,20 +163,28 @@ export class EditAssignedRoutineContentUseCase {
         );
       }
       for (const ex of day.exercises) {
-        if (!ex.name || ex.name.trim().length === 0) {
-          throw new BadRequestException('Exercise name cannot be empty');
-        }
-        if (!Number.isInteger(ex.sets) || ex.sets < 1) {
-          throw new BadRequestException(
-            `Exercise "${ex.name}" must have at least 1 set`,
-          );
-        }
-        if (!Number.isInteger(ex.reps) || ex.reps < 1) {
-          throw new BadRequestException(
-            `Exercise "${ex.name}" must have at least 1 rep`,
-          );
-        }
+        this.validateExercise(ex);
       }
+    }
+  }
+
+  private validateExercise(ex: {
+    name: string;
+    sets: number;
+    reps: number;
+  }): void {
+    if (!ex.name || ex.name.trim().length === 0) {
+      throw new BadRequestException('Exercise name cannot be empty');
+    }
+    if (!Number.isInteger(ex.sets) || ex.sets < 1) {
+      throw new BadRequestException(
+        `Exercise "${ex.name}" must have at least 1 set`,
+      );
+    }
+    if (!Number.isInteger(ex.reps) || ex.reps < 1) {
+      throw new BadRequestException(
+        `Exercise "${ex.name}" must have at least 1 rep`,
+      );
     }
   }
 

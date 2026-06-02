@@ -17,6 +17,6 @@ export class InMemoryEventBus {
     if (!name) return;
 
     const handlers = this.listeners.get(name) || [];
-    await Promise.all(handlers.map((h) => h(event)));
+    await Promise.all(handlers.map((h) => Promise.resolve(h(event))));
   }
 }

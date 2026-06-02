@@ -20,7 +20,7 @@ export class InMemoryCommandBus implements OnApplicationShutdown {
     const handlers = this.handlers.get(name) || [];
 
     const job = Promise.resolve().then(async () => {
-      await Promise.all(handlers.map((h) => h(command)));
+      await Promise.all(handlers.map((h) => Promise.resolve(h(command))));
     });
     this.pendingJobs.push(job);
 

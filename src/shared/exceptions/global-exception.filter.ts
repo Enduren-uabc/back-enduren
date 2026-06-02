@@ -47,33 +47,44 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private resolveError(
     exception: unknown,
   ): { status: number; code: string; message: string } {
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let code = 'INTERNAL_ERROR';
-    let message = 'Tuvimos un problema. Intenta de nuevo en un momento.';
+    const defaultMessage = 'Tuvimos un problema. Intenta de nuevo en un momento.';
+    const defaultCode = 'INTERNAL_ERROR';
 
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const body = exception.getResponse();
-
-      if (typeof body === 'object' && body !== null) {
-        const bodyRecord = body as Record<string, unknown>;
-        message =
-          typeof bodyRecord.message === 'string'
-            ? bodyRecord.message
-            : Array.isArray(bodyRecord.message)
-              ? (bodyRecord.message as string[]).join('; ')
-              : message;
-        code =
-          typeof bodyRecord.code === 'string'
-            ? bodyRecord.code
-            : statusToCode(status);
-      } else {
-        code = statusToCode(status);
-        message = typeof body === 'string' ? body : message;
-      }
+    if (!(exception instanceof HttpException)) {
+      return { status: HttpStatus.INTERNAL_SERVER_ERROR, code: defaultCode, message: defaultMessage };
     }
 
+    const status = exception.getStatus();
+    const body = exception.getResponse();
+    const { message, code } = this.parseExceptionBody(body, status, defaultMessage);
+
     return { status, code, message };
+  }
+
+  private parseExceptionBody(
+    body: unknown,
+    status: number,
+    defaultMessage: string,
+  ): { message: string; code: string } {
+    if (typeof body === 'object' && body !== null) {
+      const bodyRecord = body as Record<string, unknown>;
+      const message =
+        typeof bodyRecord.message === 'string'
+          ? bodyRecord.message
+          : Array.isArray(bodyRecord.message)
+            ? (bodyRecord.message as string[]).join('; ')
+            : defaultMessage;
+      const code =
+        typeof bodyRecord.code === 'string'
+          ? bodyRecord.code
+          : statusToCode(status);
+      return { message, code };
+    }
+
+    return {
+      message: typeof body === 'string' ? body : defaultMessage,
+      code: statusToCode(status),
+    };
   }
 
   private sendErrorResponse(

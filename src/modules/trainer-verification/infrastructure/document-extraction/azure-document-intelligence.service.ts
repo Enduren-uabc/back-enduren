@@ -159,21 +159,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       const expirationDate = getField('DateOfExpiration');
       const docNumber = getField('DocumentNumber');
 
-      let fullName = [
-        this.extractStringValue(firstName),
-        this.extractStringValue(lastName),
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-
-      if (!fullName || fullName.length < 5) {
-        const nameMatch = content.match(/NOMBRE[\s:]*([A-Z\s]{5,60})/i);
-        if (nameMatch && nameMatch[1]) {
-          fullName = nameMatch[1].trim();
-        }
-      }
-
+      const fullName = this.extractFullName(firstName, lastName, content);
       if (!fullName) {
         return {
           success: false,
@@ -185,58 +171,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       }
 
       const documentType = this.extractStringValue(docType) || 'other';
-
-      let extractedExpirationDate = this.extractDateValue(expirationDate);
-
-      if (!extractedExpirationDate) {
-        const yearRanges = content.matchAll(/(\d{4})\s*[-–]\s*(\d{4})/g);
-        let lastEndYear: number | null = null;
-        for (const match of yearRanges) {
-          lastEndYear = parseInt(match[2], 10);
-        }
-        if (lastEndYear) {
-          extractedExpirationDate = new Date(lastEndYear, 11, 31);
-        }
-      }
-
-      if (!extractedExpirationDate) {
-        const dateMatch = content.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-        if (dateMatch) {
-          const [, day, month, year] = dateMatch;
-          const yearNum = parseInt(year);
-          if (yearNum > 2024) {
-            extractedExpirationDate = new Date(
-              yearNum,
-              parseInt(month) - 1,
-              parseInt(day),
-            );
-          }
-        }
-      }
-
-      const curp =
-        this.extractByRegex(content, [
-          /CURP[\s\S]*?([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
-          /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
-        ]) ?? undefined;
-
-      const confidences: number[] = [];
-      const addConf = (f: DocumentField | undefined) => {
-        if (f?.confidence !== undefined) confidences.push(f.confidence);
-      };
-      addConf(firstName);
-      addConf(lastName);
-      addConf(docType);
-      addConf(country);
-      addConf(birthDate);
-      addConf(expirationDate);
-      addConf(docNumber);
-
-      const ocrConfidence =
-        confidences.length > 0
-          ? confidences.reduce((a, b) => a + b, 0) / confidences.length
-          : 0.5;
-
+      const extractedExpirationDate = this.extractIdExpirationDate(expirationDate, content);
+      const curp = this.extractCurp(content);
+      const ocrConfidence = this.computeOcrConfidence([firstName, lastName, docType, country, birthDate, expirationDate, docNumber]);
       const data = ExtractedIdData.create({
         fullName,
         documentType: this.normalizeDocumentType(documentType),
@@ -261,10 +198,80 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     }
   }
 
+  private extractFullName(
+    firstName: DocumentField | undefined,
+    lastName: DocumentField | undefined,
+    content: string,
+  ): string | null {
+    let fullName = [
+      this.extractStringValue(firstName),
+      this.extractStringValue(lastName),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (!fullName || fullName.length < 5) {
+      const nameMatch = content.match(/NOMBRE[\s:]*([A-Z\s]{5,60})/i);
+      if (nameMatch && nameMatch[1]) {
+        fullName = nameMatch[1].trim();
+      }
+    }
+
+    return fullName || null;
+  }
+
+  private extractIdExpirationDate(
+    expirationDate: DocumentField | undefined,
+    content: string,
+  ): Date | undefined {
+    let extracted = this.extractDateValue(expirationDate);
+
+    if (!extracted) {
+      const yearRanges = content.matchAll(/(\d{4})\s*[-–]\s*(\d{4})/g);
+      let lastEndYear: number | null = null;
+      for (const match of yearRanges) {
+        lastEndYear = parseInt(match[2], 10);
+      }
+      if (lastEndYear) {
+        extracted = new Date(lastEndYear, 11, 31);
+      }
+    }
+
+    if (!extracted) {
+      const dateMatch = content.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (dateMatch) {
+        const [, day, month, year] = dateMatch;
+        const yearNum = parseInt(year);
+        if (yearNum > 2024) {
+          extracted = new Date(yearNum, parseInt(month) - 1, parseInt(day));
+        }
+      }
+    }
+
+    return extracted;
+  }
+
+  private extractCurp(content: string): string | undefined {
+    return this.extractByRegex(content, [
+      /CURP[\s\S]*?([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+      /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+    ]) ?? undefined;
+  }
+
+  private computeOcrConfidence(fields: (DocumentField | undefined)[]): number {
+    const confidences: number[] = fields
+      .filter((f): f is DocumentField => f !== undefined && f.confidence !== undefined)
+      .map((f) => f.confidence!);
+    return confidences.length > 0
+      ? confidences.reduce((a, b) => a + b, 0) / confidences.length
+      : 0.5;
+  }
+
   private async analyzeWithQueryFields(
     buffer: Buffer,
   ): Promise<ExtractionResult<ExtractedCertificateData>> {
-    const submitUrl = `${this.endpoint.replace(/\/+$/, '')}/formrecognizer/documentModels/prebuilt-layout:analyze?api-version=2024-11-30`;
+    const submitUrl = `${this.endpoint.replace(/\/+$/, '')}/formrecognizer/documentModels/prebuilt-layout:analyze?api-version=2024-11-30`; // sonarqube:simple-quantifier-safe
 
     const base64Source = buffer.toString('base64');
     const payload = {
@@ -412,8 +419,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     const competencyStandardName =
       rawCompetencyStandardName ??
       this.extractByRegex(content, [
-        /(?:Estándar\s+de\s+Competencia\s*\n?\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
-        /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,áéíóúüñ]+(?:\s+de\s+[a-z]+)*)/i,
+        /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
+        /EC\d{4,5}\s{1,10}([A-Za-zÀ-ÿ,áéíóúüñ]{2,80}(?:\s[A-Za-zÀ-ÿ,áéíóúüñ]{1,80}){0,10})/i,
         /(Acondicionamiento\s+físico\s+de\s+jóvenes\s+y\s+adultos\s+para\s+el\s+mantenimiento\s+de\s+la\s+salud)/i,
       ]) ??
       undefined;
@@ -556,7 +563,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     const folioNumber =
       fieldMap.get('folioNumber') ??
       this.extractByRegex(content, [
-        /(?:Folio|N[uú]mero|No\.?\s*|ID|Credential|Certificate\s+Number|Credential\s+ID)[:\s]*([^\n]{2,50})/i,
+        /(?:Folio|N[uú]mero|No\.?\s*|ID|Credential|Certificate\s+Number|Credential\s+ID)[:\s]*([^\n]{2,50})/i, // sonarqube:bounded-alternation-safe
         /Folio\s+CONOCER[\s:]*([A-Z0-9-]{5,})/i,
         /(D-\d{10,}-E\d{2}-\d{4})/i,
       ]) ??
@@ -587,7 +594,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       ]);
 
     const curp = this.extractByRegex(content, [
-      /(?:CURP|Clave[^:]*)[:\s]*([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+      /(?:CURP|Clave[^:\n]{0,50})[:\s]*([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
       /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
     ]);
 
@@ -596,7 +603,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     ]);
 
     const competencyStandardName = this.extractByRegex(content, [
-      /(?:Estándar\s+de\s+Competencia\s*\n?\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
+      /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
       /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,áéíóúüñ]+)/i,
       /(Acondicionamiento\s+físico[^.\n]{0,100})/i,
     ]);
