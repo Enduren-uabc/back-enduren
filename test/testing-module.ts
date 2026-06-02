@@ -44,7 +44,7 @@ export async function createTestingApp(): Promise<{
     imports: [
       ConfigModule.forRoot({
         isGlobal: true,
-        envFilePath: '.env',
+        envFilePath: '.env.test',
       }),
       TypeOrmModule.forRoot({
         type: 'better-sqlite3',

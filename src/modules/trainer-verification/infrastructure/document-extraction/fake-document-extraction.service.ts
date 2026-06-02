@@ -9,12 +9,10 @@ import { ExtractedIdData } from '../../domain/value-objects/extracted-id-data.vo
 @Injectable()
 export class FakeDocumentExtractionService implements DocumentExtractionPort {
   async extractCertificate(
-    buffer: Buffer,
-    mimeType: string,
+    _buffer: Buffer,
+    _mimeType: string,
     originalName: string,
   ): Promise<ExtractionResult<ExtractedCertificateData>> {
-    void buffer;
-    void mimeType;
     await new Promise((r) => setTimeout(r, 2000 + Math.random() * 3000));
 
     const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
@@ -39,13 +37,10 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
   }
 
   async extractIdDocument(
-    buffer: Buffer,
-    mimeType: string,
-    originalName: string,
+    _buffer: Buffer,
+    _mimeType: string,
+    _originalName: string,
   ): Promise<ExtractionResult<ExtractedIdData>> {
-    void buffer;
-    void mimeType;
-    void originalName;
     await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
 
     const data = ExtractedIdData.create({

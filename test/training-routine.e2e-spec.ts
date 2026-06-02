@@ -23,7 +23,7 @@ describe('Training Routine (e2e)', () => {
         .send({
           email: 'test@routine.com',
           username: 'testroutine',
-          password: 'Password123',
+          password: process.env.TEST_USER_PASSWORD ?? 'TestPass123!',
         })
         .expect(201);
 
@@ -64,7 +64,7 @@ describe('Training Routine (e2e)', () => {
         .send({
           email: 'limit@routine.com',
           username: 'limitroutine',
-          password: 'Password123',
+          password: process.env.TEST_USER_PASSWORD ?? 'TestPass123!',
         })
         .expect(201);
 
@@ -109,7 +109,7 @@ describe('Training Routine (e2e)', () => {
         .send({
           email: 'duplicate@routine.com',
           username: 'duplicateroutine',
-          password: 'Password123',
+          password: process.env.TEST_USER_PASSWORD ?? 'TestPass123!',
         })
         .expect(201);
 
@@ -150,7 +150,7 @@ describe('Training Routine (e2e)', () => {
         .send({
           email: 'missing@routine.com',
           username: 'missingroutine',
-          password: 'Password123',
+          password: process.env.TEST_USER_PASSWORD ?? 'TestPass123!',
         })
         .expect(201);
 

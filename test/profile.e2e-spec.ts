@@ -27,7 +27,7 @@ describe('Profile / Onboarding (e2e)', () => {
       .send({
         email,
         username,
-        password: 'Password123',
+        password: process.env.TEST_USER_PASSWORD ?? 'TestPass123!',
       })
       .expect(201);
   }

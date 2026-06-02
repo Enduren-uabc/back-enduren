@@ -23,7 +23,7 @@ describe('App (e2e) - Health check with SQLite', () => {
       .send({
         email: 'health@check.com',
         username: 'healthcheck',
-        password: 'Password123',
+        password: process.env.TEST_USER_PASSWORD ?? 'TestPass123!',
       })
       .expect(201);
 

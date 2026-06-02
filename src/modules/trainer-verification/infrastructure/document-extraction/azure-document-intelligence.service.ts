@@ -45,10 +45,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
 
   async extractCertificate(
     buffer: Buffer,
-    mimeType: string,
+    _mimeType: string,
     _originalName: string,
   ): Promise<ExtractionResult<ExtractedCertificateData>> {
-    void mimeType;
     try {
       const poller = await this.client.beginAnalyzeDocument(
         'prebuilt-layout',
@@ -124,11 +123,10 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
 
   async extractIdDocument(
     buffer: Buffer,
-    mimeType: string,
+    _mimeType: string,
     _originalName: string,
   ): Promise<ExtractionResult<ExtractedIdData>> {
     try {
-      void mimeType;
       const poller = await this.client.beginAnalyzeDocument(
         'prebuilt-idDocument',
         buffer,
