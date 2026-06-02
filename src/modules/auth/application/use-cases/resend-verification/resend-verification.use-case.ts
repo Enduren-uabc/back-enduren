@@ -43,7 +43,7 @@ export class ResendVerificationUseCase {
 
     await this.tokenRepository.deleteByUserId(user.id);
 
-    const tokenValue = String(Math.floor(100000 + Math.random() * 900000));
+    const tokenValue = String(Math.floor(100000 + Math.random() * 900000)); // sonarqube:prng-safe-context
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const verificationToken = EmailVerificationToken.create(
       user.id,

@@ -13,7 +13,7 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
     _mimeType: string,
     originalName: string,
   ): Promise<ExtractionResult<ExtractedCertificateData>> {
-    await new Promise((r) => setTimeout(r, 2000 + Math.random() * 3000));
+    await new Promise((r) => setTimeout(r, 2000 + Math.random() * 3000)); // sonarqube:prng-safe-context
 
     const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
 
@@ -24,8 +24,8 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
       issueDate: new Date('2024-01-15'),
       expirationDate: new Date('2027-01-15'),
       folioNumber:
-        'CERT-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      ocrConfidence: 0.89 + Math.random() * 0.1,
+        'CERT-' + Math.random().toString(36).substring(2, 10).toUpperCase(), // sonarqube:prng-safe-context
+      ocrConfidence: 0.89 + Math.random() * 0.1, // sonarqube:prng-safe-context
       curp: 'JUPE900101HDFRRN01',
       documentType: 'certificate',
       certifyingInstitution: 'ICEM',
@@ -41,7 +41,7 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
     _mimeType: string,
     _originalName: string,
   ): Promise<ExtractionResult<ExtractedIdData>> {
-    await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000));
+    await new Promise((r) => setTimeout(r, 1500 + Math.random() * 2000)); // sonarqube:prng-safe-context
 
     const data = ExtractedIdData.create({
       fullName: 'Juan Perez Lopez',
@@ -50,7 +50,7 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
       birthDate: new Date('1990-05-20'),
       expirationDate: new Date('2030-05-20'),
       documentIdentifier: 'INE****5678',
-      ocrConfidence: 0.92 + Math.random() * 0.07,
+      ocrConfidence: 0.92 + Math.random() * 0.07, // sonarqube:prng-safe-context
       curp: 'JUPE900101HDFRRN01',
     });
 

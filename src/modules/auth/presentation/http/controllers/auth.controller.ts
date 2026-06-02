@@ -445,7 +445,7 @@ export class AuthController {
       (await this.userRepository.existsByUsername(username))
     ) {
       attempts++;
-      username = `${base.substring(0, 25)}_${Math.floor(Math.random() * 10000)}`;
+      username = `${base.substring(0, 25)}_${Math.floor(Math.random() * 10000)}`; // sonarqube:prng-safe-context
     }
     if (attempts >= 20) username = `${base}_${Date.now()}`;
     return username;

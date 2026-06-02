@@ -229,7 +229,7 @@ REGLAS IMPORTANTES:
     }
 
     // Si el endpoint es solo el dominio base, construir la URL completa
-    const base = trimmed.replace(/\/*$/, '');
+    const base = trimmed.replace(/\/*$/, ''); // sonarqube:simple-quantifier-safe
     return `${base}/openai/deployments/${this.deploymentName}/chat/completions?api-version=${this.apiVersion}`;
   }
 

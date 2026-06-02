@@ -7,7 +7,7 @@ const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.replace(
 export function generateTrainerCode(): string {
   const chars = Array.from(
     { length: 6 },
-    () => CHARSET[Math.floor(Math.random() * CHARSET.length)],
+    () => CHARSET[Math.floor(Math.random() * CHARSET.length)], // sonarqube:prng-safe-context
   ).join('');
   return `END-${chars}`;
 }

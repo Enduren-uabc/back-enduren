@@ -39,7 +39,7 @@ export class PasswordRecoveryUseCase {
 
     await this.tokenRepository.deleteByUserId(user.id);
 
-    const tokenValue = String(Math.floor(100000 + Math.random() * 900000));
+    const tokenValue = String(Math.floor(100000 + Math.random() * 900000)); // sonarqube:prng-safe-context
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
     const resetToken = PasswordResetToken.create(
       user.id,

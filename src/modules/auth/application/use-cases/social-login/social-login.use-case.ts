@@ -163,7 +163,7 @@ export class SocialLoginUseCase {
         return username;
       }
       attempts++;
-      const suffix = Math.floor(Math.random() * 10000);
+      const suffix = Math.floor(Math.random() * 10000); // sonarqube:prng-safe-context
       username = `${base.substring(0, 25)}_${suffix}`;
     }
     return `${base}_${Date.now()}`;
