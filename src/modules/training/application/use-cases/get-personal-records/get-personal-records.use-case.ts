@@ -42,8 +42,10 @@ export class GetPersonalRecordsUseCase {
         );
         if (completedSets.length === 0) continue;
 
-        const bestSet = completedSets.reduce((best, ws) =>
+        const [first, ...rest] = completedSets;
+        const bestSet = rest.reduce((best, ws) =>
           (ws.weightUsed ?? 0) > (best.weightUsed ?? 0) ? ws : best,
+          first,
         );
         const currentWeight = bestSet.weightUsed ?? 0;
         const currentEntry = bestByExercise.get(exercise.exerciseId);

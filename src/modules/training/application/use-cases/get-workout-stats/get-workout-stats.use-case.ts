@@ -34,7 +34,7 @@ export class GetWorkoutStatsUseCase {
           return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }),
       ),
-    ].sort();
+    ].sort((a, b) => a.localeCompare(b));
 
     let longestStreak = 1;
     let currentRun = 1;
