@@ -30,19 +30,19 @@ describe('MarkSetAsCompletedUseCase', () => {
 
   describe('RF-12.0.3: Mark a set as completed', () => {
     it('should mark a set as completed using targets if not yet registered', async () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        'user-1',
-        'routine-1',
-        [exercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      );
+      });
       (workoutSessionRepository.save as jest.Mock).mockImplementation(
         (s: WorkoutSession) => Promise.resolve(s),
-      );
+      });
 
       const result = await useCase.execute(actor, {
         sessionId: 'session-1',
@@ -122,15 +122,15 @@ describe('MarkSetAsCompletedUseCase', () => {
     });
 
     it('should reject when session belongs to another user', async () => {
-      const otherUserSession = WorkoutSession.create(
-        'session-2',
-        'user-2',
-        'routine-1',
-        [exercise],
-      );
+      const otherUserSession = WorkoutSession.create({
+        id: 'session-2',
+        userId: 'user-2',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      );
+      });
 
       await expect(
         useCase.execute(actor, {
@@ -151,7 +151,7 @@ describe('MarkSetAsCompletedUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      );
+      });
 
       await expect(
         useCase.execute(actor, {

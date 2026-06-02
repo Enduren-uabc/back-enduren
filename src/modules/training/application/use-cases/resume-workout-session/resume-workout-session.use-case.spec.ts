@@ -31,12 +31,12 @@ describe('ResumeWorkoutSessionUseCase', () => {
 
   describe('RF-12.0.7: Resume in-progress session', () => {
     it('should return the in-progress session for the user', async () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        'user-1',
-        'routine-1',
-        [exercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
 
       (
         workoutSessionRepository.findInProgressByUserId as jest.Mock
@@ -58,12 +58,12 @@ describe('ResumeWorkoutSessionUseCase', () => {
     });
 
     it('should return exercises with current set states', async () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        'user-1',
-        'routine-1',
-        [exercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
 
       (
         workoutSessionRepository.findInProgressByUserId as jest.Mock

@@ -251,12 +251,12 @@ describe('StartWorkoutSessionUseCase', () => {
   describe('SESSION_ALREADY_IN_PROGRESS error', () => {
     it('should reject when user already has a session in progress', async () => {
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
-      const existingSession = WorkoutSession.create(
-        'existing-session',
-        'user-1',
-        'routine-1',
-        [],
-      );
+      const existingSession = WorkoutSession.create({
+        id: 'existing-session',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [],
+      });
       (
         workoutSessionRepository.findInProgressByUserId as jest.Mock
       ).mockResolvedValue(existingSession);
@@ -277,7 +277,7 @@ describe('StartWorkoutSessionUseCase', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_IN_PROGRESS,
-        );
+        });
       }
     });
   });

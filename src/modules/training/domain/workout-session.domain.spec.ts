@@ -18,12 +18,12 @@ describe('WorkoutSession domain entity', () => {
 
   describe('create', () => {
     it('should create a session in IN_PROGRESS state', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       expect(session.id).toBe('session-1');
       expect(session.userId).toBe(validUserId);
@@ -37,31 +37,31 @@ describe('WorkoutSession domain entity', () => {
 
     it('should require a userId', () => {
       expect(() =>
-        WorkoutSession.create('session-1', '', validRoutineId, [validExercise]),
+        WorkoutSession.create({ id: 'session-1', userId: '', routineId: validRoutineId, exercises: [validExercise] }),
       ).toThrow(WorkoutSessionDomainError);
 
       try {
-        WorkoutSession.create('session-1', '', validRoutineId, [validExercise]);
+        WorkoutSession.create({ id: 'session-1', userId: '', routineId: validRoutineId, exercises: [validExercise] });
       } catch (error) {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
-        );
+        });
       }
     });
 
     it('should require a routineId', () => {
       expect(() =>
-        WorkoutSession.create('session-1', validUserId, '', [validExercise]),
+        WorkoutSession.create({ id: 'session-1', userId: validUserId, routineId: '', exercises: [validExercise] }),
       ).toThrow(WorkoutSessionDomainError);
 
       try {
-        WorkoutSession.create('session-1', validUserId, '', [validExercise]);
+        WorkoutSession.create({ id: 'session-1', userId: validUserId, routineId: '', exercises: [validExercise] });
       } catch (error) {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
-        );
+        });
       }
     });
 
@@ -73,12 +73,12 @@ describe('WorkoutSession domain entity', () => {
         { setNumber: 4, reps: 8, weight: 80 },
       ]);
 
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise, exercise2],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise, exercise2],
+      });
 
       expect(session.exercises).toHaveLength(2);
       expect(session.exercises[0].exerciseId).toBe('exercise-1');
@@ -86,12 +86,12 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should create a session with empty exercises array', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [],
+      });
 
       expect(session.exercises).toHaveLength(0);
     });
@@ -99,12 +99,12 @@ describe('WorkoutSession domain entity', () => {
 
   describe('finish', () => {
     it('should transition from IN_PROGRESS to FINISHED', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       const finished = session.finish();
 
@@ -117,12 +117,12 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should throw when finishing an already finished session', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       const finished = session.finish();
 
       expect(() => finished.finish()).toThrow(WorkoutSessionDomainError);
@@ -133,17 +133,17 @@ describe('WorkoutSession domain entity', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        );
+        });
       }
     });
 
     it('should preserve exercises after finishing', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       const finished = session.finish();
 
       expect(finished.exercises[0].exerciseId).toBe('exercise-1');
@@ -153,23 +153,23 @@ describe('WorkoutSession domain entity', () => {
 
   describe('state checks', () => {
     it('isInProgress should return true for IN_PROGRESS session', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       expect(session.isInProgress()).toBe(true);
       expect(session.isFinished()).toBe(false);
     });
 
     it('isFinished should return true for FINISHED session', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       const finished = session.finish();
       expect(finished.isInProgress()).toBe(false);
       expect(finished.isFinished()).toBe(true);
@@ -189,7 +189,7 @@ describe('WorkoutSession domain entity', () => {
         0,
         startedAt,
         finishedAt,
-      );
+      });
 
       expect(session.id).toBe('session-1');
       expect(session.status).toBe(WorkoutSessionStatus.FINISHED);
@@ -201,12 +201,12 @@ describe('WorkoutSession domain entity', () => {
 
   describe('registerSetRepsAndWeight', () => {
     it('should register reps and weight for a set at valid exercise index', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       const updated = session.registerSetRepsAndWeight(0, 1, 10, 50);
 
@@ -216,41 +216,41 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
-      let session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       session = session.finish();
 
       expect(() => session.registerSetRepsAndWeight(0, 1, 10, 50)).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
 
       try {
         session.registerSetRepsAndWeight(0, 1, 10, 50);
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        );
+        });
       }
     });
 
     it('should throw SESSION_EXERCISE_INDEX_INVALID when exercise index is out of range', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       expect(() => session.registerSetRepsAndWeight(-1, 1, 10, 50)).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
       expect(() => session.registerSetRepsAndWeight(5, 1, 10, 50)).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
 
       try {
         session.registerSetRepsAndWeight(5, 1, 10, 50);
@@ -262,12 +262,12 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should not mutate the original session', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       const updated = session.registerSetRepsAndWeight(0, 1, 10, 50);
 
@@ -278,12 +278,12 @@ describe('WorkoutSession domain entity', () => {
 
   describe('markSetAsCompleted', () => {
     it('should mark a set as completed after registering reps and weight', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       const withReps = session.registerSetRepsAndWeight(0, 1, 10, 50);
       const completed = withReps.markSetAsCompleted(0, 1);
 
@@ -293,38 +293,38 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
-      let session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
       session = session.finish();
 
       expect(() => session.markSetAsCompleted(0, 1)).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
 
       try {
         session.markSetAsCompleted(0, 1);
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        );
+        });
       }
     });
 
     it('should throw SESSION_EXERCISE_INDEX_INVALID with invalid exercise index', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       expect(() => session.markSetAsCompleted(5, 1)).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
     });
   });
 
@@ -336,12 +336,12 @@ describe('WorkoutSession domain entity', () => {
     ]);
 
     it('should advance to next exercise when all sets are completed', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise, exercise2],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise, exercise2],
+      });
 
       let updated = session.registerSetRepsAndWeight(0, 1, 10, 50);
       updated = updated.markSetAsCompleted(0, 1);
@@ -356,68 +356,68 @@ describe('WorkoutSession domain entity', () => {
     });
 
     it('should throw SESSION_EXERCISE_SETS_INCOMPLETE when sets are not all completed', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise, exercise2],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise, exercise2],
+      });
 
       const withReps = session.registerSetRepsAndWeight(0, 1, 10, 50);
 
       expect(() => withReps.advanceToNextExercise()).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
 
       try {
         withReps.advanceToNextExercise();
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_EXERCISE_SETS_INCOMPLETE,
-        );
+        });
       }
     });
 
     it('should throw SESSION_ALREADY_AT_LAST_EXERCISE when at last exercise', () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise],
+      });
 
       expect(() => session.advanceToNextExercise()).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
 
       try {
         session.advanceToNextExercise();
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_AT_LAST_EXERCISE,
-        );
+        });
       }
     });
 
     it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
-      let session = WorkoutSession.create(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        [validExercise, exercise2],
-      );
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        exercises: [validExercise, exercise2],
+      });
       session = session.finish();
 
       expect(() => session.advanceToNextExercise()).toThrow(
         WorkoutSessionDomainError,
-      );
+      });
 
       try {
         session.advanceToNextExercise();
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        );
+        });
       }
     });
   });

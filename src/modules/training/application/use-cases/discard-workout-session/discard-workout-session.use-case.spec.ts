@@ -29,19 +29,19 @@ describe('DiscardWorkoutSessionUseCase', () => {
 
   describe('Happy path: discard in-progress session', () => {
     it('should discard an in-progress session', async () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        'user-1',
-        'routine-1',
-        [exercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      );
+      });
       (workoutSessionRepository.save as jest.Mock).mockImplementation(
         (s: WorkoutSession) => Promise.resolve(s),
-      );
+      });
 
       const result = await useCase.execute(actor, {
         sessionId: 'session-1',
@@ -73,15 +73,15 @@ describe('DiscardWorkoutSessionUseCase', () => {
     });
 
     it('should reject when session belongs to another user', async () => {
-      const otherUserSession = WorkoutSession.create(
-        'session-2',
-        'user-2',
-        'routine-1',
-        [exercise],
-      );
+      const otherUserSession = WorkoutSession.create({
+        id: 'session-2',
+        userId: 'user-2',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      );
+      });
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-2' }),
@@ -91,17 +91,17 @@ describe('DiscardWorkoutSessionUseCase', () => {
 
   describe('session not in progress', () => {
     it('should reject when session is already finished', async () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        'user-1',
-        'routine-1',
-        [exercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       const finishedSession = session.finish();
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         finishedSession,
-      );
+      });
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-1' }),
@@ -113,22 +113,22 @@ describe('DiscardWorkoutSessionUseCase', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        );
+        });
       }
     });
 
     it('should reject when session is already discarded', async () => {
-      const session = WorkoutSession.create(
-        'session-1',
-        'user-1',
-        'routine-1',
-        [exercise],
-      );
+      const session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       const discardedSession = session.discard();
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         discardedSession,
-      );
+      });
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-1' }),
@@ -140,7 +140,7 @@ describe('DiscardWorkoutSessionUseCase', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        );
+        });
       }
     });
   });

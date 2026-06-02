@@ -438,7 +438,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       undefined;
 
     const fullName =
-      holderFullName?.length >= 5 && !holderFullName.includes('|')
+      holderFullName != null &&
+      holderFullName.length >= 5 &&
+      !holderFullName.includes('|')
         ? holderFullName
         : (this.extractByRegex(content, [
             /(?:Nombre|Name|Nombre\s+Completo|Full\s+Name|Student\s+Name)[:\s]*([^\n]{2,60})/i,

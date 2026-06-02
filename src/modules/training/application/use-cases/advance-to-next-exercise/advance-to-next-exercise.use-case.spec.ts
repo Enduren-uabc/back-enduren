@@ -97,15 +97,15 @@ describe('AdvanceToNextExerciseUseCase', () => {
     });
 
     it('should reject when session belongs to another user', async () => {
-      const otherUserSession = WorkoutSession.create(
-        'session-2',
-        'user-2',
-        'routine-1',
-        [exercise1, exercise2],
-      );
+      const otherUserSession = WorkoutSession.create({
+        id: 'session-2',
+        userId: 'user-2',
+        routineId: 'routine-1',
+        exercises: [exercise1, exercise2],
+      });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      );
+      });
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-2' }),
@@ -123,7 +123,7 @@ describe('AdvanceToNextExerciseUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      );
+      });
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-1' }),

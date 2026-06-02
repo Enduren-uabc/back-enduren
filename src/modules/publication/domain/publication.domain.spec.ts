@@ -9,12 +9,12 @@ import { PublicationTitle } from './value-objects/publication-title.value-object
 
 describe('Publication domain', () => {
   it('creates a base publication for an author without fitness linkage', () => {
-    const publication = Publication.create(
-      'publication-1',
-      'user-1',
-      PublicationTitle.create('Entrenamiento del dia'),
-      PublicationContent.create('Hoy complete mi sesion.'),
-    );
+    const publication = Publication.create({
+      id: 'publication-1',
+      authorUserId: 'user-1',
+      title: PublicationTitle.create('Entrenamiento del dia'),
+      content: PublicationContent.create('Hoy complete mi sesion.'),
+    });
 
     expect(publication.id).toBe('publication-1');
     expect(publication.authorUserId).toBe('user-1');
@@ -25,21 +25,21 @@ describe('Publication domain', () => {
 
   it('rejects a publication without author', () => {
     expect(() =>
-      Publication.create(
-        'publication-1',
-        '',
-        PublicationTitle.create('Titulo'),
-        PublicationContent.create('Contenido'),
-      ),
+      Publication.create({
+        id: 'publication-1',
+        authorUserId: '',
+        title: PublicationTitle.create('Titulo'),
+        content: PublicationContent.create('Contenido'),
+      }),
     ).toThrow(PublicationDomainError);
 
     try {
-      Publication.create(
-        'publication-1',
-        '',
-        PublicationTitle.create('Titulo'),
-        PublicationContent.create('Contenido'),
-      );
+      Publication.create({
+        id: 'publication-1',
+        authorUserId: '',
+        title: PublicationTitle.create('Titulo'),
+        content: PublicationContent.create('Contenido'),
+      });
     } catch (error) {
       expect((error as PublicationDomainError).code).toBe(
         PublicationErrorCode.PUBLICATION_AUTHOR_REQUIRED,
@@ -57,12 +57,12 @@ describe('Publication domain', () => {
   });
 
   it('updates title and content without changing author', () => {
-    const publication = Publication.create(
-      'publication-1',
-      'user-1',
-      PublicationTitle.create('Titulo inicial'),
-      PublicationContent.create('Contenido inicial'),
-    );
+    const publication = Publication.create({
+      id: 'publication-1',
+      authorUserId: 'user-1',
+      title: PublicationTitle.create('Titulo inicial'),
+      content: PublicationContent.create('Contenido inicial'),
+    });
 
     const updated = publication.update({
       title: PublicationTitle.create('Titulo actualizado'),
@@ -77,13 +77,13 @@ describe('Publication domain', () => {
   });
 
   it('creates and updates publication media URLs', () => {
-    const publication = Publication.create(
-      'publication-1',
-      'user-1',
-      PublicationTitle.create('Titulo'),
-      PublicationContent.create('Contenido'),
-      PublicationMediaUrls.create(['https://cdn.example.com/image-a.jpg']),
-    );
+    const publication = Publication.create({
+      id: 'publication-1',
+      authorUserId: 'user-1',
+      title: PublicationTitle.create('Titulo'),
+      content: PublicationContent.create('Contenido'),
+      mediaUrls: PublicationMediaUrls.create(['https://cdn.example.com/image-a.jpg']),
+    });
 
     const updated = publication.update({
       mediaUrls: PublicationMediaUrls.create([
@@ -106,12 +106,12 @@ describe('Publication domain', () => {
   });
 
   it('rejects ownership mismatch', () => {
-    const publication = Publication.create(
-      'publication-1',
-      'user-1',
-      PublicationTitle.create('Titulo'),
-      PublicationContent.create('Contenido'),
-    );
+    const publication = Publication.create({
+      id: 'publication-1',
+      authorUserId: 'user-1',
+      title: PublicationTitle.create('Titulo'),
+      content: PublicationContent.create('Contenido'),
+    });
 
     expect(() => publication.ensureOwnedBy('user-2')).toThrow(
       PublicationDomainError,
