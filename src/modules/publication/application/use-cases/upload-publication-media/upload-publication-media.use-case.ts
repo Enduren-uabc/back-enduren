@@ -45,14 +45,14 @@ export class UploadPublicationMediaUseCase {
       315360000,
     );
 
-    const media = PublicationMedia.create(
-      randomUUID(),
-      signedUrl,
-      input.file.originalname,
-      input.file.size,
-      input.file.mimetype,
-      input.sortOrder,
-    );
+    const media = PublicationMedia.create({
+      id: randomUUID(),
+      url: signedUrl,
+      fileName: input.file.originalname,
+      fileSize: input.file.size,
+      mimeType: input.file.mimetype,
+      sortOrder: input.sortOrder,
+    });
 
     await this.mediaRepository.save(media);
 

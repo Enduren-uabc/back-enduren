@@ -34,7 +34,7 @@ export class RemoveSetFromExerciseUseCase {
       input.sessionId,
     );
 
-    if (!session || session.userId !== actor.userId) {
+    if (session?.userId !== actor.userId) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_NOT_FOUND,
         'Workout session not found',

@@ -102,9 +102,7 @@ export class ReplaceAssignedRoutineUseCase {
             sets: ex.sets.length,
             reps: firstSet ? firstSet.reps : 10,
             restSeconds:
-              firstSet && firstSet.restSeconds != null
-                ? firstSet.restSeconds
-                : 60,
+              firstSet?.restSeconds != null ? firstSet.restSeconds : 60,
             order: index + 1,
           });
         }),

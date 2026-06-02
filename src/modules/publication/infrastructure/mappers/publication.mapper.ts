@@ -7,14 +7,14 @@ import { PublicationTypeormEntity } from '../persistence/typeorm/entities/public
 
 export class PublicationPersistenceMapper {
   public static toDomain(ormEntity: PublicationTypeormEntity): Publication {
-    return Publication.reconstitute(
-      ormEntity.id,
-      ormEntity.authorUserId,
-      PublicationTitle.reconstitute(ormEntity.title),
-      PublicationContent.reconstitute(ormEntity.content),
-      PublicationMediaUrls.reconstitute(ormEntity.mediaUrls ?? []),
-      ormEntity.workoutSessionId,
-      ormEntity.exerciseSummary
+    return Publication.reconstitute({
+      id: ormEntity.id,
+      authorUserId: ormEntity.authorUserId,
+      title: PublicationTitle.reconstitute(ormEntity.title),
+      content: PublicationContent.reconstitute(ormEntity.content),
+      mediaUrls: PublicationMediaUrls.reconstitute(ormEntity.mediaUrls ?? []),
+      workoutSessionId: ormEntity.workoutSessionId,
+      exerciseSummary: ormEntity.exerciseSummary
         ? ExerciseSummary.create(
             ormEntity.exerciseSummary as unknown as {
               totalExercises: number;
@@ -42,9 +42,9 @@ export class PublicationPersistenceMapper {
             },
           )
         : null,
-      ormEntity.createdAt,
-      ormEntity.updatedAt,
-    );
+      createdAt: ormEntity.createdAt,
+      updatedAt: ormEntity.updatedAt,
+    });
   }
 
   public static toOrm(publication: Publication): PublicationTypeormEntity {

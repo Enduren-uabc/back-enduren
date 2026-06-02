@@ -20,6 +20,21 @@ export interface CreateReminderProps {
   nextActivationAt: Date;
 }
 
+export interface TrainingReminderProps {
+  id: string;
+  userId: string;
+  routineId: string;
+  routineName: string;
+  dayOfWeek: DayOfWeek;
+  time: string;
+  timezone: string;
+  status: ReminderStatus;
+  nextActivationAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
 export class TrainingReminder {
   public readonly id: string;
   public readonly userId: string;
@@ -34,82 +49,43 @@ export class TrainingReminder {
   public readonly updatedAt: Date;
   public readonly deletedAt: Date | null;
 
-  private constructor(
-    id: string,
-    userId: string,
-    routineId: string,
-    routineName: string,
-    dayOfWeek: DayOfWeek,
-    time: string,
-    timezone: string,
-    status: ReminderStatus,
-    nextActivationAt: Date | null,
-    createdAt: Date,
-    updatedAt: Date,
-    deletedAt: Date | null,
-  ) {
-    this.id = id;
-    this.userId = userId;
-    this.routineId = routineId;
-    this.routineName = routineName;
-    this.dayOfWeek = dayOfWeek;
-    this.time = time;
-    this.timezone = timezone;
-    this.status = status;
-    this.nextActivationAt = nextActivationAt;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.deletedAt = deletedAt;
+  private constructor(props: TrainingReminderProps) {
+    this.id = props.id;
+    this.userId = props.userId;
+    this.routineId = props.routineId;
+    this.routineName = props.routineName;
+    this.dayOfWeek = props.dayOfWeek;
+    this.time = props.time;
+    this.timezone = props.timezone;
+    this.status = props.status;
+    this.nextActivationAt = props.nextActivationAt;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
+    this.deletedAt = props.deletedAt;
   }
 
   public static create(props: CreateReminderProps): TrainingReminder {
     assertValidDayOfWeek(props.dayOfWeek);
     assertValidTime(props.time);
 
-    return new TrainingReminder(
-      crypto.randomUUID(),
-      props.userId,
-      props.routineId,
-      props.routineName,
-      props.dayOfWeek,
-      props.time,
-      props.timezone,
-      'activo',
-      props.nextActivationAt,
-      new Date(),
-      new Date(),
-      null,
-    );
+    return new TrainingReminder({
+      id: crypto.randomUUID(),
+      userId: props.userId,
+      routineId: props.routineId,
+      routineName: props.routineName,
+      dayOfWeek: props.dayOfWeek,
+      time: props.time,
+      timezone: props.timezone,
+      status: 'activo',
+      nextActivationAt: props.nextActivationAt,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
   }
 
-  public static reconstitute(props: {
-    id: string;
-    userId: string;
-    routineId: string;
-    routineName: string;
-    dayOfWeek: DayOfWeek;
-    time: string;
-    timezone: string;
-    status: ReminderStatus;
-    nextActivationAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-    deletedAt: Date | null;
-  }): TrainingReminder {
-    return new TrainingReminder(
-      props.id,
-      props.userId,
-      props.routineId,
-      props.routineName,
-      props.dayOfWeek,
-      props.time,
-      props.timezone,
-      props.status,
-      props.nextActivationAt,
-      props.createdAt,
-      props.updatedAt,
-      props.deletedAt,
-    );
+  public static reconstitute(props: TrainingReminderProps): TrainingReminder {
+    return new TrainingReminder(props);
   }
 
   public edit(props: {
@@ -131,20 +107,20 @@ export class TrainingReminder {
     if (props.dayOfWeek) assertValidDayOfWeek(props.dayOfWeek);
     if (props.time) assertValidTime(props.time);
 
-    return new TrainingReminder(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.routineName,
-      newDay,
-      newTime,
-      this.timezone,
-      this.status,
-      props.nextActivationAt ?? this.nextActivationAt,
-      this.createdAt,
-      new Date(),
-      this.deletedAt,
-    );
+    return new TrainingReminder({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      routineName: this.routineName,
+      dayOfWeek: newDay,
+      time: newTime,
+      timezone: this.timezone,
+      status: this.status,
+      nextActivationAt: props.nextActivationAt ?? this.nextActivationAt,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+      deletedAt: this.deletedAt,
+    });
   }
 
   public delete(): TrainingReminder {
@@ -156,20 +132,20 @@ export class TrainingReminder {
       );
     }
 
-    return new TrainingReminder(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.routineName,
-      this.dayOfWeek,
-      this.time,
-      this.timezone,
-      'eliminado',
-      null,
-      this.createdAt,
-      new Date(),
-      new Date(),
-    );
+    return new TrainingReminder({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      routineName: this.routineName,
+      dayOfWeek: this.dayOfWeek,
+      time: this.time,
+      timezone: this.timezone,
+      status: 'eliminado',
+      nextActivationAt: null,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+      deletedAt: new Date(),
+    });
   }
 
   public recalculateNextActivation(): Date {
@@ -201,20 +177,20 @@ export class TrainingReminder {
   }
 
   public withNextActivation(date: Date | null): TrainingReminder {
-    return new TrainingReminder(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.routineName,
-      this.dayOfWeek,
-      this.time,
-      this.timezone,
-      this.status,
-      date,
-      this.createdAt,
-      new Date(),
-      this.deletedAt,
-    );
+    return new TrainingReminder({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      routineName: this.routineName,
+      dayOfWeek: this.dayOfWeek,
+      time: this.time,
+      timezone: this.timezone,
+      status: this.status,
+      nextActivationAt: date,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+      deletedAt: this.deletedAt,
+    });
   }
 
   public isOwnedBy(userId: string): boolean {

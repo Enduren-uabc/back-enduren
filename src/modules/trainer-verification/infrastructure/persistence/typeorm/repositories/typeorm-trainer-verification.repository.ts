@@ -513,9 +513,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     );
   }
 
-  private mapExtractedCertificateData(
-    verification: TrainerVerification,
-  ): {
+  private mapExtractedCertificateData(verification: TrainerVerification): {
     fullName: string;
     certificateName: string;
     issuingOrganization: string;
@@ -535,9 +533,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       fullName: cert.fullName,
       certificateName: cert.certificateName,
       issuingOrganization: cert.issuingOrganization,
-      issueDate: cert.issueDate
-        ? cert.issueDate.toISOString()
-        : undefined,
+      issueDate: cert.issueDate ? cert.issueDate.toISOString() : undefined,
       expirationDate: cert.expirationDate
         ? cert.expirationDate.toISOString()
         : undefined,
@@ -549,9 +545,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     };
   }
 
-  private mapExtractedIdData(
-    verification: TrainerVerification,
-  ): {
+  private mapExtractedIdData(verification: TrainerVerification): {
     fullName: string;
     documentType: string;
     issuingCountry?: string;
@@ -569,9 +563,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       fullName: idData.fullName,
       documentType: idData.documentType,
       issuingCountry: idData.issuingCountry ?? undefined,
-      birthDate: idData.birthDate
-        ? idData.birthDate.toISOString()
-        : undefined,
+      birthDate: idData.birthDate ? idData.birthDate.toISOString() : undefined,
       expirationDate: idData.expirationDate
         ? idData.expirationDate.toISOString()
         : undefined,
@@ -584,9 +576,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
     };
   }
 
-  private mapScoringResult(
-    verification: TrainerVerification,
-  ): {
+  private mapScoringResult(verification: TrainerVerification): {
     riskScore: number;
     riskLevel: string;
     recommendedAction: string;

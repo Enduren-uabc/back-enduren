@@ -7,6 +7,28 @@ import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-
 import type { RoutineTargetAudience } from '../value-objects/routine-target-audience.value-object';
 import { Exercise } from './exercise.entity';
 
+export interface RoutineProps {
+  id: string;
+  name: string;
+  userId: string;
+  days: RoutineDay[];
+  isActive: boolean;
+  trainingStrategyKey: string | null;
+  targetAudience: RoutineTargetAudience;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateRoutineParams {
+  id: string;
+  name: string;
+  userId: string;
+  days: RoutineDay[];
+  isActive?: boolean;
+  trainingStrategyKey?: string | null;
+  targetAudience?: RoutineTargetAudience;
+}
+
 export class Routine {
   public readonly id: string;
   public readonly name: string;
@@ -18,26 +40,16 @@ export class Routine {
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
-  private constructor(
-    id: string,
-    name: string,
-    userId: string,
-    days: RoutineDay[],
-    isActive: boolean,
-    trainingStrategyKey: string | null,
-    targetAudience: RoutineTargetAudience,
-    createdAt: Date,
-    updatedAt: Date,
-  ) {
-    this.id = id;
-    this.name = name;
-    this.userId = userId;
-    this.days = days;
-    this.isActive = isActive;
-    this.trainingStrategyKey = trainingStrategyKey;
-    this.targetAudience = targetAudience;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
+  private constructor(props: RoutineProps) {
+    this.id = props.id;
+    this.name = props.name;
+    this.userId = props.userId;
+    this.days = props.days;
+    this.isActive = props.isActive;
+    this.trainingStrategyKey = props.trainingStrategyKey;
+    this.targetAudience = props.targetAudience;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 
   /**
@@ -46,70 +58,45 @@ export class Routine {
    * - At least one day is required.
    * - isActive defaults to false unless explicitly set.
    */
-  public static create(
-    id: string,
-    name: string,
-    userId: string,
-    days: RoutineDay[],
-    isActive: boolean = false,
-    trainingStrategyKey: string | null = null,
-    targetAudience: RoutineTargetAudience = 'self',
-  ): Routine {
-    if (!name || name.trim().length === 0) {
+  public static create(params: CreateRoutineParams): Routine {
+    if (!params.name || params.name.trim().length === 0) {
       throw new RoutineDomainError(
         RoutineErrorCode.ROUTINE_NAME_REQUIRED,
         'Routine name is required',
-        { name },
+        { name: params.name },
       );
     }
 
-    if (!days || days.length === 0) {
+    if (!params.days || params.days.length === 0) {
       throw new RoutineDomainError(
         RoutineErrorCode.ROUTINE_DAYS_MINIMUM,
         'Routine must have at least one day',
-        { daysCount: days?.length ?? 0 },
+        { daysCount: params.days?.length ?? 0 },
       );
     }
 
     const now = new Date();
-    return new Routine(
-      id,
-      name.trim(),
-      userId,
-      [...days],
-      isActive,
-      trainingStrategyKey,
-      targetAudience,
-      now,
-      now,
-    );
+    return new Routine({
+      id: params.id,
+      name: params.name.trim(),
+      userId: params.userId,
+      days: [...params.days],
+      isActive: params.isActive ?? false,
+      trainingStrategyKey: params.trainingStrategyKey ?? null,
+      targetAudience: params.targetAudience ?? 'self',
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   /**
    * Reconstitutes a Routine from persistence without re-running creation invariants.
    */
-  public static reconstitute(
-    id: string,
-    name: string,
-    userId: string,
-    days: RoutineDay[],
-    isActive: boolean,
-    trainingStrategyKey: string | null,
-    createdAt: Date,
-    updatedAt: Date,
-    targetAudience: RoutineTargetAudience = 'self',
-  ): Routine {
-    return new Routine(
-      id,
-      name,
-      userId,
-      [...days],
-      isActive,
-      trainingStrategyKey,
-      targetAudience,
-      createdAt,
-      updatedAt,
-    );
+  public static reconstitute(props: RoutineProps): Routine {
+    return new Routine({
+      ...props,
+      days: [...props.days],
+    });
   }
 
   /**
@@ -125,17 +112,17 @@ export class Routine {
       );
     }
 
-    return new Routine(
-      this.id,
-      newName.trim(),
-      this.userId,
-      this.days,
-      this.isActive,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: newName.trim(),
+      userId: this.userId,
+      days: this.days,
+      isActive: this.isActive,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -143,17 +130,17 @@ export class Routine {
    * No domain invariants to enforce beyond the field change.
    */
   public activate(): Routine {
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      this.days,
-      true,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: this.days,
+      isActive: true,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -161,17 +148,17 @@ export class Routine {
    * No domain invariants to enforce beyond the field change.
    */
   public deactivate(): Routine {
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      this.days,
-      false,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: this.days,
+      isActive: false,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -179,17 +166,17 @@ export class Routine {
    * Returns a new Routine with the updated strategy key.
    */
   public setTrainingStrategy(key: string | null): Routine {
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      this.days,
-      this.isActive,
-      key,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: this.days,
+      isActive: this.isActive,
+      trainingStrategyKey: key,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -211,17 +198,17 @@ export class Routine {
     const updatedDays = [...this.days];
     updatedDays[dayIndex] = updatedDay;
 
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      updatedDays,
-      this.isActive,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: updatedDays,
+      isActive: this.isActive,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -243,17 +230,17 @@ export class Routine {
     const updatedDays = [...this.days];
     updatedDays[dayIndex] = updatedDay;
 
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      updatedDays,
-      this.isActive,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: updatedDays,
+      isActive: this.isActive,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -281,17 +268,17 @@ export class Routine {
 
     const updatedDays = this.days.filter((_, i) => i !== dayIndex);
 
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      updatedDays,
-      this.isActive,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: updatedDays,
+      isActive: this.isActive,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   /**
@@ -317,16 +304,16 @@ export class Routine {
     const updatedDays = [...this.days];
     updatedDays[dayIndex] = updatedDay;
 
-    return new Routine(
-      this.id,
-      this.name,
-      this.userId,
-      updatedDays,
-      this.isActive,
-      this.trainingStrategyKey,
-      this.targetAudience,
-      this.createdAt,
-      new Date(),
-    );
+    return new Routine({
+      id: this.id,
+      name: this.name,
+      userId: this.userId,
+      days: updatedDays,
+      isActive: this.isActive,
+      trainingStrategyKey: this.trainingStrategyKey,
+      targetAudience: this.targetAudience,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 }

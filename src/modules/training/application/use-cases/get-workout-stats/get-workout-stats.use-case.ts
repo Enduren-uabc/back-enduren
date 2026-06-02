@@ -56,7 +56,6 @@ export class GetWorkoutStatsUseCase {
     }
 
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const lastSessionDay = uniqueDays[uniqueDays.length - 1];
 
     const lastDate = new Date(lastSessionDay);

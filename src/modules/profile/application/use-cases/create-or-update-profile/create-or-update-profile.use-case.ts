@@ -5,6 +5,8 @@ import {
   ExperienceLevel,
   MainGoal,
   WeightUnit,
+  CreateProfileParams,
+  UpdateProfileParams,
 } from '../../../domain/entities/profile.entity';
 import {
   ProfileRepository,
@@ -58,34 +60,34 @@ export class CreateOrUpdateProfileUseCase {
     let profile: Profile;
 
     if (existing) {
-      existing.update(
-        input.fullName,
-        input.birthDate,
-        input.gender,
-        input.weight,
-        input.height,
-        input.experienceLevel,
-        input.mainGoal,
-        input.daysAvailablePerWeek ?? 3,
-        input.weightUnit ?? 'kg',
-        input.defaultTrainingStrategyKey ?? existing.defaultTrainingStrategyKey,
-      );
+      existing.update({
+        fullName: input.fullName,
+        birthDate: input.birthDate,
+        gender: input.gender,
+        weight: input.weight,
+        height: input.height,
+        experienceLevel: input.experienceLevel,
+        mainGoal: input.mainGoal,
+        daysAvailablePerWeek: input.daysAvailablePerWeek ?? 3,
+        weightUnit: input.weightUnit ?? 'kg',
+        defaultTrainingStrategyKey: input.defaultTrainingStrategyKey ?? existing.defaultTrainingStrategyKey,
+      });
       profile = await this.profileRepository.save(existing);
     } else {
-      profile = Profile.create(
-        crypto.randomUUID(),
-        input.userId,
-        input.fullName,
-        input.birthDate,
-        input.gender,
-        input.weight,
-        input.height,
-        input.experienceLevel,
-        input.mainGoal,
-        input.daysAvailablePerWeek ?? 3,
-        input.weightUnit ?? 'kg',
-        input.defaultTrainingStrategyKey ?? null,
-      );
+      const createParams: CreateProfileParams = {
+        userId: input.userId,
+        fullName: input.fullName,
+        birthDate: input.birthDate,
+        gender: input.gender,
+        weight: input.weight,
+        height: input.height,
+        experienceLevel: input.experienceLevel,
+        mainGoal: input.mainGoal,
+        daysAvailablePerWeek: input.daysAvailablePerWeek ?? 3,
+        weightUnit: input.weightUnit ?? 'kg',
+        defaultTrainingStrategyKey: input.defaultTrainingStrategyKey ?? null,
+      };
+      profile = Profile.create(createParams);
       profile = await this.profileRepository.save(profile);
     }
 

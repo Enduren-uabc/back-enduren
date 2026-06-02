@@ -7,6 +7,28 @@ import { PublicationMediaUrls } from '../value-objects/publication-media-urls.va
 import { PublicationTitle } from '../value-objects/publication-title.value-object';
 import { ExerciseSummary } from '../value-objects/exercise-summary.value-object';
 
+export interface PublicationProps {
+  id: string;
+  authorUserId: string;
+  title: PublicationTitle;
+  content: PublicationContent;
+  mediaUrls: PublicationMediaUrls;
+  workoutSessionId: string | null;
+  exerciseSummary: ExerciseSummary | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreatePublicationParams {
+  id: string;
+  authorUserId: string;
+  title: PublicationTitle;
+  content: PublicationContent;
+  mediaUrls?: PublicationMediaUrls;
+  workoutSessionId?: string | null;
+  exerciseSummary?: ExerciseSummary | null;
+}
+
 export class Publication {
   public readonly id: string;
   public readonly authorUserId: string;
@@ -18,81 +40,43 @@ export class Publication {
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
-  private constructor(
-    id: string,
-    authorUserId: string,
-    title: PublicationTitle,
-    content: PublicationContent,
-    mediaUrls: PublicationMediaUrls,
-    workoutSessionId: string | null,
-    exerciseSummary: ExerciseSummary | null,
-    createdAt: Date,
-    updatedAt: Date,
-  ) {
-    this.id = id;
-    this.authorUserId = authorUserId;
-    this.title = title;
-    this.content = content;
-    this.mediaUrls = mediaUrls;
-    this.workoutSessionId = workoutSessionId;
-    this.exerciseSummary = exerciseSummary;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
+  private constructor(props: PublicationProps) {
+    this.id = props.id;
+    this.authorUserId = props.authorUserId;
+    this.title = props.title;
+    this.content = props.content;
+    this.mediaUrls = props.mediaUrls;
+    this.workoutSessionId = props.workoutSessionId;
+    this.exerciseSummary = props.exerciseSummary;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 
-  public static create(
-    id: string,
-    authorUserId: string,
-    title: PublicationTitle,
-    content: PublicationContent,
-    mediaUrls: PublicationMediaUrls = PublicationMediaUrls.create(),
-    workoutSessionId?: string | null,
-    exerciseSummary?: ExerciseSummary | null,
-  ): Publication {
-    if (!authorUserId || authorUserId.trim().length === 0) {
+  public static create(params: CreatePublicationParams): Publication {
+    if (!params.authorUserId || params.authorUserId.trim().length === 0) {
       throw new PublicationDomainError(
         PublicationErrorCode.PUBLICATION_AUTHOR_REQUIRED,
         'Publication author is required',
-        { authorUserId },
+        { authorUserId: params.authorUserId },
       );
     }
 
     const now = new Date();
-    return new Publication(
-      id,
-      authorUserId.trim(),
-      title,
-      content,
-      mediaUrls,
-      workoutSessionId ?? null,
-      exerciseSummary ?? null,
-      now,
-      now,
-    );
+    return new Publication({
+      id: params.id,
+      authorUserId: params.authorUserId.trim(),
+      title: params.title,
+      content: params.content,
+      mediaUrls: params.mediaUrls ?? PublicationMediaUrls.create(),
+      workoutSessionId: params.workoutSessionId ?? null,
+      exerciseSummary: params.exerciseSummary ?? null,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
-  public static reconstitute(
-    id: string,
-    authorUserId: string,
-    title: PublicationTitle,
-    content: PublicationContent,
-    mediaUrls: PublicationMediaUrls,
-    workoutSessionId: string | null,
-    exerciseSummary: ExerciseSummary | null,
-    createdAt: Date,
-    updatedAt: Date,
-  ): Publication {
-    return new Publication(
-      id,
-      authorUserId,
-      title,
-      content,
-      mediaUrls,
-      workoutSessionId,
-      exerciseSummary,
-      createdAt,
-      updatedAt,
-    );
+  public static reconstitute(props: PublicationProps): Publication {
+    return new Publication(props);
   }
 
   public ensureOwnedBy(actorUserId: string): void {
@@ -122,16 +106,16 @@ export class Publication {
       );
     }
 
-    return new Publication(
-      this.id,
-      this.authorUserId,
-      input.title ?? this.title,
-      input.content ?? this.content,
-      input.mediaUrls ?? this.mediaUrls,
-      this.workoutSessionId,
-      this.exerciseSummary,
-      this.createdAt,
-      new Date(),
-    );
+    return new Publication({
+      id: this.id,
+      authorUserId: this.authorUserId,
+      title: input.title ?? this.title,
+      content: input.content ?? this.content,
+      mediaUrls: input.mediaUrls ?? this.mediaUrls,
+      workoutSessionId: this.workoutSessionId,
+      exerciseSummary: this.exerciseSummary,
+      createdAt: this.createdAt,
+      updatedAt: new Date(),
+    });
   }
 }

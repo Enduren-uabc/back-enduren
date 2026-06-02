@@ -45,19 +45,19 @@ export class WorkoutSessionMapper {
         );
       });
 
-    return WorkoutSession.reconstitute(
-      ormEntity.id,
-      ormEntity.userId,
-      ormEntity.routineId,
-      ormEntity.status as WorkoutSessionStatus,
+    return WorkoutSession.reconstitute({
+      id: ormEntity.id,
+      userId: ormEntity.userId,
+      routineId: ormEntity.routineId,
+      status: ormEntity.status as WorkoutSessionStatus,
       exercises,
-      ormEntity.currentExerciseIndex ?? 0,
-      ormEntity.startedAt,
-      ormEntity.finishedAt,
-      (ormEntity.dayOfWeek ?? 'monday') as DayOfWeek,
-      (ormEntity.sourceType ?? 'personal') as WorkoutSessionSourceType,
-      ormEntity.assignedRoutineId ?? null,
-    );
+      currentExerciseIndex: ormEntity.currentExerciseIndex ?? 0,
+      startedAt: ormEntity.startedAt,
+      finishedAt: ormEntity.finishedAt,
+      dayOfWeek: (ormEntity.dayOfWeek ?? 'monday') as DayOfWeek,
+      sourceType: (ormEntity.sourceType ?? 'personal') as WorkoutSessionSourceType,
+      assignedRoutineId: ormEntity.assignedRoutineId ?? null,
+    });
   }
 
   public static toOrm(domain: WorkoutSession): WorkoutSessionTypeormEntity {

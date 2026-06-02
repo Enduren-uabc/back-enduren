@@ -308,7 +308,7 @@ REGLAS IMPORTANTES:
     if (!isNaN(iso.getTime())) return iso;
 
     // dd/mm/yyyy o dd-mm-yyyy
-    const slashMatch = str.match(/(\d{1,2})[-\/]\s*(\d{1,2})[-\/]\s*(\d{4})/);
+    const slashMatch = str.match(/(\d{1,2})[-/]\s*(\d{1,2})[-/]\s*(\d{4})/);
     if (slashMatch) {
       const [, day, month, year] = slashMatch;
       const parsed = new Date(

@@ -46,12 +46,16 @@ export class ForkWorkoutToRoutineUseCase {
     actor: CurrentActor,
     input: ForkWorkoutInput,
   ): Promise<ForkWorkoutOutput> {
-    const routine = await this.findRoutineOrThrow(input.routineId, actor.userId);
+    const routine = await this.findRoutineOrThrow(
+      input.routineId,
+      actor.userId,
+    );
     const session = await this.findSessionOrThrow(input.sourceWorkoutSessionId);
     this.validateDayOfWeek(input.dayOfWeek);
 
     const overrideMap = this.buildOverrideMap(input.exercises);
-    const overrideDefaultSets = input.exercises != null && input.exercises.length > 0;
+    const overrideDefaultSets =
+      input.exercises != null && input.exercises.length > 0;
 
     const { forkedExercises, exercisesAdded } = this.forkSessionExercises(
       session,
@@ -100,9 +104,7 @@ export class ForkWorkoutToRoutineUseCase {
     return routine;
   }
 
-  private async findSessionOrThrow(
-    sessionId: string,
-  ): Promise<WorkoutSession> {
+  private async findSessionOrThrow(sessionId: string): Promise<WorkoutSession> {
     const session = await this.workoutSessionRepository.findById(sessionId);
     if (!session) {
       throw new RoutineDomainError(
@@ -258,17 +260,17 @@ export class ForkWorkoutToRoutineUseCase {
       (day, ex) => day.addExercise(ex),
       newDay,
     );
-    return Routine.reconstitute(
-      routine.id,
-      routine.name,
-      routine.userId,
-      [...routine.days, dayWithExercises],
-      routine.isActive,
-      routine.trainingStrategyKey,
-      routine.createdAt,
-      new Date(),
-      routine.targetAudience,
-    );
+    return Routine.reconstitute({
+      id: routine.id,
+      name: routine.name,
+      userId: routine.userId,
+      days: [...routine.days, dayWithExercises],
+      isActive: routine.isActive,
+      trainingStrategyKey: routine.trainingStrategyKey,
+      targetAudience: routine.targetAudience,
+      createdAt: routine.createdAt,
+      updatedAt: new Date(),
+    });
   }
 
   private addExercisesToExistingDay(

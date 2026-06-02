@@ -140,15 +140,15 @@ export class CreateRoutineUseCase {
     const defaultTrainingStrategyKey =
       profile?.defaultTrainingStrategyKey ?? null;
 
-    const routine = Routine.create(
+    const routine = Routine.create({
       id,
-      input.name,
-      actor.userId,
+      name: input.name,
+      userId: actor.userId,
       days,
       isActive,
-      defaultTrainingStrategyKey,
+      trainingStrategyKey: defaultTrainingStrategyKey,
       targetAudience,
-    );
+    });
 
     const saved = await this.routineRepository.save(routine);
 

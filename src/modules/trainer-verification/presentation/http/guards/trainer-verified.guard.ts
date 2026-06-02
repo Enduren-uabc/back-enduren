@@ -22,7 +22,7 @@ export class TrainerVerifiedGuard implements CanActivate {
       user?: { sub: string; role: string };
     }>();
     const actor = request.user;
-    if (!actor || actor.role !== 'trainer') {
+    if (actor?.role !== 'trainer') {
       throw new ForbiddenException(
         'Only trainer users can access this resource',
       );

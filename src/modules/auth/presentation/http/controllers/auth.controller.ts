@@ -21,7 +21,10 @@ import {
   CookieHelper,
   COOKIE_HELPER_PORT,
 } from '../../../infrastructure/providers/cookie-helper.provider';
-import { GoogleOAuthService, GoogleProfile } from '../../../infrastructure/providers/google-oauth.service';
+import {
+  GoogleOAuthService,
+  GoogleProfile,
+} from '../../../infrastructure/providers/google-oauth.service';
 import { OAuthStateStore } from '../../../infrastructure/providers/oauth-state.store';
 import { RegisterUserUseCase } from '../../../application/use-cases/register-user/register-user.use-case';
 import { LoginUserUseCase } from '../../../application/use-cases/login-user/login-user.use-case';

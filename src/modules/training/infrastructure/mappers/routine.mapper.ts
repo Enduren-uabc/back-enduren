@@ -52,17 +52,17 @@ export class RoutineMapper {
       ? ormEntity.targetAudience
       : 'self';
 
-    return Routine.reconstitute(
-      ormEntity.id,
-      ormEntity.name,
-      ormEntity.userId,
+    return Routine.reconstitute({
+      id: ormEntity.id,
+      name: ormEntity.name,
+      userId: ormEntity.userId,
       days,
-      ormEntity.isActive,
-      ormEntity.trainingStrategyKey ?? null,
-      ormEntity.createdAt,
-      ormEntity.updatedAt,
+      isActive: ormEntity.isActive,
+      trainingStrategyKey: ormEntity.trainingStrategyKey ?? null,
       targetAudience,
-    );
+      createdAt: ormEntity.createdAt,
+      updatedAt: ormEntity.updatedAt,
+    });
   }
 
   public static toOrm(domain: Routine): RoutineTypeormEntity {

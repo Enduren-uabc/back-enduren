@@ -103,9 +103,10 @@ export class CreateDefaultRoutineUseCase {
       );
 
     if (dayConfigs.length === 0) {
+      const splitInfo = splitKey ? ` and split "${splitKey}"` : '';
       throw new RoutineDomainError(
         RoutineErrorCode.ROUTINE_NAME_REQUIRED,
-        `No default routine templates found for level "${input.experienceLevel}"${splitKey ? ` and split "${splitKey}"` : ''}.`,
+        `No default routine templates found for level "${input.experienceLevel}"${splitInfo}.`,
         { experienceLevel: input.experienceLevel, splitKey },
       );
     }
@@ -180,14 +181,14 @@ export class CreateDefaultRoutineUseCase {
     // Build routine name
     const name = getRoutineName(input.experienceLevel, input.trainingSplitKey);
 
-    const routine = Routine.create(
-      routineId,
+    const routine = Routine.create({
+      id: routineId,
       name,
-      actor.userId,
+      userId: actor.userId,
       days,
       isActive,
-      input.trainingStrategyKey,
-    );
+      trainingStrategyKey: input.trainingStrategyKey,
+    });
 
     // 5. Persist
     const saved = await this.routineRepository.save(routine);

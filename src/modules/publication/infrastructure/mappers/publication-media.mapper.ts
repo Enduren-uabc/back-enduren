@@ -3,16 +3,16 @@ import { PublicationMediaTypeormEntity } from '../persistence/typeorm/entities/p
 
 export class PublicationMediaMapper {
   static toDomain(orm: PublicationMediaTypeormEntity): PublicationMedia {
-    return PublicationMedia.reconstitute(
-      orm.id,
-      orm.publicationId,
-      orm.url,
-      orm.fileName,
-      orm.fileSize,
-      orm.mimeType,
-      orm.sortOrder,
-      orm.createdAt,
-    );
+    return PublicationMedia.reconstitute({
+      id: orm.id,
+      publicationId: orm.publicationId,
+      url: orm.url,
+      fileName: orm.fileName,
+      fileSize: orm.fileSize,
+      mimeType: orm.mimeType,
+      sortOrder: orm.sortOrder,
+      createdAt: orm.createdAt,
+    });
   }
 
   static toOrm(domain: PublicationMedia): PublicationMediaTypeormEntity {

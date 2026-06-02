@@ -44,12 +44,13 @@ export class TypeormSocialProfileRepository implements SocialProfileRepository {
     });
 
     const order = new Map(userIds.map((userId, index) => [userId, index]));
-    return ormEntities
-      .sort(
-        (left, right) =>
-          (order.get(left.userId) ?? 0) - (order.get(right.userId) ?? 0),
-      )
-      .map((ormEntity) => SocialProfilePersistenceMapper.toDomain(ormEntity));
+    const sorted = [...ormEntities].sort(
+      (left, right) =>
+        (order.get(left.userId) ?? 0) - (order.get(right.userId) ?? 0),
+    );
+    return sorted.map((ormEntity) =>
+      SocialProfilePersistenceMapper.toDomain(ormEntity),
+    );
   }
 
   public async searchByQuery(query: string): Promise<SocialProfile[]> {

@@ -101,17 +101,17 @@ export class SyncRoutineUseCase {
 
     const allDays = [...updatedDays, ...newDays];
 
-    const updatedRoutine = Routine.reconstitute(
-      routine.id,
-      routine.name,
-      routine.userId,
-      allDays,
-      routine.isActive,
-      routine.trainingStrategyKey,
-      routine.createdAt,
-      new Date(),
-      routine.targetAudience,
-    );
+    const updatedRoutine = Routine.reconstitute({
+      id: routine.id,
+      name: routine.name,
+      userId: routine.userId,
+      days: allDays,
+      isActive: routine.isActive,
+      trainingStrategyKey: routine.trainingStrategyKey,
+      targetAudience: routine.targetAudience,
+      createdAt: routine.createdAt,
+      updatedAt: new Date(),
+    });
 
     const saved = await this.routineRepository.save(updatedRoutine);
 
@@ -129,7 +129,12 @@ export class SyncRoutineUseCase {
     const exerciseId = existingExercise?.id ?? crypto.randomUUID();
     const sets = this.mapUpdatedSets(exPayload, existingExercise);
 
-    return Exercise.reconstitute(exerciseId, exPayload.name, exPayload.order, sets);
+    return Exercise.reconstitute(
+      exerciseId,
+      exPayload.name,
+      exPayload.order,
+      sets,
+    );
   }
 
   private mapUpdatedSets(
@@ -174,7 +179,12 @@ export class SyncRoutineUseCase {
     const exercises = dayPayload.exercises.map((exPayload) => {
       const exerciseId = exPayload.id ?? crypto.randomUUID();
       const sets = this.createNewSets(exPayload);
-      return Exercise.reconstitute(exerciseId, exPayload.name, exPayload.order, sets);
+      return Exercise.reconstitute(
+        exerciseId,
+        exPayload.name,
+        exPayload.order,
+        sets,
+      );
     });
     return RoutineDay.reconstitute(dayOfWeek, exercises, crypto.randomUUID());
   }
@@ -184,12 +194,7 @@ export class SyncRoutineUseCase {
   ): RoutineExerciseSet[] {
     if (exPayload.sets != null && exPayload.sets.length > 0) {
       return exPayload.sets.map((s) =>
-        RoutineExerciseSet.create(
-          s.setNumber,
-          s.reps,
-          s.weight,
-          s.restSeconds,
-        ),
+        RoutineExerciseSet.create(s.setNumber, s.reps, s.weight, s.restSeconds),
       );
     }
     return [];

@@ -46,7 +46,7 @@ export class StartWorkoutSessionUseCase {
   ): Promise<StartWorkoutSessionOutput> {
     // Validate that the routine exists and belongs to the user
     const routine = await this.routineRepository.findById(input.routineId);
-    if (!routine || routine.userId !== actor.userId) {
+    if (routine?.userId !== actor.userId) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
         'No active routine found for this user',
@@ -129,13 +129,13 @@ export class StartWorkoutSessionUseCase {
       });
 
     const sessionId = crypto.randomUUID();
-    const session = WorkoutSession.create(
-      sessionId,
-      actor.userId,
-      input.routineId,
-      workoutExercises,
-      input.dayOfWeek,
-    );
+    const session = WorkoutSession.create({
+      id: sessionId,
+      userId: actor.userId,
+      routineId: input.routineId,
+      exercises: workoutExercises,
+      dayOfWeek: input.dayOfWeek,
+    });
 
     const saved = await this.workoutSessionRepository.save(session);
 

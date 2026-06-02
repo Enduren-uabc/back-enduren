@@ -28,13 +28,13 @@ export class CreatePublicationUseCase {
     actor: CurrentActor,
     input: CreatePublicationDto,
   ): Promise<PublicationDto> {
-    const publication = Publication.create(
-      crypto.randomUUID(),
-      actor.userId,
-      PublicationTitle.create(input.title),
-      PublicationContent.create(input.content),
-      PublicationMediaUrls.create(input.mediaUrls ?? []),
-    );
+    const publication = Publication.create({
+      id: crypto.randomUUID(),
+      authorUserId: actor.userId,
+      title: PublicationTitle.create(input.title),
+      content: PublicationContent.create(input.content),
+      mediaUrls: PublicationMediaUrls.create(input.mediaUrls ?? []),
+    });
 
     const saved = await this.publicationRepository.save(publication);
 

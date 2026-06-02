@@ -43,8 +43,9 @@ export class GetPersonalRecordsUseCase {
         if (completedSets.length === 0) continue;
 
         const [first, ...rest] = completedSets;
-        const bestSet = rest.reduce((best, ws) =>
-          (ws.weightUsed ?? 0) > (best.weightUsed ?? 0) ? ws : best,
+        const bestSet = rest.reduce(
+          (best, ws) =>
+            (ws.weightUsed ?? 0) > (best.weightUsed ?? 0) ? ws : best,
           first,
         );
         const currentWeight = bestSet.weightUsed ?? 0;

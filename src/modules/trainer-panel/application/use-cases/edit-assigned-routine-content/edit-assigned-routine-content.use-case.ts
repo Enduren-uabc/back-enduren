@@ -131,7 +131,10 @@ export class EditAssignedRoutineContentUseCase {
     const updated = assigned.updateSnapshot(updatedSnapshot);
     const saved = await this.assignedRoutineRepository.save(updated);
 
-    await this.sendUpdateNotification(input.clientId, saved.routineSnapshot.name);
+    await this.sendUpdateNotification(
+      input.clientId,
+      saved.routineSnapshot.name,
+    );
 
     return this.buildResponse(saved);
   }

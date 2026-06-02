@@ -12,7 +12,7 @@ export class ClientGuard implements CanActivate {
       user?: { sub: string; role: string };
     }>();
     const user = request.user;
-    if (!user || user.role !== 'user') {
+    if (user?.role !== 'user') {
       throw new ForbiddenException(
         'Only client users can access this resource',
       );

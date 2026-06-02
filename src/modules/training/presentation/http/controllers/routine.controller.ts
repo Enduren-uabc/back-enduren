@@ -110,7 +110,8 @@ export class RoutineController {
     limit: number;
   }> {
     const validLevels = ['beginner', 'intermediate', 'advanced'];
-    const sanitizedLevel = level && validLevels.includes(level) ? level : undefined;
+    const sanitizedLevel =
+      level && validLevels.includes(level) ? level : undefined;
     const result = await this.listRoutineTemplatesUseCase.execute({
       level: sanitizedLevel,
       page: page ? Math.max(1, Number(page)) : undefined,

@@ -68,14 +68,18 @@ export class GetRoutineTemplateDetailUseCase {
       );
     }
 
-    const sortedDays = dayDtos.sort(
-      (a, b) => {
-        const orderMap: Record<string, number> = {
-          monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 7,
-        };
-        return (orderMap[a.dayOfWeek] ?? 0) - (orderMap[b.dayOfWeek] ?? 0);
-      },
-    );
+    const sortedDays = [...dayDtos].sort((a, b) => {
+      const orderMap: Record<string, number> = {
+        monday: 1,
+        tuesday: 2,
+        wednesday: 3,
+        thursday: 4,
+        friday: 5,
+        saturday: 6,
+        sunday: 7,
+      };
+      return (orderMap[a.dayOfWeek] ?? 0) - (orderMap[b.dayOfWeek] ?? 0);
+    });
 
     const days: RoutineTemplateDay[] = sortedDays.map((d, index) => ({
       dayOfWeek: d.dayOfWeek,

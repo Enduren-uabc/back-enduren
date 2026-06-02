@@ -84,34 +84,36 @@ export class GetAssignedRoutineDetailUseCase {
       );
     }
 
-    const days =
-      assigned.routineSnapshot.days.length > 0
-        ? assigned.routineSnapshot.days.map((d) => ({
-            dayOfWeek: d.dayOfWeek,
-            exercises: d.exercises.map((e) => ({
-              exerciseId: e.exerciseId,
-              name: e.name,
-              sets: e.sets,
-              reps: e.reps,
-              restSeconds: e.restSeconds,
-              order: e.order,
-            })),
-          }))
-        : assigned.routineSnapshot.exercises.length > 0
-          ? [
-              {
-                dayOfWeek: 'general',
-                exercises: assigned.routineSnapshot.exercises.map((e) => ({
-                  exerciseId: e.exerciseId,
-                  name: e.name,
-                  sets: e.sets,
-                  reps: e.reps,
-                  restSeconds: e.restSeconds,
-                  order: e.order,
-                })),
-              },
-            ]
-          : [];
+    let days: DayDetailItem[];
+    if (assigned.routineSnapshot.days.length > 0) {
+      days = assigned.routineSnapshot.days.map((d) => ({
+        dayOfWeek: d.dayOfWeek,
+        exercises: d.exercises.map((e) => ({
+          exerciseId: e.exerciseId,
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          restSeconds: e.restSeconds,
+          order: e.order,
+        })),
+      }));
+    } else if (assigned.routineSnapshot.exercises.length > 0) {
+      days = [
+        {
+          dayOfWeek: 'general',
+          exercises: assigned.routineSnapshot.exercises.map((e) => ({
+            exerciseId: e.exerciseId,
+            name: e.name,
+            sets: e.sets,
+            reps: e.reps,
+            restSeconds: e.restSeconds,
+            order: e.order,
+          })),
+        },
+      ];
+    } else {
+      days = [];
+    }
 
     return {
       id: assigned.id,

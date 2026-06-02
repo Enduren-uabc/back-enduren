@@ -25,6 +25,33 @@ export interface ProfileProps {
   updatedAt: Date;
 }
 
+export interface CreateProfileParams {
+  userId: string;
+  fullName: string;
+  birthDate: Date;
+  gender: Gender;
+  weight: number;
+  height: number;
+  experienceLevel: ExperienceLevel;
+  mainGoal: MainGoal;
+  daysAvailablePerWeek?: number;
+  weightUnit?: WeightUnit;
+  defaultTrainingStrategyKey?: string | null;
+}
+
+export interface UpdateProfileParams {
+  fullName: string;
+  birthDate: Date;
+  gender: Gender;
+  weight: number;
+  height: number;
+  experienceLevel: ExperienceLevel;
+  mainGoal: MainGoal;
+  daysAvailablePerWeek: number;
+  weightUnit: WeightUnit;
+  defaultTrainingStrategyKey?: string | null;
+}
+
 export class Profile {
   public readonly id: string;
   public readonly userId: string;
@@ -58,34 +85,21 @@ export class Profile {
     this.updatedAt = props.updatedAt;
   }
 
-  static create(
-    id: string,
-    userId: string,
-    fullName: string,
-    birthDate: Date,
-    gender: Gender,
-    weight: number,
-    height: number,
-    experienceLevel: ExperienceLevel,
-    mainGoal: MainGoal,
-    daysAvailablePerWeek: number = 3,
-    weightUnit: WeightUnit = 'kg',
-    defaultTrainingStrategyKey: string | null = null,
-  ): Profile {
+  static create(params: CreateProfileParams): Profile {
     const now = new Date();
     return new Profile({
-      id,
-      userId,
-      fullName: fullName.trim(),
-      birthDate,
-      gender,
-      weight,
-      height,
-      experienceLevel,
-      mainGoal,
-      daysAvailablePerWeek,
-      weightUnit,
-      defaultTrainingStrategyKey,
+      id: crypto.randomUUID(),
+      userId: params.userId,
+      fullName: params.fullName.trim(),
+      birthDate: params.birthDate,
+      gender: params.gender,
+      weight: params.weight,
+      height: params.height,
+      experienceLevel: params.experienceLevel,
+      mainGoal: params.mainGoal,
+      daysAvailablePerWeek: params.daysAvailablePerWeek ?? 3,
+      weightUnit: params.weightUnit ?? 'kg',
+      defaultTrainingStrategyKey: params.defaultTrainingStrategyKey ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -108,28 +122,17 @@ export class Profile {
     );
   }
 
-  update(
-    fullName: string,
-    birthDate: Date,
-    gender: Gender,
-    weight: number,
-    height: number,
-    experienceLevel: ExperienceLevel,
-    mainGoal: MainGoal,
-    daysAvailablePerWeek: number,
-    weightUnit: WeightUnit,
-    defaultTrainingStrategyKey: string | null = null,
-  ): void {
-    this.fullName = fullName.trim();
-    this.birthDate = birthDate;
-    this.gender = gender;
-    this.weight = weight;
-    this.height = height;
-    this.experienceLevel = experienceLevel;
-    this.mainGoal = mainGoal;
-    this.daysAvailablePerWeek = daysAvailablePerWeek;
-    this.weightUnit = weightUnit;
-    this.defaultTrainingStrategyKey = defaultTrainingStrategyKey;
+  update(params: UpdateProfileParams): void {
+    this.fullName = params.fullName.trim();
+    this.birthDate = params.birthDate;
+    this.gender = params.gender;
+    this.weight = params.weight;
+    this.height = params.height;
+    this.experienceLevel = params.experienceLevel;
+    this.mainGoal = params.mainGoal;
+    this.daysAvailablePerWeek = params.daysAvailablePerWeek;
+    this.weightUnit = params.weightUnit;
+    this.defaultTrainingStrategyKey = params.defaultTrainingStrategyKey ?? this.defaultTrainingStrategyKey;
     this.updatedAt = new Date();
   }
 }

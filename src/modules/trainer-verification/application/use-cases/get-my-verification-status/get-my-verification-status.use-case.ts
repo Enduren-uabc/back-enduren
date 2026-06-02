@@ -165,9 +165,7 @@ export class GetMyVerificationStatusUseCase {
       fullName: idData.fullName,
       documentType: idData.documentType,
       issuingCountry: idData.issuingCountry ?? undefined,
-      birthDate: idData.birthDate
-        ? idData.birthDate.toISOString()
-        : undefined,
+      birthDate: idData.birthDate ? idData.birthDate.toISOString() : undefined,
       expirationDate: idData.expirationDate
         ? idData.expirationDate.toISOString()
         : undefined,

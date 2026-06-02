@@ -82,7 +82,7 @@ function sanitizeObject(
   value: Record<string, unknown>,
   depth: number,
 ): Record<string, unknown> {
-  const record = value as Record<string, unknown>;
+  const record = value;
   const entries = Object.entries(record).slice(0, MAX_OBJECT_KEYS);
   const sanitized: Record<string, unknown> = {};
 

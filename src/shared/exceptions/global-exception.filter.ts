@@ -44,19 +44,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     this.sendErrorResponse(response, status, code, message);
   }
 
-  private resolveError(
-    exception: unknown,
-  ): { status: number; code: string; message: string } {
-    const defaultMessage = 'Tuvimos un problema. Intenta de nuevo en un momento.';
+  private resolveError(exception: unknown): {
+    status: number;
+    code: string;
+    message: string;
+  } {
+    const defaultMessage =
+      'Tuvimos un problema. Intenta de nuevo en un momento.';
     const defaultCode = 'INTERNAL_ERROR';
 
     if (!(exception instanceof HttpException)) {
-      return { status: HttpStatus.INTERNAL_SERVER_ERROR, code: defaultCode, message: defaultMessage };
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        code: defaultCode,
+        message: defaultMessage,
+      };
     }
 
     const status = exception.getStatus();
     const body = exception.getResponse();
-    const { message, code } = this.parseExceptionBody(body, status, defaultMessage);
+    const { message, code } = this.parseExceptionBody(
+      body,
+      status,
+      defaultMessage,
+    );
 
     return { status, code, message };
   }
@@ -68,12 +79,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   ): { message: string; code: string } {
     if (typeof body === 'object' && body !== null) {
       const bodyRecord = body as Record<string, unknown>;
-      const message =
-        typeof bodyRecord.message === 'string'
-          ? bodyRecord.message
-          : Array.isArray(bodyRecord.message)
-            ? (bodyRecord.message as string[]).join('; ')
-            : defaultMessage;
+      let message: string;
+      if (typeof bodyRecord.message === 'string') {
+        message = bodyRecord.message;
+      } else if (Array.isArray(bodyRecord.message)) {
+        message = (bodyRecord.message as string[]).join('; ');
+      } else {
+        message = defaultMessage;
+      }
       const code =
         typeof bodyRecord.code === 'string'
           ? bodyRecord.code

@@ -45,7 +45,7 @@ export class DevAuthService {
   ): Promise<AuthResponseDto> {
     const user = this.usersByEmail.get(email.trim().toLowerCase());
 
-    if (!user || user.password !== password) {
+    if (user?.password !== password) {
       throw new UnauthorizedException('Invalid email or password');
     }
 

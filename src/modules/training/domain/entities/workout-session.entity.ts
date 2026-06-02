@@ -10,6 +10,30 @@ import {
 } from '../errors/workout-session-domain.error';
 import type { WorkoutSessionSourceType } from '../value-objects/workout-session-source.value-object';
 
+export interface WorkoutSessionProps {
+  id: string;
+  userId: string;
+  routineId: string;
+  sourceType: WorkoutSessionSourceType;
+  assignedRoutineId: string | null;
+  dayOfWeek: DayOfWeek;
+  status: WorkoutSessionStatus;
+  exercises: WorkoutExercise[];
+  currentExerciseIndex: number;
+  startedAt: Date;
+  finishedAt: Date | null;
+}
+
+export interface CreateWorkoutSessionParams {
+  id: string;
+  userId: string;
+  routineId: string;
+  exercises: WorkoutExercise[];
+  dayOfWeek?: DayOfWeek;
+  sourceType?: WorkoutSessionSourceType;
+  assignedRoutineId?: string | null;
+}
+
 /**
  * WorkoutSession domain entity — aggregate root.
  * Represents a workout session started from an active routine.
@@ -30,30 +54,18 @@ export class WorkoutSession {
   public readonly startedAt: Date;
   public readonly finishedAt: Date | null;
 
-  private constructor(
-    id: string,
-    userId: string,
-    routineId: string,
-    sourceType: WorkoutSessionSourceType,
-    assignedRoutineId: string | null,
-    dayOfWeek: DayOfWeek,
-    status: WorkoutSessionStatus,
-    exercises: WorkoutExercise[],
-    currentExerciseIndex: number,
-    startedAt: Date,
-    finishedAt: Date | null,
-  ) {
-    this.id = id;
-    this.userId = userId;
-    this.routineId = routineId;
-    this.sourceType = sourceType;
-    this.assignedRoutineId = assignedRoutineId;
-    this.dayOfWeek = dayOfWeek;
-    this.status = status;
-    this.exercises = exercises;
-    this.currentExerciseIndex = currentExerciseIndex;
-    this.startedAt = startedAt;
-    this.finishedAt = finishedAt;
+  private constructor(props: WorkoutSessionProps) {
+    this.id = props.id;
+    this.userId = props.userId;
+    this.routineId = props.routineId;
+    this.sourceType = props.sourceType;
+    this.assignedRoutineId = props.assignedRoutineId;
+    this.dayOfWeek = props.dayOfWeek;
+    this.status = props.status;
+    this.exercises = props.exercises;
+    this.currentExerciseIndex = props.currentExerciseIndex;
+    this.startedAt = props.startedAt;
+    this.finishedAt = props.finishedAt;
   }
 
   /**
@@ -61,31 +73,24 @@ export class WorkoutSession {
    * Enforces: userId and routineId are required.
    * currentExerciseIndex defaults to 0.
    */
-  public static create(
-    id: string,
-    userId: string,
-    routineId: string,
-    exercises: WorkoutExercise[],
-    dayOfWeek: DayOfWeek = 'monday',
-    sourceType: WorkoutSessionSourceType = 'personal',
-    assignedRoutineId: string | null = null,
-  ): WorkoutSession {
-    if (!userId || userId.trim().length === 0) {
+  public static create(params: CreateWorkoutSessionParams): WorkoutSession {
+    if (!params.userId || params.userId.trim().length === 0) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
         'User ID is required to start a workout session',
-        { userId },
+        { userId: params.userId },
       );
     }
 
-    if (!routineId || routineId.trim().length === 0) {
+    if (!params.routineId || params.routineId.trim().length === 0) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
         'Routine ID is required to start a workout session',
-        { routineId },
+        { routineId: params.routineId },
       );
     }
 
+    const dayOfWeek = params.dayOfWeek ?? 'monday';
     if (!isValidDayOfWeek(dayOfWeek)) {
       throw new WorkoutSessionDomainError(
         WorkoutSessionErrorCode.SESSION_DAY_NOT_FOUND,
@@ -93,6 +98,9 @@ export class WorkoutSession {
         { dayOfWeek },
       );
     }
+
+    const sourceType = params.sourceType ?? 'personal';
+    const assignedRoutineId = params.assignedRoutineId ?? null;
 
     if (sourceType === 'trainer_assigned' && !assignedRoutineId) {
       throw new WorkoutSessionDomainError(
@@ -103,50 +111,29 @@ export class WorkoutSession {
     }
 
     const now = new Date();
-    return new WorkoutSession(
-      id,
-      userId,
-      routineId,
+    return new WorkoutSession({
+      id: params.id,
+      userId: params.userId,
+      routineId: params.routineId,
       sourceType,
       assignedRoutineId,
       dayOfWeek,
-      WorkoutSessionStatus.IN_PROGRESS,
-      [...exercises],
-      0,
-      now,
-      null,
-    );
+      status: WorkoutSessionStatus.IN_PROGRESS,
+      exercises: [...params.exercises],
+      currentExerciseIndex: 0,
+      startedAt: now,
+      finishedAt: null,
+    });
   }
 
   /**
    * Reconstitutes a WorkoutSession from persistence without re-running creation invariants.
    */
-  public static reconstitute(
-    id: string,
-    userId: string,
-    routineId: string,
-    status: WorkoutSessionStatus,
-    exercises: WorkoutExercise[],
-    currentExerciseIndex: number,
-    startedAt: Date,
-    finishedAt: Date | null,
-    dayOfWeek: DayOfWeek = 'monday',
-    sourceType: WorkoutSessionSourceType = 'personal',
-    assignedRoutineId: string | null = null,
-  ): WorkoutSession {
-    return new WorkoutSession(
-      id,
-      userId,
-      routineId,
-      sourceType,
-      assignedRoutineId,
-      dayOfWeek,
-      status,
-      [...exercises],
-      currentExerciseIndex,
-      startedAt,
-      finishedAt,
-    );
+  public static reconstitute(props: WorkoutSessionProps): WorkoutSession {
+    return new WorkoutSession({
+      ...props,
+      exercises: [...props.exercises],
+    });
   }
 
   /**
@@ -163,19 +150,19 @@ export class WorkoutSession {
       );
     }
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      WorkoutSessionStatus.FINISHED,
-      [...this.exercises],
-      this.currentExerciseIndex,
-      this.startedAt,
-      new Date(),
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: WorkoutSessionStatus.FINISHED,
+      exercises: [...this.exercises],
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: new Date(),
+    });
   }
 
   /**
@@ -200,19 +187,19 @@ export class WorkoutSession {
       );
     }
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      WorkoutSessionStatus.DISCARDED,
-      [...this.exercises],
-      this.currentExerciseIndex,
-      this.startedAt,
-      new Date(),
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: WorkoutSessionStatus.DISCARDED,
+      exercises: [...this.exercises],
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: new Date(),
+    });
   }
 
   /**
@@ -275,19 +262,19 @@ export class WorkoutSession {
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      this.status,
-      updatedExercises,
-      this.currentExerciseIndex,
-      this.startedAt,
-      this.finishedAt,
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: this.status,
+      exercises: updatedExercises,
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+    });
   }
 
   /**
@@ -326,19 +313,19 @@ export class WorkoutSession {
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      this.status,
-      updatedExercises,
-      this.currentExerciseIndex,
-      this.startedAt,
-      this.finishedAt,
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: this.status,
+      exercises: updatedExercises,
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+    });
   }
 
   /**
@@ -377,19 +364,19 @@ export class WorkoutSession {
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      this.status,
-      updatedExercises,
-      this.currentExerciseIndex,
-      this.startedAt,
-      this.finishedAt,
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: this.status,
+      exercises: updatedExercises,
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+    });
   }
 
   /**
@@ -427,19 +414,19 @@ export class WorkoutSession {
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      this.status,
-      updatedExercises,
-      this.currentExerciseIndex,
-      this.startedAt,
-      this.finishedAt,
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: this.status,
+      exercises: updatedExercises,
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+    });
   }
 
   /**
@@ -476,19 +463,19 @@ export class WorkoutSession {
     const updatedExercises = [...this.exercises];
     updatedExercises[exerciseIndex] = updatedExercise;
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      this.status,
-      updatedExercises,
-      this.currentExerciseIndex,
-      this.startedAt,
-      this.finishedAt,
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: this.status,
+      exercises: updatedExercises,
+      currentExerciseIndex: this.currentExerciseIndex,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+    });
   }
 
   /**
@@ -538,18 +525,18 @@ export class WorkoutSession {
       );
     }
 
-    return new WorkoutSession(
-      this.id,
-      this.userId,
-      this.routineId,
-      this.sourceType,
-      this.assignedRoutineId,
-      this.dayOfWeek,
-      this.status,
-      [...this.exercises],
-      this.currentExerciseIndex + 1,
-      this.startedAt,
-      this.finishedAt,
-    );
+    return new WorkoutSession({
+      id: this.id,
+      userId: this.userId,
+      routineId: this.routineId,
+      sourceType: this.sourceType,
+      assignedRoutineId: this.assignedRoutineId,
+      dayOfWeek: this.dayOfWeek,
+      status: this.status,
+      exercises: [...this.exercises],
+      currentExerciseIndex: this.currentExerciseIndex + 1,
+      startedAt: this.startedAt,
+      finishedAt: this.finishedAt,
+    });
   }
 }

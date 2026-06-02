@@ -42,7 +42,7 @@ export class StartAssignedRoutineWorkoutUseCase {
       input.assignedId,
     );
 
-    if (!assigned || assigned.clientId !== input.clientId) {
+    if (assigned?.clientId !== input.clientId) {
       throw new NotFoundException('Assigned routine not found');
     }
 
@@ -116,15 +116,15 @@ export class StartAssignedRoutineWorkoutUseCase {
         );
       });
 
-    const session = WorkoutSession.create(
-      crypto.randomUUID(),
-      input.clientId,
-      assigned.routineId,
-      workoutExercises,
-      day.dayOfWeek as DayOfWeek,
-      'trainer_assigned',
-      assigned.id,
-    );
+    const session = WorkoutSession.create({
+      id: crypto.randomUUID(),
+      userId: input.clientId,
+      routineId: assigned.routineId,
+      exercises: workoutExercises,
+      dayOfWeek: day.dayOfWeek as DayOfWeek,
+      sourceType: 'trainer_assigned',
+      assignedRoutineId: assigned.id,
+    });
 
     const saved = await this.workoutSessionRepository.save(session);
     return mapWorkoutSessionToOutput(saved);

@@ -54,7 +54,7 @@ export class SendLinkRequestUseCase {
     }
 
     const client = await this.userRepository.findById(input.actorId);
-    if (!client || client.role !== 'user') {
+    if (client?.role !== 'user') {
       throw new TrainerLinkDomainError(
         TrainerLinkErrorCode.UNAUTHORIZED_LINK_ACCESS,
         'Only client users can send link requests',
@@ -99,7 +99,7 @@ export class SendLinkRequestUseCase {
       input.actorId,
       input.trainerId,
     );
-    if (existingLink && existingLink.status === 'active') {
+    if (existingLink?.status === 'active') {
       throw new TrainerLinkDomainError(
         TrainerLinkErrorCode.LINK_ALREADY_ACTIVE,
         'You already have an active link with this trainer',

@@ -4,8 +4,8 @@ type CommandHandler = (command: any) => Promise<void>;
 
 @Injectable()
 export class InMemoryCommandBus implements OnApplicationShutdown {
-  private handlers = new Map<string, CommandHandler[]>();
-  private pendingJobs: Promise<void>[] = [];
+  private readonly handlers = new Map<string, CommandHandler[]>();
+  private readonly pendingJobs: Promise<void>[] = [];
 
   register(commandName: string, handler: CommandHandler): void {
     const existing = this.handlers.get(commandName) || [];

@@ -8,6 +8,29 @@ import {
 } from '../../application/ports/profile-publication-query.port';
 import { PublicationTypeormEntity } from '../../../publication/infrastructure/persistence/typeorm/entities/publication-typeorm.entity';
 
+interface BuildPublicationItemParams {
+  publication: PublicationTypeormEntity;
+  authorProfile:
+    | { display_name: string; avatar_url: string | null }
+    | undefined;
+  reactionCounts: Map<string, number>;
+  recentReactors: Map<string, string[]>;
+  reactorNameMap: Map<string, string>;
+  reactedPublicationIds: Set<string>;
+  commentCounts: Map<string, number>;
+  recentCommentMap: Map<
+    string,
+    {
+      id: string;
+      publication_id: string;
+      author_user_id: string;
+      content: string;
+      created_at: Date;
+    }[]
+  >;
+  commentAuthorNameMap: Map<string, string>;
+}
+
 @Injectable()
 export class TypeormProfilePublicationQueryAdapter implements ProfilePublicationQueryPort {
   constructor(
@@ -34,13 +57,18 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
 
     const authorProfile = await this.loadAuthorProfile(input.authorUserId);
     const reactionCounts = await this.loadReactionCounts(publicationIds);
-    const { recentReactors, reactorNameMap } = await this.loadRecentReactors(publicationIds);
-    const reactedPublicationIds = await this.loadCurrentUserReactions(publicationIds, input.currentUserId);
+    const { recentReactors, reactorNameMap } =
+      await this.loadRecentReactors(publicationIds);
+    const reactedPublicationIds = await this.loadCurrentUserReactions(
+      publicationIds,
+      input.currentUserId,
+    );
     const commentCounts = await this.loadCommentCounts(publicationIds);
-    const { recentCommentMap, commentAuthorNameMap } = await this.loadRecentComments(publicationIds);
+    const { recentCommentMap, commentAuthorNameMap } =
+      await this.loadRecentComments(publicationIds);
 
     const items: ProfilePublicationItem[] = publications.map((publication) =>
-      this.buildPublicationItem(
+      this.buildPublicationItem({
         publication,
         authorProfile,
         reactionCounts,
@@ -50,7 +78,7 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
         commentCounts,
         recentCommentMap,
         commentAuthorNameMap,
-      ),
+      }),
     );
 
     return {
@@ -62,7 +90,9 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     };
   }
 
-  private async loadAuthorProfile(authorUserId: string): Promise<{ display_name: string; avatar_url: string | null } | undefined> {
+  private async loadAuthorProfile(
+    authorUserId: string,
+  ): Promise<{ display_name: string; avatar_url: string | null } | undefined> {
     const rows: { display_name: string; avatar_url: string | null }[] =
       await this.dataSource.query(
         `SELECT display_name, avatar_url FROM social_profiles WHERE user_id = $1`,
@@ -71,7 +101,9 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     return rows[0];
   }
 
-  private async loadReactionCounts(publicationIds: string[]): Promise<Map<string, number>> {
+  private async loadReactionCounts(
+    publicationIds: string[],
+  ): Promise<Map<string, number>> {
     if (publicationIds.length === 0) return new Map();
     const countRows: { publicationid: string; count: string }[] =
       await this.dataSource.query(
@@ -81,14 +113,17 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
          GROUP BY r.publication_id`,
         [publicationIds],
       );
-    return new Map(countRows.map((r) => [r.publicationid, parseInt(r.count, 10)]));
+    return new Map(
+      countRows.map((r) => [r.publicationid, parseInt(r.count, 10)]),
+    );
   }
 
   private async loadRecentReactors(publicationIds: string[]): Promise<{
     recentReactors: Map<string, string[]>;
     reactorNameMap: Map<string, string>;
   }> {
-    if (publicationIds.length === 0) return { recentReactors: new Map(), reactorNameMap: new Map() };
+    if (publicationIds.length === 0)
+      return { recentReactors: new Map(), reactorNameMap: new Map() };
 
     const reactorRows: { publicationid: string; authoruserid: string }[] =
       await this.dataSource.query(
@@ -146,7 +181,9 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     return new Set(rows.map((r) => r.publication_id));
   }
 
-  private async loadCommentCounts(publicationIds: string[]): Promise<Map<string, number>> {
+  private async loadCommentCounts(
+    publicationIds: string[],
+  ): Promise<Map<string, number>> {
     if (publicationIds.length === 0) return new Map();
     const countRows: { publicationid: string; count: string }[] =
       await this.dataSource.query(
@@ -156,17 +193,22 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
          GROUP BY c.publication_id`,
         [publicationIds],
       );
-    return new Map(countRows.map((r) => [r.publicationid, parseInt(r.count, 10)]));
+    return new Map(
+      countRows.map((r) => [r.publicationid, parseInt(r.count, 10)]),
+    );
   }
 
   private async loadRecentComments(publicationIds: string[]): Promise<{
-    recentCommentMap: Map<string, {
-      id: string;
-      publication_id: string;
-      author_user_id: string;
-      content: string;
-      created_at: Date;
-    }[]>;
+    recentCommentMap: Map<
+      string,
+      {
+        id: string;
+        publication_id: string;
+        author_user_id: string;
+        content: string;
+        created_at: Date;
+      }[]
+    >;
     commentAuthorNameMap: Map<string, string>;
   }> {
     if (publicationIds.length === 0) {
@@ -198,7 +240,9 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
       commentCounters.set(pubId, cnt + 1);
     }
 
-    const allCommentAuthorIds = [...new Set(commentRows.map((r) => r.author_user_id))];
+    const allCommentAuthorIds = [
+      ...new Set(commentRows.map((r) => r.author_user_id)),
+    ];
     const commentAuthorRows: { id: string; username: string }[] =
       allCommentAuthorIds.length > 0
         ? await this.dataSource.query(
@@ -206,55 +250,41 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
             [allCommentAuthorIds],
           )
         : [];
-    const commentAuthorNameMap = new Map(commentAuthorRows.map((u) => [u.id, u.username]));
+    const commentAuthorNameMap = new Map(
+      commentAuthorRows.map((u) => [u.id, u.username]),
+    );
 
     return { recentCommentMap, commentAuthorNameMap };
   }
 
-  private buildPublicationItem(
-    publication: PublicationTypeormEntity,
-    authorProfile: { display_name: string; avatar_url: string | null } | undefined,
-    reactionCounts: Map<string, number>,
-    recentReactors: Map<string, string[]>,
-    reactorNameMap: Map<string, string>,
-    reactedPublicationIds: Set<string>,
-    commentCounts: Map<string, number>,
-    recentCommentMap: Map<string, {
-      id: string;
-      publication_id: string;
-      author_user_id: string;
-      content: string;
-      created_at: Date;
-    }[]>,
-    commentAuthorNameMap: Map<string, string>,
-  ): ProfilePublicationItem {
-    const rawComments = recentCommentMap.get(publication.id) ?? [];
+  private buildPublicationItem(params: BuildPublicationItemParams): ProfilePublicationItem {
+    const rawComments = params.recentCommentMap.get(params.publication.id) ?? [];
     return {
-      id: publication.id,
-      authorUserId: publication.authorUserId,
-      authorDisplayName: authorProfile?.display_name,
-      authorAvatarUrl: authorProfile?.avatar_url ?? undefined,
-      title: publication.title,
-      content: publication.content,
-      mediaUrls: publication.mediaUrls ?? [],
-      workoutSessionId: publication.workoutSessionId,
-      exerciseSummary: publication.exerciseSummary,
-      reactionCount: reactionCounts.get(publication.id) ?? 0,
-      recentReactorNames: (recentReactors.get(publication.id) ?? []).map(
-        (uid) => reactorNameMap.get(uid) ?? 'Usuario',
+      id: params.publication.id,
+      authorUserId: params.publication.authorUserId,
+      authorDisplayName: params.authorProfile?.display_name,
+      authorAvatarUrl: params.authorProfile?.avatar_url ?? undefined,
+      title: params.publication.title,
+      content: params.publication.content,
+      mediaUrls: params.publication.mediaUrls ?? [],
+      workoutSessionId: params.publication.workoutSessionId,
+      exerciseSummary: params.publication.exerciseSummary,
+      reactionCount: params.reactionCounts.get(params.publication.id) ?? 0,
+      recentReactorNames: (params.recentReactors.get(params.publication.id) ?? []).map(
+        (uid) => params.reactorNameMap.get(uid) ?? 'Usuario',
       ),
-      likedByMe: reactedPublicationIds.has(publication.id),
-      commentCount: commentCounts.get(publication.id) ?? 0,
+      likedByMe: params.reactedPublicationIds.has(params.publication.id),
+      commentCount: params.commentCounts.get(params.publication.id) ?? 0,
       recentComments: rawComments.map((rc) => ({
         id: rc.id,
         publicationId: rc.publication_id,
         authorUserId: rc.author_user_id,
-        authorDisplayName: commentAuthorNameMap.get(rc.author_user_id),
+        authorDisplayName: params.commentAuthorNameMap.get(rc.author_user_id),
         content: rc.content,
         createdAt: rc.created_at,
       })),
-      createdAt: publication.createdAt,
-      updatedAt: publication.updatedAt,
+      createdAt: params.publication.createdAt,
+      updatedAt: params.publication.updatedAt,
     };
   }
 }

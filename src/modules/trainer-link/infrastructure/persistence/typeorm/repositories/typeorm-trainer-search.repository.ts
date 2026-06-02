@@ -86,7 +86,7 @@ export class TypeormTrainerSearchRepository implements TrainerSearchRepositoryPo
     const user = await this.userRepo.findOne({
       where: { trainerCode: code },
     });
-    if (!user || !user.trainerCode) return null;
+    if (!user?.trainerCode) return null;
     return {
       userId: user.id,
       trainerCode: user.trainerCode,

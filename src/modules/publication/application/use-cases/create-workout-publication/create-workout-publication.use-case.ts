@@ -32,17 +32,17 @@ export class CreateWorkoutPublicationUseCase {
     const exerciseSummary =
       this.workoutSessionQuery.buildExerciseSummary(session);
 
-    const publication = Publication.create(
-      crypto.randomUUID(),
-      actor.userId,
-      PublicationTitle.create(input.caption ?? 'Entrenamiento completado'),
-      PublicationContent.create(
+    const publication = Publication.create({
+      id: crypto.randomUUID(),
+      authorUserId: actor.userId,
+      title: PublicationTitle.create(input.caption ?? 'Entrenamiento completado'),
+      content: PublicationContent.create(
         input.caption ?? 'Comparte tu progreso con la comunidad.',
       ),
-      PublicationMediaUrls.create(input.mediaUrls ?? []),
-      input.workoutSessionId,
+      mediaUrls: PublicationMediaUrls.create(input.mediaUrls ?? []),
+      workoutSessionId: input.workoutSessionId,
       exerciseSummary,
-    );
+    });
 
     const saved = await this.publicationRepository.save(publication);
     return PublicationApplicationMapper.toDto(saved);

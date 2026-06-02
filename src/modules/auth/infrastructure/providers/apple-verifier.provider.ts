@@ -32,7 +32,7 @@ export class AppleVerifier implements SocialAuthVerifierPort {
     }
 
     const decoded = jwt.decode(idToken, { complete: true });
-    if (!decoded || !decoded.header?.kid) {
+    if (!decoded?.header?.kid) {
       throw new Error('Invalid Apple ID token: cannot decode');
     }
 

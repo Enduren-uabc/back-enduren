@@ -40,7 +40,7 @@ export class GoogleOAuthService {
     });
 
     const payload = ticket.getPayload();
-    if (!payload || !payload.sub || !payload.email) {
+    if (!payload?.sub || !payload.email) {
       throw new Error('Invalid Google profile: missing sub or email');
     }
 

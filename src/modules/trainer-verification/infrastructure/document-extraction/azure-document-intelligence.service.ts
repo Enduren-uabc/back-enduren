@@ -133,7 +133,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       );
       const result = await poller.pollUntilDone();
 
-      if (!result || !result.documents || result.documents.length === 0) {
+      if (!result?.documents || result.documents.length === 0) {
         return {
           success: false,
           error: {
@@ -171,9 +171,20 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       }
 
       const documentType = this.extractStringValue(docType) || 'other';
-      const extractedExpirationDate = this.extractIdExpirationDate(expirationDate, content);
+      const extractedExpirationDate = this.extractIdExpirationDate(
+        expirationDate,
+        content,
+      );
       const curp = this.extractCurp(content);
-      const ocrConfidence = this.computeOcrConfidence([firstName, lastName, docType, country, birthDate, expirationDate, docNumber]);
+      const ocrConfidence = this.computeOcrConfidence([
+        firstName,
+        lastName,
+        docType,
+        country,
+        birthDate,
+        expirationDate,
+        docNumber,
+      ]);
       const data = ExtractedIdData.create({
         fullName,
         documentType: this.normalizeDocumentType(documentType),
@@ -213,7 +224,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
 
     if (!fullName || fullName.length < 5) {
       const nameMatch = content.match(/NOMBRE[\s:]*([A-Z\s]{5,60})/i);
-      if (nameMatch && nameMatch[1]) {
+      if (nameMatch?.[1]) {
         fullName = nameMatch[1].trim();
       }
     }
@@ -253,15 +264,17 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
   }
 
   private extractCurp(content: string): string | undefined {
-    return this.extractByRegex(content, [
-      /CURP[\s\S]*?([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
-      /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
-    ]) ?? undefined;
+    return (
+      this.extractByRegex(content, [
+        /CURP[\s\S]*?([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+        /([A-Z]{4}\d{6}[A-Z]{6}\d{2})/i,
+      ]) ?? undefined
+    );
   }
 
   private computeOcrConfidence(fields: (DocumentField | undefined)[]): number {
     const confidences: number[] = fields
-      .filter((f): f is DocumentField => f !== undefined && f.confidence !== undefined)
+      .filter((f): f is DocumentField => f?.confidence !== undefined)
       .map((f) => f.confidence!);
     return confidences.length > 0
       ? confidences.reduce((a, b) => a + b, 0) / confidences.length
@@ -325,15 +338,14 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     const analyzeResult = pollResult.data;
     const content: string = analyzeResult.content ?? '';
     const queryDocs = analyzeResult.documents ?? [];
-    const fields =
-      queryDocs.length > 0 && queryDocs[0].fields ? queryDocs[0].fields : {};
+    const fields = queryDocs[0]?.fields ?? {};
 
     return this.buildExtractedData(fields, content);
   }
 
   private async pollForResult(
     operationLocation: string,
-  ): Promise<ExtractionResult<{ content: string; documents: any[] }>> {
+  ): Promise<ExtractionResult<AzureAnalyzeResult>> {
     const maxRetries = 60;
     for (let i = 0; i < maxRetries; i++) {
       const pollResponse = await fetch(operationLocation, {
@@ -350,7 +362,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
         };
       }
 
-      const body: any = await pollResponse.json();
+      const body = (await pollResponse.json()) as AzurePollResponse;
 
       if (body.status === 'succeeded') {
         return {
@@ -382,22 +394,22 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
   }
 
   private buildExtractedData(
-    fields: Record<string, any>,
+    fields: Record<string, AzureFieldValue>,
     content: string,
   ): ExtractionResult<ExtractedCertificateData> {
     const getFieldStr = (name: string): string | undefined => {
       const field = fields[name];
       if (!field) return undefined;
-      const confidence = field.confidence;
-      if (confidence !== undefined && confidence < 0.5) return undefined;
+      if (field.confidence !== undefined && field.confidence < 0.5)
+        return undefined;
       return field.valueString ?? field.valueDate ?? field.content ?? undefined;
     };
 
     const getFieldDate = (name: string): string | undefined => {
       const field = fields[name];
       if (!field) return undefined;
-      const confidence = field.confidence;
-      if (confidence !== undefined && confidence < 0.5) return undefined;
+      if (field.confidence !== undefined && field.confidence < 0.5)
+        return undefined;
       return field.valueDate ?? field.content ?? field.valueString ?? undefined;
     };
 
@@ -420,21 +432,19 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       rawCompetencyStandardName ??
       this.extractByRegex(content, [
         /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
-        /EC\d{4,5}\s{1,10}([A-Za-zÀ-ÿ,áéíóúüñ]{2,80}(?:\s[A-Za-zÀ-ÿ,áéíóúüñ]{1,80}){0,10})/i,
+        /EC\d{4,5}\s{1,10}([A-Za-zÀ-ÿ,]{2,80}(?:\s[A-Za-zÀ-ÿ,]{1,80}){0,10})/i,
         /(Acondicionamiento\s+físico\s+de\s+jóvenes\s+y\s+adultos\s+para\s+el\s+mantenimiento\s+de\s+la\s+salud)/i,
       ]) ??
       undefined;
 
     const fullName =
-      holderFullName &&
-      holderFullName.length >= 5 &&
-      !holderFullName.includes('|')
+      holderFullName?.length >= 5 && !holderFullName.includes('|')
         ? holderFullName
         : (this.extractByRegex(content, [
-            /(?:Nombre|Name|Nombre\s+Completo|Full\s+Name|Student\s+Name)[:\s\n]*([^\n]{2,60})/i,
-            /Otorga\s+el\s+presente[\s\na]+([A-Z][A-Z\s]{5,60})/i,
-            /Certificado\s+a[:\s\n]*([A-Z][A-Z\s]{5,60})/i,
-            /a[:\s\n]+([A-Z][A-Z\s]{5,60})(?:\s+con|\s+por|\s+nivel|$)/i,
+            /(?:Nombre|Name|Nombre\s+Completo|Full\s+Name|Student\s+Name)[:\s]*([^\n]{2,60})/i,
+            /Otorga\s+el\s+presente[\sa]+([A-Z][A-Z\s]{5,60})/i,
+            /Certificado\s+a[:\s]*([A-Z][A-Z\s]{5,60})/i,
+            /a[:\s]+([A-Z][A-Z\s]{5,60})(?:\s+con|\s+por|\s+nivel|$)/i,
           ]) ?? 'Unknown');
 
     const certificateName =
@@ -449,15 +459,15 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       rawIssuingAuthority ??
       this.extractByRegex(content, [
         /(CONOCER[^.\n]{0,30})/i,
-        /(SEP[\s\n]*SECRETARIA[^.\n]{0,50})/i,
+        /(SEP\s*SECRETARIA[^.\n]{0,50})/i,
       ]) ??
       'Unknown Organization';
 
     const certifyingInstitution =
       rawCertifyingInstitution ??
       this.extractByRegex(content, [
-        /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACIÓN[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MÉXICO)/i,
-        /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACION[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MEXICO)/i,
+        /(ICEM\s*INSTITUTO\s+DE\s+CERTIFICACIÓN\s*EMPRESARIAL\s*DE\s*MÉXICO)/i,
+        /(ICEM\s*INSTITUTO\s+DE\s+CERTIFICACION\s*EMPRESARIAL\s*DE\s*MEXICO)/i,
         /(INSTITUTO\s+DE\s+CERTIFICACIÓN\s+EMPRESARIAL\s+DE\s+MÉXICO)/i,
       ]) ??
       undefined;
@@ -496,8 +506,8 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       ) ?? undefined;
 
     const confidenceValues: number[] = Object.values(fields)
-      .map((f: any) => f.confidence)
-      .filter((c: any) => typeof c === 'number');
+      .map((f: AzureFieldValue) => f.confidence)
+      .filter((c): c is number => typeof c === 'number');
     const ocrConfidence =
       confidenceValues.length > 0
         ? confidenceValues.reduce((a, b) => a + b, 0) / confidenceValues.length
@@ -523,7 +533,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     };
   }
 
-  private parseCertificateFromLayout(result: any): ExtractedCertificateData {
+  private parseCertificateFromLayout(
+    result: AzureAnalyzeResult,
+  ): ExtractedCertificateData {
     const keyValuePairs = result.keyValuePairs ?? [];
     const content: string = result.content ?? '';
 
@@ -532,10 +544,10 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     const fullName =
       fieldMap.get('fullName') ??
       this.extractByRegex(content, [
-        /(?:Nombre|Name|Nombre\s+Completo|Full\s+Name|Student\s+Name)[:\s\n]*([^\n]{2,60})/i,
-        /Otorga\s+el\s+presente[\s\na]+([A-Z][A-Z\s]{5,60})/i,
-        /Certificado\s+a[:\s\n]*([A-Z][A-Z\s]{5,60})/i,
-        /a[:\s\n]+([A-Z][A-Z\s]{5,60})(?:\s+con|\s+por|\s+nivel|$)/i,
+        /(?:Nombre|Name|Nombre\s+Completo|Full\s+Name|Student\s+Name)[:\s]*([^\n]{2,60})/i,
+        /Otorga\s+el\s+presente[\sa]+([A-Z][A-Z\s]{5,60})/i,
+        /Certificado\s+a[:\s]*([A-Z][A-Z\s]{5,60})/i,
+        /a[:\s]+([A-Z][A-Z\s]{5,60})(?:\s+con|\s+por|\s+nivel|$)/i,
       ]) ??
       'Unknown';
 
@@ -553,9 +565,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
       fieldMap.get('issuingOrganization') ??
       this.extractByRegex(content, [
         /(?:Instituci[oó]n|Institution|Issuing|Organization|Entidad\s+Emisora|Issuing\s+Organization)[:\s]*([^\n]{2,100})/i,
-        /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACION[^.\n]{0,50})/i,
+        /(ICEM\s*INSTITUTO\s+DE\s+CERTIFICACION[^.\n]{0,50})/i,
         /(CONOCER[^.\n]{0,30})/i,
-        /(SEP[\s\n]*SECRETARIA[^.\n]{0,50})/i,
+        /(SEP\s*SECRETARIA[^.\n]{0,50})/i,
         /(INSTITUTO\s+DE\s+CERTIFICACION[^.\n]{0,50})/i,
       ]) ??
       'Unknown Organization';
@@ -604,19 +616,19 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
 
     const competencyStandardName = this.extractByRegex(content, [
       /(?:Estándar\s+de\s+Competencia\s*)(EC\d{4,5}\s+[A-Za-zÀ-ÿ\s,]+?)(?:\n|$)/i,
-      /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,áéíóúüñ]+)/i,
+      /EC\d{4,5}\s+([A-Za-zÀ-ÿ\s,]+)/i,
       /(Acondicionamiento\s+físico[^.\n]{0,100})/i,
     ]);
 
     const certifyingInstitution = this.extractByRegex(content, [
-      /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACIÓN[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MÉXICO)/i,
-      /(ICEM[\s\n]*INSTITUTO\s+DE\s+CERTIFICACION[\s\n]*EMPRESARIAL[\s\n]*DE[\s\n]*MEXICO)/i,
+      /(ICEM\s*INSTITUTO\s+DE\s+CERTIFICACIÓN\s*EMPRESARIAL\s*DE\s*MÉXICO)/i,
+      /(ICEM\s*INSTITUTO\s+DE\s+CERTIFICACION\s*EMPRESARIAL\s*DE\s*MEXICO)/i,
       /(INSTITUTO\s+DE\s+CERTIFICACIÓN\s+EMPRESARIAL\s+DE\s+MÉXICO)/i,
     ]);
 
     const confidenceValues: number[] = keyValuePairs
-      .map((kv: any) => kv.confidence)
-      .filter(Boolean);
+      .map((kv: AzureKeyValuePair) => kv.confidence)
+      .filter((c): c is number => typeof c === 'number');
     const ocrConfidence =
       confidenceValues.length > 0
         ? confidenceValues.reduce((a: number, b: number) => a + b, 0) /
@@ -642,7 +654,9 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     });
   }
 
-  private extractFromKeyValuePairs(pairs: any[]): Map<string, string> {
+  private extractFromKeyValuePairs(
+    pairs: AzureKeyValuePair[],
+  ): Map<string, string> {
     const map = new Map<string, string>();
 
     const keyMap: Record<string, string[]> = {
@@ -741,7 +755,7 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
   private extractByRegex(content: string, patterns: RegExp[]): string | null {
     for (const regex of patterns) {
       const match = content.match(regex);
-      if (match && match[1]?.trim()) {
+      if (match?.[1]?.trim()) {
         return match[1].trim();
       }
     }
@@ -784,13 +798,13 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
   private extractStringValue(
     field: DocumentField | undefined,
   ): string | undefined {
-    if (!field || field.kind !== 'string') return undefined;
-    return (field as any).value;
+    if (field?.kind !== 'string') return undefined;
+    return field.value as string | undefined;
   }
 
   private extractDateValue(field: DocumentField | undefined): Date | undefined {
-    if (!field || field.kind !== 'date') return undefined;
-    return (field as any).value;
+    if (field?.kind !== 'date') return undefined;
+    return field.value as Date | undefined;
   }
 
   private normalizeDocumentType(raw: string): string {
@@ -812,6 +826,39 @@ export class AzureDocumentIntelligenceService implements DocumentExtractionPort 
     return 'other';
   }
 }
+
+// ---- Azure API response types ----
+
+interface AzureFieldValue {
+  valueString?: string;
+  valueDate?: string;
+  content?: string;
+  confidence?: number;
+}
+
+interface AzureDocument {
+  fields?: Record<string, AzureFieldValue>;
+  confidence?: number;
+}
+
+interface AzureAnalyzeResult {
+  content?: string;
+  documents?: AzureDocument[];
+  keyValuePairs?: AzureKeyValuePair[];
+}
+
+interface AzureKeyValuePair {
+  key?: { content?: string };
+  value?: { content?: string };
+  confidence?: number;
+}
+
+interface AzurePollResponse {
+  status?: string;
+  analyzeResult?: AzureAnalyzeResult;
+}
+
+// ---- ID Document field type (prebuilt-idDocument SDK) ----
 
 interface DocumentField {
   kind?: string;
