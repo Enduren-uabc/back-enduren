@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --config.onlyBuiltDependencies="@nestjs/core,better-sqlite3,unrs-resolver"
 
       - name: Lint
         run: pnpm lint
