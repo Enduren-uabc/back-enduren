@@ -132,7 +132,8 @@ export class Profile {
     this.mainGoal = params.mainGoal;
     this.daysAvailablePerWeek = params.daysAvailablePerWeek;
     this.weightUnit = params.weightUnit;
-    this.defaultTrainingStrategyKey = params.defaultTrainingStrategyKey ?? this.defaultTrainingStrategyKey;
+    this.defaultTrainingStrategyKey =
+      params.defaultTrainingStrategyKey ?? this.defaultTrainingStrategyKey;
     this.updatedAt = new Date();
   }
 }

@@ -70,7 +70,9 @@ export class CreateOrUpdateProfileUseCase {
         mainGoal: input.mainGoal,
         daysAvailablePerWeek: input.daysAvailablePerWeek ?? 3,
         weightUnit: input.weightUnit ?? 'kg',
-        defaultTrainingStrategyKey: input.defaultTrainingStrategyKey ?? existing.defaultTrainingStrategyKey,
+        defaultTrainingStrategyKey:
+          input.defaultTrainingStrategyKey ??
+          existing.defaultTrainingStrategyKey,
       });
       profile = await this.profileRepository.save(existing);
     } else {

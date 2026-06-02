@@ -82,7 +82,9 @@ describe('Publication domain', () => {
       authorUserId: 'user-1',
       title: PublicationTitle.create('Titulo'),
       content: PublicationContent.create('Contenido'),
-      mediaUrls: PublicationMediaUrls.create(['https://cdn.example.com/image-a.jpg']),
+      mediaUrls: PublicationMediaUrls.create([
+        'https://cdn.example.com/image-a.jpg',
+      ]),
     });
 
     const updated = publication.update({

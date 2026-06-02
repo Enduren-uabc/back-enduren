@@ -55,7 +55,8 @@ export class WorkoutSessionMapper {
       startedAt: ormEntity.startedAt,
       finishedAt: ormEntity.finishedAt,
       dayOfWeek: (ormEntity.dayOfWeek ?? 'monday') as DayOfWeek,
-      sourceType: (ormEntity.sourceType ?? 'personal') as WorkoutSessionSourceType,
+      sourceType: (ormEntity.sourceType ??
+        'personal') as WorkoutSessionSourceType,
       assignedRoutineId: ormEntity.assignedRoutineId ?? null,
     });
   }

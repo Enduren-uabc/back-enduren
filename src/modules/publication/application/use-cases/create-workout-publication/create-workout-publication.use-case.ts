@@ -35,7 +35,9 @@ export class CreateWorkoutPublicationUseCase {
     const publication = Publication.create({
       id: crypto.randomUUID(),
       authorUserId: actor.userId,
-      title: PublicationTitle.create(input.caption ?? 'Entrenamiento completado'),
+      title: PublicationTitle.create(
+        input.caption ?? 'Entrenamiento completado',
+      ),
       content: PublicationContent.create(
         input.caption ?? 'Comparte tu progreso con la comunidad.',
       ),

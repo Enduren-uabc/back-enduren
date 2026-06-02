@@ -257,8 +257,11 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
     return { recentCommentMap, commentAuthorNameMap };
   }
 
-  private buildPublicationItem(params: BuildPublicationItemParams): ProfilePublicationItem {
-    const rawComments = params.recentCommentMap.get(params.publication.id) ?? [];
+  private buildPublicationItem(
+    params: BuildPublicationItemParams,
+  ): ProfilePublicationItem {
+    const rawComments =
+      params.recentCommentMap.get(params.publication.id) ?? [];
     return {
       id: params.publication.id,
       authorUserId: params.publication.authorUserId,
@@ -270,9 +273,9 @@ export class TypeormProfilePublicationQueryAdapter implements ProfilePublication
       workoutSessionId: params.publication.workoutSessionId,
       exerciseSummary: params.publication.exerciseSummary,
       reactionCount: params.reactionCounts.get(params.publication.id) ?? 0,
-      recentReactorNames: (params.recentReactors.get(params.publication.id) ?? []).map(
-        (uid) => params.reactorNameMap.get(uid) ?? 'Usuario',
-      ),
+      recentReactorNames: (
+        params.recentReactors.get(params.publication.id) ?? []
+      ).map((uid) => params.reactorNameMap.get(uid) ?? 'Usuario'),
       likedByMe: params.reactedPublicationIds.has(params.publication.id),
       commentCount: params.commentCounts.get(params.publication.id) ?? 0,
       recentComments: rawComments.map((rc) => ({
