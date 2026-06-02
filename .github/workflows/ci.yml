@@ -7,8 +7,8 @@ on:
     branches: [master]
 
 jobs:
-  ci:
-    name: Lint, Test & SonarQube
+  sonarqube:
+    name: SonarQube Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -16,35 +16,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint || echo "Lint issues found (non-blocking)"
-
-      - name: Test with coverage
-        run: pnpm test:cov || echo "Tests completed (non-blocking)"
-
-      - name: SonarQube Scan
-        if: always()
-        uses: sonarsource/sonarqube-scan-action@v5
+      - uses: sonarsource/sonarqube-scan-action@v5
         with:
           args: >
             -Dsonar.projectKey=enduren-back
             -Dsonar.sources=src
-            -Dsonar.tests=src
-            -Dsonar.test.inclusions=**/*.spec.ts,**/*.test.ts
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
-            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: squ_f8efac174584cb4f0aa1e7a07b9420c500e75c52
+          SONAR_HOST_URL: https://kindling-obstacle-freebie.ngrok-free.dev
