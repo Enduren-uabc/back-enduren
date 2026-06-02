@@ -113,6 +113,43 @@ export class EditAssignedRoutineContentUseCase {
     const name = input.name ?? assigned.routineSnapshot.name;
     const days = input.days ?? assigned.routineSnapshot.days;
 
+    this.validateRoutineContent(name, days);
+
+    const daySnapshots = this.buildDaySnapshots(days);
+    const exerciseSnapshots = daySnapshots.flatMap((d) => d.exercises);
+
+    const updatedSnapshot = RoutineSnapshot.create({
+      routineId: assigned.routineId,
+      name: name.trim(),
+      description: assigned.routineSnapshot.description,
+      difficulty: assigned.routineSnapshot.difficulty,
+      estimatedDuration: assigned.routineSnapshot.estimatedDuration,
+      exercises: exerciseSnapshots,
+      days: daySnapshots,
+    });
+
+    const updated = assigned.updateSnapshot(updatedSnapshot);
+    const saved = await this.assignedRoutineRepository.save(updated);
+
+    await this.sendUpdateNotification(input.clientId, saved.routineSnapshot.name);
+
+    return this.buildResponse(saved);
+  }
+
+  private validateRoutineContent(
+    name: string,
+    days: Array<{
+      dayOfWeek: string;
+      exercises: Array<{
+        exerciseId: string;
+        name: string;
+        sets: number;
+        reps: number;
+        restSeconds: number;
+        order: number;
+      }>;
+    }>,
+  ): void {
     if (!name || name.trim().length === 0) {
       throw new BadRequestException('Routine name cannot be empty');
     }
@@ -141,8 +178,22 @@ export class EditAssignedRoutineContentUseCase {
         }
       }
     }
+  }
 
-    const daySnapshots = days.map((day) =>
+  private buildDaySnapshots(
+    days: Array<{
+      dayOfWeek: string;
+      exercises: Array<{
+        exerciseId: string;
+        name: string;
+        sets: number;
+        reps: number;
+        restSeconds: number;
+        order: number;
+      }>;
+    }>,
+  ): RoutineDaySnapshot[] {
+    return days.map((day) =>
       RoutineDaySnapshot.create({
         dayOfWeek: day.dayOfWeek,
         exercises: day.exercises.map((ex) =>
@@ -157,29 +208,23 @@ export class EditAssignedRoutineContentUseCase {
         ),
       }),
     );
+  }
 
-    const exerciseSnapshots = daySnapshots.flatMap((d) => d.exercises);
-
-    const updatedSnapshot = RoutineSnapshot.create({
-      routineId: assigned.routineId,
-      name: name.trim(),
-      description: assigned.routineSnapshot.description,
-      difficulty: assigned.routineSnapshot.difficulty,
-      estimatedDuration: assigned.routineSnapshot.estimatedDuration,
-      exercises: exerciseSnapshots,
-      days: daySnapshots,
-    });
-
-    const updated = assigned.updateSnapshot(updatedSnapshot);
-    const saved = await this.assignedRoutineRepository.save(updated);
-
+  private async sendUpdateNotification(
+    clientId: string,
+    routineName: string,
+  ): Promise<void> {
     const notification = InAppNotification.create(
-      input.clientId,
+      clientId,
       'Rutina actualizada',
-      `Tu entrenador ha modificado tu rutina asignada: ${saved.routineSnapshot.name}`,
+      `Tu entrenador ha modificado tu rutina asignada: ${routineName}`,
     );
     await this.notificationRepository.save(notification);
+  }
 
+  private buildResponse(
+    saved: import('../../../domain/entities/trainer-assigned-routine.entity').TrainerAssignedRoutine,
+  ): EditAssignedRoutineContentOutput {
     return {
       id: saved.id,
       clientId: saved.clientId,

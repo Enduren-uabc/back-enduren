@@ -21,7 +21,7 @@ import {
   CookieHelper,
   COOKIE_HELPER_PORT,
 } from '../../../infrastructure/providers/cookie-helper.provider';
-import { GoogleOAuthService } from '../../../infrastructure/providers/google-oauth.service';
+import { GoogleOAuthService, GoogleProfile } from '../../../infrastructure/providers/google-oauth.service';
 import { OAuthStateStore } from '../../../infrastructure/providers/oauth-state.store';
 import { RegisterUserUseCase } from '../../../application/use-cases/register-user/register-user.use-case';
 import { LoginUserUseCase } from '../../../application/use-cases/login-user/login-user.use-case';
@@ -378,83 +378,104 @@ export class AuthController {
       );
 
       const provider = 'google';
-
-      let user = await this.userRepository.findBySocialId(provider, profile.id);
-
-      if (user) {
-        user.updateFromSocial(profile.email, profile.name, profile.picture);
-        await this.userRepository.save(user);
-        this.logger.log(`Usuario existente actualizado: ${user.id}`);
-      } else {
-        const existingByEmail = await this.userRepository.findByEmail(
-          profile.email,
-        );
-        if (existingByEmail) {
-          existingByEmail.authProvider = provider;
-          existingByEmail.socialId = profile.id;
-          existingByEmail.privacyAccepted = true;
-          existingByEmail.emailVerified = true;
-          if (profile.picture) existingByEmail.avatarUrl = profile.picture;
-          await this.userRepository.save(existingByEmail);
-          user = existingByEmail;
-          this.logger.log(`Cuenta email vinculada a Google: ${user.id}`);
-        } else {
-          const base = profile.email
-            .split('@')[0]
-            .replace(/[^a-zA-Z0-9_]/g, '_')
-            .substring(0, 30);
-          let username = base;
-          let attempts = 0;
-          while (
-            attempts < 20 &&
-            (await this.userRepository.existsByUsername(username))
-          ) {
-            attempts++;
-            username = `${base.substring(0, 25)}_${Math.floor(Math.random() * 10000)}`;
-          }
-          if (attempts >= 20) username = `${base}_${Date.now()}`;
-
-          user = User.createFromSocial(
-            crypto.randomUUID(),
-            profile.email,
-            username,
-            provider,
-            profile.id,
-            profile.picture,
-          );
-          await this.userRepository.save(user);
-          this.logger.log(`Usuario nuevo creado desde Google: ${user.id}`);
-        }
-      }
+      const user = await this.findOrCreateGoogleUser(profile, provider);
 
       if (user.status === 'locked') {
         res.redirect(`${returnTo}?error=cuenta_bloqueada`);
         return;
       }
 
-      const ttlSeconds = parseInt(
-        this.configService.get<string>('MOBILE_OAUTH_CODE_TTL_SECONDS', '120'),
-        10,
-      );
-      const tempCodeValue = generateTempCode();
-      const tempCode = SocialAuthCode.create(
-        user.id,
-        provider,
-        tempCodeValue,
-        new Date(Date.now() + ttlSeconds * 1000),
-      );
-
-      await this.authCodeRepository.save(tempCode);
-      this.logger.log(
-        `Código temporal generado para usuario ${user.id}, TTL=${ttlSeconds}s`,
-      );
-
-      this.logger.log(`Redirigiendo a app con code temporal`);
-      res.redirect(`${returnTo}?code=${tempCode.code}&provider=google`);
+      await this.generateAndRedirectTempCode(user, provider, returnTo, res);
     } catch (err) {
       this.logger.error(`Error en callback Google: ${(err as Error).message}`);
       res.redirect(`${returnTo}?error=autenticacion_fallida`);
     }
+  }
+
+  private async findOrCreateGoogleUser(
+    profile: GoogleProfile,
+    provider: 'google' | 'apple',
+  ): Promise<User> {
+    let user = await this.userRepository.findBySocialId(provider, profile.id);
+
+    if (user) {
+      user.updateFromSocial(profile.email, profile.name, profile.picture);
+      await this.userRepository.save(user);
+      this.logger.log(`Usuario existente actualizado: ${user.id}`);
+      return user;
+    }
+
+    const existingByEmail = await this.userRepository.findByEmail(
+      profile.email,
+    );
+    if (existingByEmail) {
+      existingByEmail.authProvider = provider;
+      existingByEmail.socialId = profile.id;
+      existingByEmail.privacyAccepted = true;
+      existingByEmail.emailVerified = true;
+      if (profile.picture) existingByEmail.avatarUrl = profile.picture;
+      await this.userRepository.save(existingByEmail);
+      this.logger.log(`Cuenta email vinculada a Google: ${existingByEmail.id}`);
+      return existingByEmail;
+    }
+
+    const username = await this.generateUniqueUsername(profile.email);
+    user = User.createFromSocial(
+      crypto.randomUUID(),
+      profile.email,
+      username,
+      provider,
+      profile.id,
+      profile.picture,
+    );
+    await this.userRepository.save(user);
+    this.logger.log(`Usuario nuevo creado desde Google: ${user.id}`);
+    return user;
+  }
+
+  private async generateUniqueUsername(email: string): Promise<string> {
+    const base = email
+      .split('@')[0]
+      .replace(/[^a-zA-Z0-9_]/g, '_')
+      .substring(0, 30);
+    let username = base;
+    let attempts = 0;
+    while (
+      attempts < 20 &&
+      (await this.userRepository.existsByUsername(username))
+    ) {
+      attempts++;
+      username = `${base.substring(0, 25)}_${Math.floor(Math.random() * 10000)}`;
+    }
+    if (attempts >= 20) username = `${base}_${Date.now()}`;
+    return username;
+  }
+
+  private async generateAndRedirectTempCode(
+    user: User,
+    provider: string,
+    returnTo: string,
+    res: Response,
+  ): Promise<void> {
+    const ttlSeconds = parseInt(
+      this.configService.get<string>('MOBILE_OAUTH_CODE_TTL_SECONDS', '120'),
+      10,
+    );
+    const tempCodeValue = generateTempCode();
+    const tempCode = SocialAuthCode.create(
+      user.id,
+      provider,
+      tempCodeValue,
+      new Date(Date.now() + ttlSeconds * 1000),
+    );
+
+    await this.authCodeRepository.save(tempCode);
+    this.logger.log(
+      `Código temporal generado para usuario ${user.id}, TTL=${ttlSeconds}s`,
+    );
+
+    this.logger.log(`Redirigiendo a app con code temporal`);
+    res.redirect(`${returnTo}?code=${tempCode.code}&provider=google`);
   }
 
   @Public()

@@ -409,89 +409,11 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       },
     });
 
-    const statusHistory =
-      entity?.statusHistory?.map((h) => ({
-        id: h.id,
-        fromStatus: h.previousStatus ?? null,
-        toStatus: h.newStatus,
-        actorId: h.actorId,
-        actorType: h.actorType,
-        reason: h.reason ?? undefined,
-        createdAt: h.createdAt.toISOString(),
-      })) ?? [];
-
-    const auditEvents =
-      entity?.auditEvents?.map((e) => ({
-        id: e.id,
-        eventType: e.eventType,
-        actorId: e.actorId,
-        actorType: e.actorType,
-        description: e.description,
-        metadata: (e.metadata as Record<string, unknown>) ?? undefined,
-        createdAt: e.createdAt.toISOString(),
-      })) ?? [];
-
-    const extractedCertData = verification.extractedCertificateData
-      ? {
-          fullName: verification.extractedCertificateData.fullName,
-          certificateName:
-            verification.extractedCertificateData.certificateName,
-          issuingOrganization:
-            verification.extractedCertificateData.issuingOrganization,
-          issueDate: verification.extractedCertificateData.issueDate
-            ? verification.extractedCertificateData.issueDate.toISOString()
-            : undefined,
-          expirationDate: verification.extractedCertificateData.expirationDate
-            ? verification.extractedCertificateData.expirationDate.toISOString()
-            : undefined,
-          folioNumber:
-            verification.extractedCertificateData.folioNumber ?? undefined,
-          qrUrl: verification.extractedCertificateData.qrUrl ?? undefined,
-          ocrConfidence: verification.extractedCertificateData.ocrConfidence,
-          hasVeracityCode:
-            verification.extractedCertificateData.hasVeracityCode ?? undefined,
-          veracityCode:
-            verification.extractedCertificateData.veracityCode ?? undefined,
-        }
-      : null;
-
-    const rawDocId = verification.extractedIdData?.documentIdentifier;
-    const extractedIdData = verification.extractedIdData
-      ? {
-          fullName: verification.extractedIdData.fullName,
-          documentType: verification.extractedIdData.documentType,
-          issuingCountry:
-            verification.extractedIdData.issuingCountry ?? undefined,
-          birthDate: verification.extractedIdData.birthDate
-            ? verification.extractedIdData.birthDate.toISOString()
-            : undefined,
-          expirationDate: verification.extractedIdData.expirationDate
-            ? verification.extractedIdData.expirationDate.toISOString()
-            : undefined,
-          documentIdentifier: rawDocId
-            ? rawDocId.length > 8
-              ? rawDocId.slice(0, 4) + '****' + rawDocId.slice(-4)
-              : '****'
-            : undefined,
-          ocrConfidence: verification.extractedIdData.ocrConfidence,
-        }
-      : null;
-
-    const scoringResult = verification.scoringResult
-      ? {
-          riskScore: verification.scoringResult.riskScore,
-          riskLevel: verification.scoringResult.riskLevel,
-          recommendedAction: verification.scoringResult.recommendedAction,
-          summary: verification.scoringResult.summary,
-          positiveSignals: verification.scoringResult.positiveSignals,
-          alerts: verification.scoringResult.alerts.map((a) => ({
-            code: a.code,
-            severity: a.severity,
-            message: a.message,
-          })),
-          overrides: verification.scoringResult.overrides,
-        }
-      : null;
+    const statusHistory = this.mapStatusHistory(entity);
+    const auditEvents = this.mapAuditEvents(entity);
+    const extractedCertData = this.mapExtractedCertificateData(verification);
+    const extractedIdData = this.mapExtractedIdData(verification);
+    const scoringResult = this.mapScoringResult(verification);
 
     return {
       id: verification.id,
@@ -540,6 +462,155 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
       scoringResult,
       statusHistory,
       auditEvents,
+    };
+  }
+
+  private mapStatusHistory(
+    entity: TrainerVerificationTypeormEntity | null,
+  ): Array<{
+    id: string;
+    fromStatus: string | null;
+    toStatus: string;
+    actorId: string;
+    actorType: string;
+    reason: string | undefined;
+    createdAt: string;
+  }> {
+    return (
+      entity?.statusHistory?.map((h) => ({
+        id: h.id,
+        fromStatus: h.previousStatus ?? null,
+        toStatus: h.newStatus,
+        actorId: h.actorId,
+        actorType: h.actorType,
+        reason: h.reason ?? undefined,
+        createdAt: h.createdAt.toISOString(),
+      })) ?? []
+    );
+  }
+
+  private mapAuditEvents(
+    entity: TrainerVerificationTypeormEntity | null,
+  ): Array<{
+    id: string;
+    eventType: string;
+    actorId: string;
+    actorType: string;
+    description: string;
+    metadata: Record<string, unknown> | undefined;
+    createdAt: string;
+  }> {
+    return (
+      entity?.auditEvents?.map((e) => ({
+        id: e.id,
+        eventType: e.eventType,
+        actorId: e.actorId,
+        actorType: e.actorType,
+        description: e.description,
+        metadata: (e.metadata as Record<string, unknown>) ?? undefined,
+        createdAt: e.createdAt.toISOString(),
+      })) ?? []
+    );
+  }
+
+  private mapExtractedCertificateData(
+    verification: TrainerVerification,
+  ): {
+    fullName: string;
+    certificateName: string;
+    issuingOrganization: string;
+    issueDate?: string;
+    expirationDate?: string;
+    folioNumber?: string;
+    qrUrl?: string;
+    ocrConfidence: number;
+    hasVeracityCode?: boolean;
+    veracityCode?: string;
+  } | null {
+    if (!verification.extractedCertificateData) {
+      return null;
+    }
+    const cert = verification.extractedCertificateData;
+    return {
+      fullName: cert.fullName,
+      certificateName: cert.certificateName,
+      issuingOrganization: cert.issuingOrganization,
+      issueDate: cert.issueDate
+        ? cert.issueDate.toISOString()
+        : undefined,
+      expirationDate: cert.expirationDate
+        ? cert.expirationDate.toISOString()
+        : undefined,
+      folioNumber: cert.folioNumber ?? undefined,
+      qrUrl: cert.qrUrl ?? undefined,
+      ocrConfidence: cert.ocrConfidence,
+      hasVeracityCode: cert.hasVeracityCode ?? undefined,
+      veracityCode: cert.veracityCode ?? undefined,
+    };
+  }
+
+  private mapExtractedIdData(
+    verification: TrainerVerification,
+  ): {
+    fullName: string;
+    documentType: string;
+    issuingCountry?: string;
+    birthDate?: string;
+    expirationDate?: string;
+    documentIdentifier?: string;
+    ocrConfidence: number;
+  } | null {
+    if (!verification.extractedIdData) {
+      return null;
+    }
+    const idData = verification.extractedIdData;
+    const rawDocId = idData.documentIdentifier;
+    return {
+      fullName: idData.fullName,
+      documentType: idData.documentType,
+      issuingCountry: idData.issuingCountry ?? undefined,
+      birthDate: idData.birthDate
+        ? idData.birthDate.toISOString()
+        : undefined,
+      expirationDate: idData.expirationDate
+        ? idData.expirationDate.toISOString()
+        : undefined,
+      documentIdentifier: rawDocId
+        ? rawDocId.length > 8
+          ? rawDocId.slice(0, 4) + '****' + rawDocId.slice(-4)
+          : '****'
+        : undefined,
+      ocrConfidence: idData.ocrConfidence,
+    };
+  }
+
+  private mapScoringResult(
+    verification: TrainerVerification,
+  ): {
+    riskScore: number;
+    riskLevel: string;
+    recommendedAction: string;
+    summary: string;
+    positiveSignals: string[];
+    alerts: { code: string; severity: string; message: string }[];
+    overrides: string[];
+  } | null {
+    if (!verification.scoringResult) {
+      return null;
+    }
+    const sr = verification.scoringResult;
+    return {
+      riskScore: sr.riskScore,
+      riskLevel: sr.riskLevel,
+      recommendedAction: sr.recommendedAction,
+      summary: sr.summary,
+      positiveSignals: sr.positiveSignals,
+      alerts: sr.alerts.map((a) => ({
+        code: a.code,
+        severity: a.severity,
+        message: a.message,
+      })),
+      overrides: sr.overrides,
     };
   }
 

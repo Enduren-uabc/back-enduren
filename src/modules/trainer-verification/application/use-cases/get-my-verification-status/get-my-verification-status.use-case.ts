@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { TrainerVerification } from '../../../domain/entities/trainer-verification.entity';
 import {
   TrainerVerificationRepository,
   TRAINER_VERIFICATION_REPOSITORY_PORT,
@@ -81,8 +82,20 @@ export class GetMyVerificationStatusUseCase {
       advancedStatus: verification.advancedStatus,
     };
 
-    const advStatus = verification.advancedStatus;
+    this.applyCertificateExtractionStatus(verification, result);
+    this.applyIdExtractionStatus(verification, result);
+    this.applyExtractedCertificateInfo(verification, result);
+    this.applyExtractedIdInfo(verification, result);
+    this.applyScoringInfo(verification, result);
 
+    return result;
+  }
+
+  private applyCertificateExtractionStatus(
+    verification: TrainerVerification,
+    result: GetMyVerificationStatusOutput,
+  ): void {
+    const advStatus = verification.advancedStatus;
     if (verification.extractedCertificateData) {
       result.certificateExtractionStatus = 'extracted';
     } else if (
@@ -94,7 +107,13 @@ export class GetMyVerificationStatusUseCase {
     } else if (verification.certificates.length > 0) {
       result.certificateExtractionStatus = 'pending';
     }
+  }
 
+  private applyIdExtractionStatus(
+    verification: TrainerVerification,
+    result: GetMyVerificationStatusOutput,
+  ): void {
+    const advStatus = verification.advancedStatus;
     if (verification.extractedIdData) {
       result.idExtractionStatus = 'extracted';
     } else if (
@@ -106,55 +125,71 @@ export class GetMyVerificationStatusUseCase {
     } else if (verification.idDocuments.length > 0) {
       result.idExtractionStatus = 'pending';
     }
+  }
 
-    if (verification.extractedCertificateData) {
-      const cert = verification.extractedCertificateData;
-      result.extractedCertificateInfo = {
-        fullName: cert.fullName,
-        name: cert.certificateName,
-        institution: cert.issuingOrganization,
-        certifyingInstitution: cert.certifyingInstitution ?? undefined,
-        issueDate: cert.issueDate ? cert.issueDate.toISOString() : undefined,
-        expirationDate: cert.expirationDate
-          ? cert.expirationDate.toISOString()
-          : undefined,
-        folioNumber: cert.folioNumber ?? undefined,
-        qrUrl: cert.qrUrl ?? undefined,
-        ocrConfidence: cert.ocrConfidence,
-        curp: cert.curp ?? undefined,
-        competencyStandardCode: cert.competencyStandardCode ?? undefined,
-        competencyStandardName: cert.competencyStandardName ?? undefined,
-      };
+  private applyExtractedCertificateInfo(
+    verification: TrainerVerification,
+    result: GetMyVerificationStatusOutput,
+  ): void {
+    if (!verification.extractedCertificateData) {
+      return;
     }
+    const cert = verification.extractedCertificateData;
+    result.extractedCertificateInfo = {
+      fullName: cert.fullName,
+      name: cert.certificateName,
+      institution: cert.issuingOrganization,
+      certifyingInstitution: cert.certifyingInstitution ?? undefined,
+      issueDate: cert.issueDate ? cert.issueDate.toISOString() : undefined,
+      expirationDate: cert.expirationDate
+        ? cert.expirationDate.toISOString()
+        : undefined,
+      folioNumber: cert.folioNumber ?? undefined,
+      qrUrl: cert.qrUrl ?? undefined,
+      ocrConfidence: cert.ocrConfidence,
+      curp: cert.curp ?? undefined,
+      competencyStandardCode: cert.competencyStandardCode ?? undefined,
+      competencyStandardName: cert.competencyStandardName ?? undefined,
+    };
+  }
 
-    if (verification.extractedIdData) {
-      const idData = verification.extractedIdData;
-      result.extractedIdInfo = {
-        fullName: idData.fullName,
-        documentType: idData.documentType,
-        issuingCountry: idData.issuingCountry ?? undefined,
-        birthDate: idData.birthDate
-          ? idData.birthDate.toISOString()
-          : undefined,
-        expirationDate: idData.expirationDate
-          ? idData.expirationDate.toISOString()
-          : undefined,
-        documentIdentifier: idData.documentIdentifier ?? undefined,
-        ocrConfidence: idData.ocrConfidence,
-        curp: idData.curp ?? undefined,
-      };
+  private applyExtractedIdInfo(
+    verification: TrainerVerification,
+    result: GetMyVerificationStatusOutput,
+  ): void {
+    if (!verification.extractedIdData) {
+      return;
     }
+    const idData = verification.extractedIdData;
+    result.extractedIdInfo = {
+      fullName: idData.fullName,
+      documentType: idData.documentType,
+      issuingCountry: idData.issuingCountry ?? undefined,
+      birthDate: idData.birthDate
+        ? idData.birthDate.toISOString()
+        : undefined,
+      expirationDate: idData.expirationDate
+        ? idData.expirationDate.toISOString()
+        : undefined,
+      documentIdentifier: idData.documentIdentifier ?? undefined,
+      ocrConfidence: idData.ocrConfidence,
+      curp: idData.curp ?? undefined,
+    };
+  }
 
-    if (verification.scoringResult) {
-      result.riskLevel = verification.scoringResult.riskLevel;
-      result.riskScore = verification.scoringResult.riskScore;
-      result.riskAlerts = verification.scoringResult.alerts.map((a) => ({
-        code: a.code,
-        severity: a.severity,
-        message: a.message,
-      }));
+  private applyScoringInfo(
+    verification: TrainerVerification,
+    result: GetMyVerificationStatusOutput,
+  ): void {
+    if (!verification.scoringResult) {
+      return;
     }
-
-    return result;
+    result.riskLevel = verification.scoringResult.riskLevel;
+    result.riskScore = verification.scoringResult.riskScore;
+    result.riskAlerts = verification.scoringResult.alerts.map((a) => ({
+      code: a.code,
+      severity: a.severity,
+      message: a.message,
+    }));
   }
 }
