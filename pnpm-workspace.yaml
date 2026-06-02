@@ -1,4 +1,7 @@
-allowBuilds:
-  '@nestjs/core': true
-  better-sqlite3: true
-  unrs-resolver: true
+packages:
+  - '.'
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - better-sqlite3
+  - unrs-resolver
