@@ -41,6 +41,7 @@ describe('ListPublicationsUseCase', () => {
     };
     useCase = new ListPublicationsUseCase(
       publicationRepository,
+      undefined,
       followedUsersQuery,
     );
   });

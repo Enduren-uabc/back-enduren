@@ -212,7 +212,7 @@ describe('WorkoutSession domain entity', () => {
 
       expect(updated.exercises[0].workoutSets[0].repsPerformed).toBe(10);
       expect(updated.exercises[0].workoutSets[0].weightUsed).toBe(50);
-      expect(updated.exercises[0].workoutSets[0].completed).toBe(false);
+      expect(updated.exercises[0].workoutSets[0].completed).toBe(true);
     });
 
     it('should throw SESSION_ALREADY_FINISHED when session is finished', () => {
@@ -559,7 +559,7 @@ describe('WorkoutExercise value object', () => {
 
       expect(updated.workoutSets[0].repsPerformed).toBe(10);
       expect(updated.workoutSets[0].weightUsed).toBe(50);
-      expect(updated.workoutSets[0].completed).toBe(false);
+      expect(updated.workoutSets[0].completed).toBe(true);
     });
 
     it('should throw SESSION_SET_NOT_FOUND when set number does not exist', () => {
@@ -746,7 +746,7 @@ describe('WorkoutSet value object', () => {
 
       expect(updated.repsPerformed).toBe(10);
       expect(updated.weightUsed).toBe(50);
-      expect(updated.completed).toBe(false);
+      expect(updated.completed).toBe(true);
       expect(updated.setNumber).toBe(1);
       expect(updated.targetReps).toBe(10);
       expect(updated.targetWeight).toBe(50);
@@ -853,7 +853,7 @@ describe('WorkoutSet value object', () => {
       const withReps = set.registerRepsAndWeight(10, 50);
       const completed = withReps.markAsCompleted();
 
-      expect(withReps.completed).toBe(false);
+      expect(withReps.completed).toBe(true);
       expect(completed.completed).toBe(true);
     });
   });

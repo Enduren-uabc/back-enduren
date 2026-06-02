@@ -55,7 +55,7 @@ export class MarkSetAsCompletedUseCase {
       );
     }
 
-    const updatedSession = session.markSetAsCompleted(
+    const updatedSession = session.toggleSetCompleted(
       input.exerciseIndex,
       input.setNumber,
     );

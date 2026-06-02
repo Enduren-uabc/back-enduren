@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { TrainerVerificationAuditEvent } from '../../../domain/entities/trainer-verification-audit-event.entity';
 import {
@@ -24,6 +25,7 @@ import {
 import { RiskScoringService } from '../../services/risk-scoring.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
 import { SYSTEM_ACTOR, SYSTEM_ACTOR_ID } from '../../constants/system-actor';
+import { TrainerVerificationSubmittedEvent } from '../../../../shared/email/domain/events/trainer-verification-submitted.event';
 
 export interface SubmitPowerspikeVerificationInput {
   actor: CurrentActor;
@@ -52,6 +54,7 @@ export class SubmitPowerspikeVerificationUseCase {
     private readonly specialtyCatalogRepository: SpecialtyCatalogRepository,
     private readonly stateMachine: TrainerVerificationStateMachineService,
     private readonly riskScoring: RiskScoringService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -201,6 +204,11 @@ export class SubmitPowerspikeVerificationUseCase {
     await this.auditRepository.recordStatusChange(finalChange);
     await this.auditRepository.recordAuditEvent(scoringAuditEvent);
     await this.auditRepository.recordAuditEvent(submitAuditEvent);
+
+    this.eventEmitter.emit(
+      'trainer-verification.submitted',
+      new TrainerVerificationSubmittedEvent(input.actor.email),
+    );
 
     return {
       verificationId: verification.id,

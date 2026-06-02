@@ -1,4 +1,9 @@
-import { Injectable, Inject, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -24,7 +29,13 @@ export interface SocialLoginInput {
 }
 
 export interface SocialLoginOutput {
-  user: { id: string; email: string; username: string; role: string; emailVerified: boolean };
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    role: string;
+    emailVerified: boolean;
+  };
   accessToken: string;
   refreshToken: string;
 }
@@ -44,27 +55,41 @@ export class SocialLoginUseCase {
 
   async execute(input: SocialLoginInput): Promise<SocialLoginOutput> {
     if (!input.privacyAccepted) {
-      throw new BadRequestException('Debes aceptar el aviso de privacidad para continuar');
+      throw new BadRequestException(
+        'Debes aceptar el aviso de privacidad para continuar',
+      );
     }
 
     let socialData;
     try {
-      socialData = await this.socialAuthVerifier.verify(input.provider, input.idToken);
+      socialData = await this.socialAuthVerifier.verify(
+        input.provider,
+        input.idToken,
+      );
     } catch {
       throw new UnauthorizedException('El token de autenticación no es válido');
     }
 
-    let user = await this.userRepository.findBySocialId(input.provider, socialData.socialId);
+    let user = await this.userRepository.findBySocialId(
+      input.provider,
+      socialData.socialId,
+    );
 
     if (user) {
-      user.updateFromSocial(socialData.email, socialData.name, socialData.avatarUrl);
+      user.updateFromSocial(
+        socialData.email,
+        socialData.name,
+        socialData.avatarUrl,
+      );
       await this.userRepository.save(user);
     } else {
       user = await this.createSocialUser(input.provider, socialData);
     }
 
     if (user.status === 'locked') {
-      throw new UnauthorizedException('La cuenta está bloqueada. Intenta más tarde.');
+      throw new UnauthorizedException(
+        'La cuenta está bloqueada. Intenta más tarde.',
+      );
     }
 
     await this.refreshTokenRepository.deleteByUserId(user.id);
@@ -84,9 +109,16 @@ export class SocialLoginUseCase {
 
   private async createSocialUser(
     provider: 'google' | 'apple',
-    socialData: { socialId: string; email: string; name: string; avatarUrl: string | null },
+    socialData: {
+      socialId: string;
+      email: string;
+      name: string;
+      avatarUrl: string | null;
+    },
   ): Promise<User> {
-    const existingByEmail = await this.userRepository.findByEmail(socialData.email);
+    const existingByEmail = await this.userRepository.findByEmail(
+      socialData.email,
+    );
     if (existingByEmail) {
       existingByEmail.authProvider = provider;
       existingByEmail.socialId = socialData.socialId;
@@ -99,7 +131,10 @@ export class SocialLoginUseCase {
       return existingByEmail;
     }
 
-    const username = await this.generateUniqueUsername(socialData.name, socialData.email);
+    const username = await this.generateUniqueUsername(
+      socialData.name,
+      socialData.email,
+    );
 
     const user = User.createFromSocial(
       crypto.randomUUID(),
@@ -113,8 +148,14 @@ export class SocialLoginUseCase {
     return user;
   }
 
-  private async generateUniqueUsername(name: string, email: string): Promise<string> {
-    const base = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 30);
+  private async generateUniqueUsername(
+    name: string,
+    email: string,
+  ): Promise<string> {
+    const base = email
+      .split('@')[0]
+      .replace(/[^a-zA-Z0-9_]/g, '_')
+      .substring(0, 30);
     let username = base;
     let attempts = 0;
     while (attempts < 20) {
@@ -131,15 +172,25 @@ export class SocialLoginUseCase {
   private async generateTokens(
     user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      emailVerified: user.emailVerified,
+    };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as `${number}m`,
+      expiresIn: this.configService.get<string>(
+        'JWT_ACCESS_EXPIRATION',
+        '15m',
+      ) as `${number}m`,
     });
 
     const refreshTokenValue = crypto.randomUUID();
     const refreshExpiresDays = parseInt(
-      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d').replace('d', ''),
+      this.configService
+        .get<string>('JWT_REFRESH_EXPIRATION', '7d')
+        .replace('d', ''),
       10,
     );
     const refreshToken = RefreshToken.create(

@@ -9,14 +9,30 @@ export interface VerificationStatusResponseDto {
   certificateExtractionStatus?: 'pending' | 'extracted' | 'failed' | null;
   idExtractionStatus?: 'pending' | 'extracted' | 'failed' | null;
   extractedCertificateInfo?: {
+    fullName: string;
     name: string;
     institution: string;
+    certifyingInstitution?: string;
+    issueDate?: string;
+    expirationDate?: string;
+    folioNumber?: string;
+    qrUrl?: string;
     ocrConfidence: number;
+    curp?: string;
+    competencyStandardCode?: string;
+    competencyStandardName?: string;
+    hasVeracityCode?: boolean;
+    veracityCode?: string;
   };
   extractedIdInfo?: {
     fullName: string;
     documentType: string;
+    issuingCountry?: string;
+    birthDate?: string;
+    expirationDate?: string;
+    documentIdentifier?: string;
     ocrConfidence: number;
+    curp?: string;
   };
   riskLevel?: string;
   riskScore?: number;

@@ -8,10 +8,26 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseFilters,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from '../../../../../shared/storage/domain/services/storage.service';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
+import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
+import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 import { FollowedUsersQueryPort } from '../../../application/ports/followed-users-query.port';
+import {
+  WORKOUT_SESSION_QUERY_PORT,
+  WorkoutSessionQueryPort,
+} from '../../../application/ports/workout-session-query.port';
+import {
+  AUTHOR_PROFILE_QUERY_PORT,
+  AuthorProfileQueryPort,
+} from '../../../application/ports/author-profile-query.port';
 import {
   AddPublicationReactionUseCase,
   PUBLICATION_REACTION_REPOSITORY_PORT,
@@ -30,9 +46,15 @@ import { RemovePublicationReactionUseCase } from '../../../application/use-cases
 import { UpdatePublicationUseCase } from '../../../application/use-cases/update-publication/update-publication.use-case';
 import {
   CreatePublicationUseCase,
-  PUBLICATION_CURRENT_ACTOR_PORT,
   PUBLICATION_REPOSITORY_PORT,
 } from '../../../application/use-cases/create-publication/create-publication.use-case';
+import { CreateWorkoutPublicationUseCase } from '../../../application/use-cases/create-workout-publication/create-workout-publication.use-case';
+import { UploadPublicationMediaUseCase } from '../../../application/use-cases/upload-publication-media/upload-publication-media.use-case';
+import { DeletePublicationMediaUseCase } from '../../../application/use-cases/delete-publication-media/delete-publication-media.use-case';
+import {
+  PUBLICATION_MEDIA_REPOSITORY_PORT,
+  PublicationMediaRepository,
+} from '../../../domain/repositories/publication-media.repository';
 import { PublicationCommentRepository } from '../../../domain/repositories/publication-comment.repository';
 import { PublicationReactionRepository } from '../../../domain/repositories/publication-reaction.repository';
 import { PublicationRepository } from '../../../domain/repositories/publication.repository';
@@ -42,10 +64,12 @@ import { CreatePublicationRequestDto } from '../requests/create-publication.requ
 import { ListPublicationsRequestDto } from '../requests/list-publications.request';
 import { UpdatePublicationRequestDto } from '../requests/update-publication.request';
 import {
+  CreateWorkoutPublicationResponseDto,
   DeletePublicationResponseDto,
   ListPublicationsResponseDto,
   PublicationPresenter,
   PublicationResponseDto,
+  WorkoutPublicationPresenter,
 } from '../responses/publication.response';
 import {
   DeletePublicationReactionResponseDto,
@@ -56,6 +80,7 @@ import {
 } from '../responses/publication-interaction.response';
 
 @Controller('publications')
+@UseGuards(JwtAuthGuard)
 @UseFilters(PublicationDomainErrorFilter)
 export class PublicationController {
   private readonly createPublicationUseCase: CreatePublicationUseCase;
@@ -66,6 +91,9 @@ export class PublicationController {
   private readonly removeReactionUseCase: RemovePublicationReactionUseCase;
   private readonly createCommentUseCase: CreatePublicationCommentUseCase;
   private readonly listCommentsUseCase: ListPublicationCommentsUseCase;
+  private readonly createWorkoutPublicationUseCase: CreateWorkoutPublicationUseCase;
+  private readonly uploadMediaUseCase: UploadPublicationMediaUseCase;
+  private readonly deleteMediaUseCase: DeletePublicationMediaUseCase;
 
   constructor(
     @Inject(PUBLICATION_REPOSITORY_PORT)
@@ -76,11 +104,25 @@ export class PublicationController {
     commentRepository: PublicationCommentRepository,
     @Inject(PUBLICATION_FOLLOWED_USERS_QUERY_PORT)
     followedUsersQuery: FollowedUsersQueryPort,
-    @Inject(PUBLICATION_CURRENT_ACTOR_PORT)
-    private readonly currentActor: CurrentActor,
+    @Inject(AUTHOR_PROFILE_QUERY_PORT)
+    authorProfileQuery: AuthorProfileQueryPort,
+    @Inject(WORKOUT_SESSION_QUERY_PORT)
+    private readonly workoutSessionQuery: WorkoutSessionQueryPort,
+    @Inject(PUBLICATION_MEDIA_REPOSITORY_PORT)
+    private readonly mediaRepository: PublicationMediaRepository,
+    private readonly storageService: StorageService,
   ) {
     this.createPublicationUseCase = new CreatePublicationUseCase(
       publicationRepository,
+      mediaRepository,
+    );
+    this.uploadMediaUseCase = new UploadPublicationMediaUseCase(
+      storageService,
+      mediaRepository,
+    );
+    this.deleteMediaUseCase = new DeletePublicationMediaUseCase(
+      storageService,
+      mediaRepository,
     );
     this.updatePublicationUseCase = new UpdatePublicationUseCase(
       publicationRepository,
@@ -90,7 +132,11 @@ export class PublicationController {
     );
     this.listPublicationsUseCase = new ListPublicationsUseCase(
       publicationRepository,
+      mediaRepository,
       followedUsersQuery,
+      authorProfileQuery,
+      reactionRepository,
+      commentRepository,
     );
     this.addReactionUseCase = new AddPublicationReactionUseCase(
       publicationRepository,
@@ -108,14 +154,23 @@ export class PublicationController {
       publicationRepository,
       commentRepository,
     );
+    this.createWorkoutPublicationUseCase = new CreateWorkoutPublicationUseCase(
+      publicationRepository,
+      workoutSessionQuery,
+    );
+  }
+
+  private getActor(user: JwtPayload): CurrentActor {
+    return { userId: user.sub };
   }
 
   @Get()
   public async list(
+    @CurrentUser() user: JwtPayload,
     @Query() query: ListPublicationsRequestDto,
   ): Promise<ListPublicationsResponseDto> {
     const publications = await this.listPublicationsUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         limit: query.limit,
         offset: query.offset,
@@ -128,27 +183,83 @@ export class PublicationController {
 
   @Post()
   public async create(
+    @CurrentUser() user: JwtPayload,
     @Body() dto: CreatePublicationRequestDto,
   ): Promise<PublicationResponseDto> {
     const publication = await this.createPublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         title: dto.title,
         content: dto.content,
         mediaUrls: dto.mediaUrls,
+        mediaIds: dto.mediaIds,
       },
     );
 
     return PublicationPresenter.toHttp(publication);
   }
 
+  @Post('from-workout/:sessionId')
+  public async createFromWorkout(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+    @Body() body: { caption?: string; mediaUrls?: string[] },
+  ): Promise<CreateWorkoutPublicationResponseDto> {
+    const publication = await this.createWorkoutPublicationUseCase.execute(
+      this.getActor(user),
+      {
+        caption: body.caption,
+        mediaUrls: body.mediaUrls,
+        workoutSessionId: sessionId,
+      },
+    );
+
+    return WorkoutPublicationPresenter.toHttp(publication);
+  }
+
+  @Post('media/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  public async uploadMedia(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{
+    id: string;
+    url: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+  }> {
+    const result = await this.uploadMediaUseCase.execute({
+      actor: this.getActor(user),
+      file,
+      sortOrder: 0,
+    });
+    return result;
+  }
+
+  @Delete('media/:mediaId')
+  public async deleteMedia(
+    @CurrentUser() user: JwtPayload,
+    @Param('mediaId') mediaId: string,
+  ): Promise<void> {
+    await this.deleteMediaUseCase.execute({
+      mediaId,
+      userId: this.getActor(user).userId,
+    });
+  }
+
   @Patch(':publicationId')
   public async update(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
     @Body() dto: UpdatePublicationRequestDto,
   ): Promise<PublicationResponseDto> {
     const publication = await this.updatePublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       {
         publicationId,
         title: dto.title,
@@ -162,10 +273,11 @@ export class PublicationController {
 
   @Delete(':publicationId')
   public async delete(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<DeletePublicationResponseDto> {
     const result = await this.deletePublicationUseCase.execute(
-      this.currentActor,
+      this.getActor(user),
       { publicationId },
     );
 
@@ -177,22 +289,30 @@ export class PublicationController {
 
   @Post(':publicationId/reactions')
   public async addReaction(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<PublicationReactionResponseDto> {
-    const reaction = await this.addReactionUseCase.execute(this.currentActor, {
-      publicationId,
-    });
+    const reaction = await this.addReactionUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+      },
+    );
 
     return PublicationInteractionPresenter.reactionToHttp(reaction);
   }
 
   @Delete(':publicationId/reactions')
   public async removeReaction(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<DeletePublicationReactionResponseDto> {
-    const result = await this.removeReactionUseCase.execute(this.currentActor, {
-      publicationId,
-    });
+    const result = await this.removeReactionUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+      },
+    );
 
     const response = new DeletePublicationReactionResponseDto();
     response.publicationId = result.publicationId;
@@ -202,24 +322,32 @@ export class PublicationController {
 
   @Post(':publicationId/comments')
   public async createComment(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
     @Body() dto: CreatePublicationCommentRequestDto,
   ): Promise<PublicationCommentResponseDto> {
-    const comment = await this.createCommentUseCase.execute(this.currentActor, {
-      publicationId,
-      content: dto.content,
-    });
+    const comment = await this.createCommentUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+        content: dto.content,
+      },
+    );
 
     return PublicationInteractionPresenter.commentToHttp(comment);
   }
 
   @Get(':publicationId/comments')
   public async listComments(
+    @CurrentUser() user: JwtPayload,
     @Param('publicationId') publicationId: string,
   ): Promise<ListPublicationCommentsResponseDto> {
-    const comments = await this.listCommentsUseCase.execute(this.currentActor, {
-      publicationId,
-    });
+    const comments = await this.listCommentsUseCase.execute(
+      this.getActor(user),
+      {
+        publicationId,
+      },
+    );
 
     return PublicationInteractionPresenter.commentsToHttp(comments);
   }

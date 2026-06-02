@@ -25,10 +25,10 @@ export class TrainerVerificationAuditEventTypeormEntity {
   @Column('varchar', { name: 'actor_type', length: 20, default: 'system' })
   actorType!: string;
 
-  @Column('text', { name: 'description' })
+  @Column('text')
   description!: string;
 
-  @Column('jsonb', { name: 'metadata', nullable: true })
+  @Column('jsonb', { nullable: true })
   metadata!: Record<string, unknown> | null;
 
   @CreateDateColumn({ name: 'created_at' })

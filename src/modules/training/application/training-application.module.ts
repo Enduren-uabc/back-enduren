@@ -4,8 +4,12 @@ import {
   CreateRoutineUseCase,
   ROUTINE_REPOSITORY_PORT,
 } from './use-cases/create-routine/create-routine.use-case';
+import { CreateDefaultRoutineUseCase } from './use-cases/create-default-routine/create-default-routine.use-case';
+import { DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT } from '../domain/repositories/default-routine-template.repository';
+import { PROFILE_QUERY_PORT } from '../infrastructure/adapters/profile-query.adapter';
 import { AddExerciseToRoutineDayUseCase } from './use-cases/add-exercise-to-routine-day/add-exercise-to-routine-day.use-case';
 import { RemoveExerciseFromRoutineUseCase } from './use-cases/remove-exercise-from-routine/remove-exercise-from-routine.use-case';
+import { RemoveDayFromRoutineUseCase } from './use-cases/remove-day-from-routine/remove-day-from-routine.use-case';
 import { ConfigureExerciseUseCase } from './use-cases/configure-exercise/configure-exercise.use-case';
 import { ActivateRoutineUseCase } from './use-cases/activate-routine/activate-routine.use-case';
 import { DeactivateRoutineUseCase } from './use-cases/deactivate-routine/deactivate-routine.use-case';
@@ -14,7 +18,11 @@ import { GetRoutineDetailUseCase } from './use-cases/get-routine-detail/get-rout
 import { DeleteRoutineUseCase } from './use-cases/delete-routine/delete-routine.use-case';
 import { SyncRoutineUseCase } from './use-cases/sync-routine/sync-routine.use-case';
 import { SetRoutineTrainingStrategyUseCase } from './use-cases/set-routine-training-strategy/set-routine-training-strategy.use-case';
+import { ForkWorkoutToRoutineUseCase } from './use-cases/fork-workout-to-routine/fork-workout-to-routine.use-case';
 import { GenerateExerciseSetsUseCase } from './use-cases/generate-exercise-sets/generate-exercise-sets.use-case';
+import { UpdateRoutineNameUseCase } from './use-cases/update-routine-name/update-routine-name.use-case';
+import { ListRoutineTemplatesUseCase } from './use-cases/list-routine-templates/list-routine-templates.use-case';
+import { GetRoutineTemplateDetailUseCase } from './use-cases/get-routine-template-detail/get-routine-template-detail.use-case';
 import {
   StartWorkoutSessionUseCase,
   WORKOUT_SESSION_REPOSITORY_PORT,
@@ -29,6 +37,12 @@ import { AdvanceToNextExerciseUseCase } from './use-cases/advance-to-next-exerci
 import { GetWorkoutSessionHistoryUseCase } from './use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from './use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from './use-cases/get-exercise-progress/get-exercise-progress.use-case';
+import { AddSetToExerciseUseCase } from './use-cases/add-set-to-exercise/add-set-to-exercise.use-case';
+import { RemoveSetFromExerciseUseCase } from './use-cases/remove-set-from-exercise/remove-set-from-exercise.use-case';
+import { DiscardWorkoutSessionUseCase } from './use-cases/discard-workout-session/discard-workout-session.use-case';
+import { GetWorkoutStatsUseCase } from './use-cases/get-workout-stats/get-workout-stats.use-case';
+import { GetWeeklyVolumeUseCase } from './use-cases/get-weekly-volume/get-weekly-volume.use-case';
+import { GetPersonalRecordsUseCase } from './use-cases/get-personal-records/get-personal-records.use-case';
 import {
   ListExerciseCatalogUseCase,
   EXERCISE_CATALOG_REPOSITORY_PORT,
@@ -41,9 +55,30 @@ import {
 const routineUseCaseProviders = [
   {
     provide: CreateRoutineUseCase,
-    inject: [ROUTINE_REPOSITORY_PORT],
-    useFactory: (routineRepository) =>
-      new CreateRoutineUseCase(routineRepository),
+    inject: [ROUTINE_REPOSITORY_PORT, PROFILE_QUERY_PORT],
+    useFactory: (routineRepository, profileRepository) =>
+      new CreateRoutineUseCase(routineRepository, profileRepository),
+  },
+  {
+    provide: CreateDefaultRoutineUseCase,
+    inject: [
+      ROUTINE_REPOSITORY_PORT,
+      TRAINING_STRATEGY_REPOSITORY_PORT,
+      PROFILE_QUERY_PORT,
+      DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT,
+    ],
+    useFactory: (
+      routineRepository,
+      trainingStrategyRepository,
+      profileRepository,
+      templateRepository,
+    ) =>
+      new CreateDefaultRoutineUseCase(
+        routineRepository,
+        trainingStrategyRepository,
+        profileRepository,
+        templateRepository,
+      ),
   },
   {
     provide: AddExerciseToRoutineDayUseCase,
@@ -56,6 +91,12 @@ const routineUseCaseProviders = [
     inject: [ROUTINE_REPOSITORY_PORT],
     useFactory: (routineRepository) =>
       new RemoveExerciseFromRoutineUseCase(routineRepository),
+  },
+  {
+    provide: RemoveDayFromRoutineUseCase,
+    inject: [ROUTINE_REPOSITORY_PORT],
+    useFactory: (routineRepository) =>
+      new RemoveDayFromRoutineUseCase(routineRepository),
   },
   {
     provide: ConfigureExerciseUseCase,
@@ -113,6 +154,33 @@ const routineUseCaseProviders = [
     inject: [TRAINING_STRATEGY_REPOSITORY_PORT],
     useFactory: (trainingStrategyRepository) =>
       new GenerateExerciseSetsUseCase(trainingStrategyRepository),
+  },
+  {
+    provide: UpdateRoutineNameUseCase,
+    inject: [ROUTINE_REPOSITORY_PORT],
+    useFactory: (routineRepository) =>
+      new UpdateRoutineNameUseCase(routineRepository),
+  },
+  {
+    provide: ForkWorkoutToRoutineUseCase,
+    inject: [ROUTINE_REPOSITORY_PORT, WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (routineRepository, workoutSessionRepository) =>
+      new ForkWorkoutToRoutineUseCase(
+        routineRepository,
+        workoutSessionRepository,
+      ),
+  },
+  {
+    provide: ListRoutineTemplatesUseCase,
+    inject: [DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT],
+    useFactory: (templateRepository) =>
+      new ListRoutineTemplatesUseCase(templateRepository),
+  },
+  {
+    provide: GetRoutineTemplateDetailUseCase,
+    inject: [DEFAULT_ROUTINE_TEMPLATE_REPOSITORY_PORT],
+    useFactory: (templateRepository) =>
+      new GetRoutineTemplateDetailUseCase(templateRepository),
   },
 ];
 
@@ -194,6 +262,42 @@ const workoutSessionUseCaseProviders = [
     inject: [WORKOUT_SESSION_REPOSITORY_PORT],
     useFactory: (workoutSessionRepository) =>
       new GetExerciseProgressUseCase(workoutSessionRepository),
+  },
+  {
+    provide: AddSetToExerciseUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new AddSetToExerciseUseCase(workoutSessionRepository),
+  },
+  {
+    provide: RemoveSetFromExerciseUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new RemoveSetFromExerciseUseCase(workoutSessionRepository),
+  },
+  {
+    provide: DiscardWorkoutSessionUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new DiscardWorkoutSessionUseCase(workoutSessionRepository),
+  },
+  {
+    provide: GetWorkoutStatsUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new GetWorkoutStatsUseCase(workoutSessionRepository),
+  },
+  {
+    provide: GetWeeklyVolumeUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new GetWeeklyVolumeUseCase(workoutSessionRepository),
+  },
+  {
+    provide: GetPersonalRecordsUseCase,
+    inject: [WORKOUT_SESSION_REPOSITORY_PORT],
+    useFactory: (workoutSessionRepository) =>
+      new GetPersonalRecordsUseCase(workoutSessionRepository),
   },
 ];
 

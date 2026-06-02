@@ -11,19 +11,19 @@ export class PasswordResetTokenTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
   @Index({ unique: true })
   @Column('varchar', { length: 6 })
   token!: string;
 
-  @Column('timestamp')
+  @Column('timestamp', { name: 'expires_at' })
   expiresAt!: Date;
 
-  @Column('timestamp', { nullable: true })
+  @Column('timestamp', { nullable: true, name: 'used_at' })
   usedAt!: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

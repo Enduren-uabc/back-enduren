@@ -2,7 +2,10 @@ import {
   ProfileDto,
   PublicProfileDto,
 } from '../../../application/dto/profile.dto';
-import { ProfilePublicationPage } from '../../../application/ports/profile-publication-query.port';
+import {
+  ProfilePublicationCommentPreview,
+  ProfilePublicationPage,
+} from '../../../application/ports/profile-publication-query.port';
 
 export class ProfileResponseDto {
   userId!: string;
@@ -15,6 +18,7 @@ export class ProfileResponseDto {
 export class PublicProfileResponseDto extends ProfileResponseDto {
   followersCount!: number;
   followingCount!: number;
+  isFollowing!: boolean;
 }
 
 export class FollowProfileResponseDto {
@@ -30,9 +34,27 @@ export class ListProfilesResponseDto {
 export class ProfilePublicationResponseDto {
   id!: string;
   authorUserId!: string;
+  authorDisplayName?: string;
+  authorAvatarUrl?: string;
   title!: string;
   content!: string;
   mediaUrls!: string[];
+  media?: {
+    id: string;
+    url: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    sortOrder: number;
+    createdAt: string;
+  }[];
+  workoutSessionId?: string | null;
+  exerciseSummary?: Record<string, unknown> | null;
+  reactionCount!: number;
+  recentReactorNames!: string[];
+  commentCount!: number;
+  recentComments!: ProfilePublicationCommentPreview[];
+  likedByMe!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 }
@@ -67,6 +89,7 @@ export class ProfilePresenter {
     response.avatarUrl = profile.avatarUrl;
     response.followersCount = profile.followersCount;
     response.followingCount = profile.followingCount;
+    response.isFollowing = profile.isFollowing;
     return response;
   }
 
@@ -85,9 +108,19 @@ export class ProfilePresenter {
     response.items = page.items.map((publication) => ({
       id: publication.id,
       authorUserId: publication.authorUserId,
+      authorDisplayName: publication.authorDisplayName,
+      authorAvatarUrl: publication.authorAvatarUrl,
       title: publication.title,
       content: publication.content,
       mediaUrls: publication.mediaUrls,
+      media: publication.media,
+      workoutSessionId: publication.workoutSessionId,
+      exerciseSummary: publication.exerciseSummary,
+      reactionCount: publication.reactionCount,
+      recentReactorNames: publication.recentReactorNames,
+      commentCount: publication.commentCount,
+      recentComments: publication.recentComments,
+      likedByMe: publication.likedByMe,
       createdAt: publication.createdAt,
       updatedAt: publication.updatedAt,
     }));

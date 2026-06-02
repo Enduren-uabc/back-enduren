@@ -25,6 +25,8 @@ export class WorkoutSessionResponseDto {
   id!: string;
   userId!: string;
   routineId!: string;
+  sourceType!: string;
+  assignedRoutineId!: string | null;
   dayOfWeek!: string;
   status!: string;
   currentExerciseIndex!: number;
@@ -37,6 +39,8 @@ export class WorkoutSessionDetailResponseDto {
   id!: string;
   userId!: string;
   routineId!: string;
+  sourceType!: string;
+  assignedRoutineId!: string | null;
   dayOfWeek!: string;
   routineName!: string;
   status!: string;

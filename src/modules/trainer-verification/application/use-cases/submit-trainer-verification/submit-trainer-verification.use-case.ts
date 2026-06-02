@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StorageService } from '../../../../../shared/storage/domain/services/storage.service';
 import { UploadFileOutput } from '../../../../../shared/storage/domain/ports/file-storage.port';
 import { CurrentActor } from '../../ports/current-actor.port';
@@ -28,6 +29,7 @@ import {
 } from '../../../domain/repositories/trainer-verification-audit.repository.port';
 import { TrainerVerificationStateMachineService } from '../../services/trainer-verification-state-machine.service';
 import { assertTrainer } from '../trainer-verification-use-case.helpers';
+import { TrainerVerificationSubmittedEvent } from '../../../../shared/email/domain/events/trainer-verification-submitted.event';
 
 export interface SubmitTrainerCertificateInput {
   name: string;
@@ -66,6 +68,7 @@ export class SubmitTrainerVerificationUseCase {
     @Inject(TRAINER_FLOW_CONFIG_PORT)
     private readonly flowConfig: TrainerFlowConfigPort,
     private readonly stateMachine: TrainerVerificationStateMachineService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -167,6 +170,12 @@ export class SubmitTrainerVerificationUseCase {
       );
 
       const saved = await this.verificationRepository.save(verification);
+
+      this.eventEmitter.emit(
+        'trainer-verification.submitted',
+        new TrainerVerificationSubmittedEvent(input.actor.email),
+      );
+
       return {
         verificationId: saved.id,
         status: 'pending',

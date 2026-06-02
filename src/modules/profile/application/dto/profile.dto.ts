@@ -9,4 +9,5 @@ export interface ProfileDto {
 export interface PublicProfileDto extends ProfileDto {
   followersCount: number;
   followingCount: number;
+  isFollowing: boolean;
 }

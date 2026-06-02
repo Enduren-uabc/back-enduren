@@ -34,14 +34,27 @@ import { PasswordRecoveryUseCase } from './application/use-cases/password-recove
 import { ResetPasswordUseCase } from './application/use-cases/reset-password/reset-password.use-case';
 import { ValidateResetTokenUseCase } from './application/use-cases/validate-reset-token/validate-reset-token.use-case';
 import { SocialLoginUseCase } from './application/use-cases/social-login/social-login.use-case';
-import { SocialAuthVerifierPort, SOCIAL_AUTH_VERIFIER_PORT } from './application/ports/social-auth-verifier.port';
+import { SocialExchangeCodeUseCase } from './application/use-cases/social-exchange-code/social-exchange-code.use-case';
+import {
+  SocialAuthVerifierPort,
+  SOCIAL_AUTH_VERIFIER_PORT,
+} from './application/ports/social-auth-verifier.port';
+import {
+  SocialAuthCodeRepository,
+  SOCIAL_AUTH_CODE_REPOSITORY_PORT,
+} from './domain/repositories/social-auth-code.repository';
 import { SocialVerifierFactory } from './infrastructure/providers/social-verifier-factory.provider';
 import { GoogleVerifier } from './infrastructure/providers/google-verifier.provider';
 import { AppleVerifier } from './infrastructure/providers/apple-verifier.provider';
 import { DevSocialVerifier } from './infrastructure/providers/dev-social-verifier.provider';
+import { GoogleOAuthService } from './infrastructure/providers/google-oauth.service';
+import { OAuthStateStore } from './infrastructure/providers/oauth-state.store';
 import { AdminSeeder } from './infrastructure/providers/admin-seeder.service';
+import { SocialAuthCodeTypeormEntity } from './infrastructure/persistence/typeorm/entities/social-auth-code-typeorm.entity';
+import { TypeormSocialAuthCodeRepository } from './infrastructure/persistence/typeorm/repositories/typeorm-social-auth-code.repository';
 import { AuthController } from './presentation/http/controllers/auth.controller';
 import { UsersModule } from '../users/users.module';
+import { ProfileModule } from '../profile/profile.module';
 
 @Module({
   imports: [
@@ -63,9 +76,11 @@ import { UsersModule } from '../users/users.module';
       RefreshTokenTypeormEntity,
       EmailVerificationTokenTypeormEntity,
       PasswordResetTokenTypeormEntity,
+      SocialAuthCodeTypeormEntity,
     ]),
     EventEmitterModule,
     UsersModule,
+    ProfileModule,
   ],
   providers: [
     JwtStrategy,
@@ -101,10 +116,17 @@ import { UsersModule } from '../users/users.module';
     ResetPasswordUseCase,
     ValidateResetTokenUseCase,
     SocialLoginUseCase,
+    SocialExchangeCodeUseCase,
     GoogleVerifier,
     AppleVerifier,
     SocialVerifierFactory,
     DevSocialVerifier,
+    GoogleOAuthService,
+    OAuthStateStore,
+    {
+      provide: SOCIAL_AUTH_CODE_REPOSITORY_PORT,
+      useClass: TypeormSocialAuthCodeRepository,
+    },
     {
       provide: SOCIAL_AUTH_VERIFIER_PORT,
       useFactory: (
@@ -113,7 +135,8 @@ import { UsersModule } from '../users/users.module';
         appleVerifier: AppleVerifier,
         devSocialVerifier: DevSocialVerifier,
       ) => {
-        const useMock = configService.get<string>('SOCIAL_AUTH_MOCK', 'false') === 'true';
+        const useMock =
+          configService.get<string>('SOCIAL_AUTH_MOCK', 'false') === 'true';
         if (useMock) {
           return devSocialVerifier;
         }

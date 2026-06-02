@@ -3,6 +3,7 @@ import {
   Post,
   Patch,
   Get,
+  Delete,
   Body,
   Param,
   ParseIntPipe,
@@ -19,13 +20,20 @@ import { GetWorkoutSessionUseCase } from '../../../application/use-cases/get-wor
 import { GetWorkoutSessionHistoryUseCase } from '../../../application/use-cases/get-workout-session-history/get-workout-session-history.use-case';
 import { GetWorkoutSessionDetailUseCase } from '../../../application/use-cases/get-workout-session-detail/get-workout-session-detail.use-case';
 import { GetExerciseProgressUseCase } from '../../../application/use-cases/get-exercise-progress/get-exercise-progress.use-case';
+import { GetWorkoutStatsUseCase } from '../../../application/use-cases/get-workout-stats/get-workout-stats.use-case';
+import { GetWeeklyVolumeUseCase } from '../../../application/use-cases/get-weekly-volume/get-weekly-volume.use-case';
+import { GetPersonalRecordsUseCase } from '../../../application/use-cases/get-personal-records/get-personal-records.use-case';
+import { DiscardWorkoutSessionUseCase } from '../../../application/use-cases/discard-workout-session/discard-workout-session.use-case';
 import { RegisterSetRepsAndWeightUseCase } from '../../../application/use-cases/register-set-reps-and-weight/register-set-reps-and-weight.use-case';
 import { MarkSetAsCompletedUseCase } from '../../../application/use-cases/mark-set-as-completed/mark-set-as-completed.use-case';
 import { AdvanceToNextExerciseUseCase } from '../../../application/use-cases/advance-to-next-exercise/advance-to-next-exercise.use-case';
+import { AddSetToExerciseUseCase } from '../../../application/use-cases/add-set-to-exercise/add-set-to-exercise.use-case';
+import { RemoveSetFromExerciseUseCase } from '../../../application/use-cases/remove-set-from-exercise/remove-set-from-exercise.use-case';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { StartWorkoutSessionRequestDto } from '../dtos/start-workout-session.request';
 import { AdvanceWorkoutSessionRequestDto } from '../dtos/advance-workout-session.request';
 import { RegisterSetRepsAndWeightRequestDto } from '../dtos/register-set-reps-and-weight.request';
+import { AddWorkoutSetRequestDto } from '../dtos/add-workout-set.request';
 import {
   WorkoutSessionResponseDto,
   WorkoutSessionDetailResponseDto,
@@ -34,10 +42,20 @@ import {
   WorkoutExerciseTargetSetResponseDto,
 } from '../dtos/workout-session.response';
 import { WorkoutSessionSummaryResponseDto } from '../dtos/workout-session-summary.response';
+import { WorkoutSessionHistoryResponseDto } from '../dtos/workout-session-history.response';
 import {
   ExerciseProgressResponseDto,
   ExerciseProgressRecordDto,
 } from '../dtos/exercise-progress-response';
+import { WorkoutStatsResponseDto } from '../dtos/workout-stats.response';
+import {
+  WeeklyVolumeResponseDto,
+  WeeklyVolumeEntryDto,
+} from '../dtos/weekly-volume.response';
+import {
+  PersonalRecordsResponseDto,
+  PersonalRecordEntryDto,
+} from '../dtos/personal-records.response';
 import { WorkoutSessionDomainErrorFilter } from '../filters/workout-session-domain-error.filter';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
@@ -55,9 +73,15 @@ export class WorkoutSessionController {
     private readonly getWorkoutSessionHistoryUseCase: GetWorkoutSessionHistoryUseCase,
     private readonly getWorkoutSessionDetailUseCase: GetWorkoutSessionDetailUseCase,
     private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
+    private readonly getWorkoutStatsUseCase: GetWorkoutStatsUseCase,
+    private readonly getWeeklyVolumeUseCase: GetWeeklyVolumeUseCase,
+    private readonly getPersonalRecordsUseCase: GetPersonalRecordsUseCase,
+    private readonly discardWorkoutSessionUseCase: DiscardWorkoutSessionUseCase,
     private readonly registerSetRepsAndWeightUseCase: RegisterSetRepsAndWeightUseCase,
     private readonly markSetAsCompletedUseCase: MarkSetAsCompletedUseCase,
     private readonly advanceToNextExerciseUseCase: AdvanceToNextExerciseUseCase,
+    private readonly addSetToExerciseUseCase: AddSetToExerciseUseCase,
+    private readonly removeSetFromExerciseUseCase: RemoveSetFromExerciseUseCase,
   ) {}
 
   private getActor(user: JwtPayload): CurrentActor {
@@ -95,33 +119,108 @@ export class WorkoutSessionController {
   @Get('in-progress')
   public async resume(
     @CurrentUser() user: JwtPayload,
-  ): Promise<WorkoutSessionResponseDto> {
+  ): Promise<WorkoutSessionResponseDto | null> {
     const result = await this.resumeWorkoutSessionUseCase.execute(
       this.getActor(user),
     );
+    if (!result) {
+      return null;
+    }
     return this.mapToResponse(result);
   }
 
   @Get('history')
   public async history(
     @CurrentUser() user: JwtPayload,
-  ): Promise<WorkoutSessionSummaryResponseDto[]> {
-    const results = await this.getWorkoutSessionHistoryUseCase.execute(
+  ): Promise<WorkoutSessionHistoryResponseDto> {
+    const result = await this.getWorkoutSessionHistoryUseCase.execute(
       this.getActor(user),
     );
-    return results.map((r) => {
-      const dto = new WorkoutSessionSummaryResponseDto();
-      dto.id = r.id;
-      dto.routineId = r.routineId;
-      dto.routineName = r.routineName;
-      dto.dayOfWeek = r.dayOfWeek;
-      dto.startedAt = r.startedAt;
-      dto.finishedAt = r.finishedAt;
-      dto.durationMinutes = r.durationMinutes;
-      dto.exerciseCount = r.exerciseCount;
-      dto.status = r.status;
-      return dto;
+    const dto = new WorkoutSessionHistoryResponseDto();
+    dto.sessions = result.sessions.map((r) => {
+      const s = new WorkoutSessionSummaryResponseDto();
+      s.id = r.id;
+      s.routineId = r.routineId;
+      s.sourceType = r.sourceType;
+      s.assignedRoutineId = r.assignedRoutineId;
+      s.routineName = r.routineName ?? 'Unknown Routine';
+      s.dayOfWeek = r.dayOfWeek;
+      s.startedAt = r.startedAt;
+      s.finishedAt = r.finishedAt;
+      s.durationMinutes = r.durationMinutes;
+      s.exerciseCount = r.exerciseCount;
+      s.status = r.status;
+      return s;
     });
+    dto.hasIncompleteData = result.hasIncompleteData;
+    return dto;
+  }
+
+  @Get('stats')
+  public async stats(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<WorkoutStatsResponseDto> {
+    const result = await this.getWorkoutStatsUseCase.execute(
+      this.getActor(user),
+    );
+    return {
+      totalWorkouts: result.totalWorkouts,
+      currentStreak: result.currentStreak,
+      longestStreak: result.longestStreak,
+    };
+  }
+
+  @Get('volume/weekly')
+  public async weeklyVolume(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<WeeklyVolumeResponseDto> {
+    const result = await this.getWeeklyVolumeUseCase.execute(
+      this.getActor(user),
+    );
+    const dto = new WeeklyVolumeResponseDto();
+    dto.entries = result.entries.map((e) => {
+      const entry = new WeeklyVolumeEntryDto();
+      entry.weekStart = e.weekStart;
+      entry.weekLabel = e.weekLabel;
+      entry.totalVolume = e.totalVolume;
+      entry.workoutCount = e.workoutCount;
+      return entry;
+    });
+    return dto;
+  }
+
+  @Get('personal-records')
+  public async personalRecords(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<PersonalRecordsResponseDto> {
+    const result = await this.getPersonalRecordsUseCase.execute(
+      this.getActor(user),
+    );
+    const dto = new PersonalRecordsResponseDto();
+    dto.totalCount = result.totalCount;
+    dto.records = result.records.map((r) => {
+      const entry = new PersonalRecordEntryDto();
+      entry.exerciseName = r.exerciseName;
+      entry.exerciseId = r.exerciseId;
+      entry.weight = r.weight;
+      entry.reps = r.reps;
+      entry.date = r.date;
+      entry.sessionId = r.sessionId;
+      return entry;
+    });
+    return dto;
+  }
+
+  @Patch(':sessionId/discard')
+  public async discard(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.discardWorkoutSessionUseCase.execute(
+      this.getActor(user),
+      { sessionId },
+    );
+    return this.mapToResponse(result);
   }
 
   @Get('exercises/:exerciseId/progress')
@@ -211,10 +310,40 @@ export class WorkoutSessionController {
     return this.mapToResponse(result);
   }
 
+  @Post(':sessionId/exercises/:exerciseIndex/sets')
+  public async addSetToExercise(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+    @Param('exerciseIndex', ParseIntPipe) exerciseIndex: number,
+    @Body() dto: AddWorkoutSetRequestDto,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.addSetToExerciseUseCase.execute(
+      this.getActor(user),
+      { sessionId, exerciseIndex, reps: dto.reps, weight: dto.weight },
+    );
+    return this.mapToResponse(result);
+  }
+
+  @Delete(':sessionId/exercises/:exerciseIndex/sets/:setNumber')
+  public async removeSetFromExercise(
+    @CurrentUser() user: JwtPayload,
+    @Param('sessionId') sessionId: string,
+    @Param('exerciseIndex', ParseIntPipe) exerciseIndex: number,
+    @Param('setNumber', ParseIntPipe) setNumber: number,
+  ): Promise<WorkoutSessionResponseDto> {
+    const result = await this.removeSetFromExerciseUseCase.execute(
+      this.getActor(user),
+      { sessionId, exerciseIndex, setNumber },
+    );
+    return this.mapToResponse(result);
+  }
+
   private mapToResponse(result: {
     id: string;
     userId: string;
     routineId: string;
+    sourceType?: string;
+    assignedRoutineId?: string | null;
     dayOfWeek: string;
     status: string;
     currentExerciseIndex: number;
@@ -243,6 +372,8 @@ export class WorkoutSessionController {
     response.id = result.id;
     response.userId = result.userId;
     response.routineId = result.routineId;
+    response.sourceType = result.sourceType ?? 'personal';
+    response.assignedRoutineId = result.assignedRoutineId ?? null;
     response.dayOfWeek = result.dayOfWeek;
     response.status = result.status;
     response.currentExerciseIndex = result.currentExerciseIndex;
@@ -279,6 +410,8 @@ export class WorkoutSessionController {
     id: string;
     userId: string;
     routineId: string;
+    sourceType?: string;
+    assignedRoutineId?: string | null;
     dayOfWeek: string;
     routineName: string;
     status: string;
@@ -309,6 +442,8 @@ export class WorkoutSessionController {
     response.id = result.id;
     response.userId = result.userId;
     response.routineId = result.routineId;
+    response.sourceType = result.sourceType ?? 'personal';
+    response.assignedRoutineId = result.assignedRoutineId ?? null;
     response.dayOfWeek = result.dayOfWeek;
     response.routineName = result.routineName;
     response.status = result.status;

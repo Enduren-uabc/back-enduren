@@ -2,17 +2,63 @@ import { Publication } from '../../domain/entities/publication.entity';
 import { PublicationComment } from '../../domain/entities/publication-comment.entity';
 import { PublicationReaction } from '../../domain/entities/publication-reaction.entity';
 import { PublicationCommentDto } from '../dto/publication-comment.dto';
-import { PublicationDto } from '../dto/publication.dto';
+import {
+  CommentPreviewDto,
+  PublicationDto,
+  ExerciseSummaryDto,
+  PublicationMediaDto,
+} from '../dto/publication.dto';
 import { PublicationReactionDto } from '../dto/publication-reaction.dto';
 
 export class PublicationApplicationMapper {
-  public static toDto(publication: Publication): PublicationDto {
+  public static toDto(
+    publication: Publication,
+    media: PublicationMediaDto[] = [],
+    reactionCount = 0,
+    recentReactorNames: string[] = [],
+    commentCount = 0,
+    recentComments: CommentPreviewDto[] = [],
+    likedByMe = false,
+  ): PublicationDto {
     return {
       id: publication.id,
       authorUserId: publication.authorUserId,
       title: publication.title.value,
       content: publication.content.value,
       mediaUrls: publication.mediaUrls.values,
+      media,
+      workoutSessionId: publication.workoutSessionId,
+      exerciseSummary: publication.exerciseSummary
+        ? {
+            totalExercises: publication.exerciseSummary.totalExercises,
+            totalCompletedSets: publication.exerciseSummary.totalCompletedSets,
+            totalSets: publication.exerciseSummary.totalSets,
+            totalVolume: publication.exerciseSummary.totalVolume,
+            durationMinutes: publication.exerciseSummary.durationMinutes,
+            routineName: publication.exerciseSummary.routineName,
+            dayOfWeek: publication.exerciseSummary.dayOfWeek,
+            exercises: publication.exerciseSummary.exercises.map((ex) => ({
+              exerciseId: ex.exerciseId,
+              exerciseName: ex.exerciseName,
+              completedSets: ex.completedSets,
+              totalSets: ex.totalSets,
+              volume: ex.volume,
+              workoutSets: ex.workoutSets.map((s) => ({
+                setNumber: s.setNumber,
+                repsPerformed: s.repsPerformed,
+                weightUsed: s.weightUsed,
+                targetReps: s.targetReps,
+                targetWeight: s.targetWeight,
+                completed: s.completed,
+              })),
+            })),
+          }
+        : null,
+      reactionCount,
+      recentReactorNames,
+      commentCount,
+      recentComments,
+      likedByMe,
       createdAt: publication.createdAt,
       updatedAt: publication.updatedAt,
     };
@@ -36,6 +82,20 @@ export class PublicationApplicationMapper {
       id: comment.id,
       publicationId: comment.publicationId,
       authorUserId: comment.authorUserId,
+      content: comment.content.value,
+      createdAt: comment.createdAt,
+    };
+  }
+
+  public static commentToPreviewDto(
+    comment: PublicationComment,
+    authorDisplayName?: string,
+  ): CommentPreviewDto {
+    return {
+      id: comment.id,
+      publicationId: comment.publicationId,
+      authorUserId: comment.authorUserId,
+      authorDisplayName,
       content: comment.content.value,
       createdAt: comment.createdAt,
     };

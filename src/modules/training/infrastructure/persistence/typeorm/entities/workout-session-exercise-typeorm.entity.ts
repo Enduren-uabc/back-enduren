@@ -20,19 +20,19 @@ export class WorkoutSessionExerciseTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'session_id' })
   sessionId!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'exercise_id' })
   exerciseId!: string;
 
-  @Column('varchar')
+  @Column('varchar', { name: 'exercise_name' })
   exerciseName!: string;
 
-  @Column('int')
+  @Column('int', { name: 'order_index' })
   orderIndex!: number;
 
-  @Column('simple-json', { nullable: true })
+  @Column('simple-json', { name: 'target_sets', nullable: true })
   targetSets!: WorkoutSessionTargetSetJson[] | null;
 
   @ManyToOne(
@@ -40,7 +40,7 @@ export class WorkoutSessionExerciseTypeormEntity {
     (session) => session.exercises,
     { onDelete: 'CASCADE' },
   )
-  @JoinColumn({ name: 'sessionId' })
+  @JoinColumn({ name: 'session_id' })
   session!: WorkoutSessionTypeormEntity;
 
   @OneToMany(

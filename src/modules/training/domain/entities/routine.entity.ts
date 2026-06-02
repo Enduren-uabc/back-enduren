@@ -4,6 +4,7 @@ import {
 } from '../errors/routine-domain.error';
 import { RoutineDay } from '../value-objects/routine-day.value-object';
 import { RoutineExerciseSet } from '../value-objects/routine-exercise-set.value-object';
+import type { RoutineTargetAudience } from '../value-objects/routine-target-audience.value-object';
 import { Exercise } from './exercise.entity';
 
 export class Routine {
@@ -13,6 +14,7 @@ export class Routine {
   public readonly days: RoutineDay[];
   public readonly isActive: boolean;
   public readonly trainingStrategyKey: string | null;
+  public readonly targetAudience: RoutineTargetAudience;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -23,6 +25,7 @@ export class Routine {
     days: RoutineDay[],
     isActive: boolean,
     trainingStrategyKey: string | null,
+    targetAudience: RoutineTargetAudience,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -32,6 +35,7 @@ export class Routine {
     this.days = days;
     this.isActive = isActive;
     this.trainingStrategyKey = trainingStrategyKey;
+    this.targetAudience = targetAudience;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -49,6 +53,7 @@ export class Routine {
     days: RoutineDay[],
     isActive: boolean = false,
     trainingStrategyKey: string | null = null,
+    targetAudience: RoutineTargetAudience = 'self',
   ): Routine {
     if (!name || name.trim().length === 0) {
       throw new RoutineDomainError(
@@ -74,6 +79,7 @@ export class Routine {
       [...days],
       isActive,
       trainingStrategyKey,
+      targetAudience,
       now,
       now,
     );
@@ -91,6 +97,7 @@ export class Routine {
     trainingStrategyKey: string | null,
     createdAt: Date,
     updatedAt: Date,
+    targetAudience: RoutineTargetAudience = 'self',
   ): Routine {
     return new Routine(
       id,
@@ -99,8 +106,35 @@ export class Routine {
       [...days],
       isActive,
       trainingStrategyKey,
+      targetAudience,
       createdAt,
       updatedAt,
+    );
+  }
+
+  /**
+   * Renames this routine. Validates the new name is non-empty.
+   * Returns a new Routine with the updated name.
+   */
+  public rename(newName: string): Routine {
+    if (!newName || newName.trim().length === 0) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_NAME_REQUIRED,
+        'Routine name is required',
+        { name: newName },
+      );
+    }
+
+    return new Routine(
+      this.id,
+      newName.trim(),
+      this.userId,
+      this.days,
+      this.isActive,
+      this.trainingStrategyKey,
+      this.targetAudience,
+      this.createdAt,
+      new Date(),
     );
   }
 
@@ -116,6 +150,7 @@ export class Routine {
       this.days,
       true,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -133,6 +168,7 @@ export class Routine {
       this.days,
       false,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -150,6 +186,7 @@ export class Routine {
       this.days,
       this.isActive,
       key,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -181,6 +218,7 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -212,6 +250,45 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  /**
+   * Removes a day from the routine.
+   * Enforces: day must exist, cannot remove the last day.
+   * Returns a new Routine with the day removed.
+   */
+  public removeDay(dayOfWeek: string): Routine {
+    const dayIndex = this.days.findIndex((d) => d.dayOfWeek === dayOfWeek);
+    if (dayIndex === -1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_DAY_NOT_FOUND,
+        `Day "${dayOfWeek}" not found in routine`,
+        { dayOfWeek },
+      );
+    }
+
+    if (this.days.length <= 1) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_CANNOT_REMOVE_LAST_DAY,
+        'Cannot remove the last day from the routine',
+        { dayOfWeek },
+      );
+    }
+
+    const updatedDays = this.days.filter((_, i) => i !== dayIndex);
+
+    return new Routine(
+      this.id,
+      this.name,
+      this.userId,
+      updatedDays,
+      this.isActive,
+      this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );
@@ -247,6 +324,7 @@ export class Routine {
       updatedDays,
       this.isActive,
       this.trainingStrategyKey,
+      this.targetAudience,
       this.createdAt,
       new Date(),
     );

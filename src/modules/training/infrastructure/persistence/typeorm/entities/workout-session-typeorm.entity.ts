@@ -16,25 +16,31 @@ export class WorkoutSessionTypeormEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'user_id' })
   userId!: string;
 
-  @Column('uuid')
+  @Column('uuid', { name: 'routine_id' })
   routineId!: string;
 
-  @Column('varchar', { default: 'monday' })
+  @Column('varchar', { name: 'source_type', default: 'personal' })
+  sourceType!: string;
+
+  @Column('uuid', { name: 'assigned_routine_id', nullable: true })
+  assignedRoutineId!: string | null;
+
+  @Column('varchar', { name: 'day_of_week', default: 'monday' })
   dayOfWeek!: string;
 
   @Column('varchar')
   status!: string;
 
-  @Column('int', { default: 0 })
+  @Column('int', { name: 'current_exercise_index', default: 0 })
   currentExerciseIndex!: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'started_at' })
   startedAt!: Date;
 
-  @Column({ type: dateTimeColumnType, nullable: true })
+  @Column({ name: 'finished_at', type: dateTimeColumnType, nullable: true })
   finishedAt!: Date | null;
 
   @OneToMany(

@@ -17,16 +17,22 @@ export class CreateEmailVerificationTokensTable1747000000000 implements Migratio
       true,
     );
 
-    await queryRunner.createIndex('email_verification_tokens', new TableIndex({
-      name: 'IDX_EMAIL_VERIFICATION_TOKEN',
-      columnNames: ['token'],
-      isUnique: true,
-    }));
+    await queryRunner.createIndex(
+      'email_verification_tokens',
+      new TableIndex({
+        name: 'IDX_EMAIL_VERIFICATION_TOKEN',
+        columnNames: ['token'],
+        isUnique: true,
+      }),
+    );
 
-    await queryRunner.createIndex('email_verification_tokens', new TableIndex({
-      name: 'IDX_EMAIL_VERIFICATION_USER_ID',
-      columnNames: ['userId'],
-    }));
+    await queryRunner.createIndex(
+      'email_verification_tokens',
+      new TableIndex({
+        name: 'IDX_EMAIL_VERIFICATION_USER_ID',
+        columnNames: ['userId'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

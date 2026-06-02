@@ -2,6 +2,7 @@ import { Publication } from '../../domain/entities/publication.entity';
 import { PublicationContent } from '../../domain/value-objects/publication-content.value-object';
 import { PublicationMediaUrls } from '../../domain/value-objects/publication-media-urls.value-object';
 import { PublicationTitle } from '../../domain/value-objects/publication-title.value-object';
+import { ExerciseSummary } from '../../domain/value-objects/exercise-summary.value-object';
 import { PublicationTypeormEntity } from '../persistence/typeorm/entities/publication-typeorm.entity';
 
 export class PublicationPersistenceMapper {
@@ -12,6 +13,35 @@ export class PublicationPersistenceMapper {
       PublicationTitle.reconstitute(ormEntity.title),
       PublicationContent.reconstitute(ormEntity.content),
       PublicationMediaUrls.reconstitute(ormEntity.mediaUrls ?? []),
+      ormEntity.workoutSessionId,
+      ormEntity.exerciseSummary
+        ? ExerciseSummary.create(
+            ormEntity.exerciseSummary as unknown as {
+              totalExercises: number;
+              totalCompletedSets: number;
+              totalSets: number;
+              totalVolume: number;
+              durationMinutes: number;
+              routineName: string;
+              dayOfWeek: string;
+              exercises: Array<{
+                exerciseId: string;
+                exerciseName: string;
+                completedSets: number;
+                totalSets: number;
+                volume: number;
+                workoutSets: Array<{
+                  setNumber: number;
+                  repsPerformed: number | null;
+                  weightUsed: number | null;
+                  targetReps: number | null;
+                  targetWeight: number | null;
+                  completed: boolean;
+                }>;
+              }>;
+            },
+          )
+        : null,
       ormEntity.createdAt,
       ormEntity.updatedAt,
     );
@@ -24,6 +54,13 @@ export class PublicationPersistenceMapper {
     ormEntity.title = publication.title.value;
     ormEntity.content = publication.content.value;
     ormEntity.mediaUrls = publication.mediaUrls.values;
+    ormEntity.workoutSessionId = publication.workoutSessionId;
+    ormEntity.exerciseSummary = publication.exerciseSummary
+      ? (JSON.parse(JSON.stringify(publication.exerciseSummary)) as Record<
+          string,
+          unknown
+        >)
+      : null;
     ormEntity.createdAt = publication.createdAt;
     ormEntity.updatedAt = publication.updatedAt;
     return ormEntity;

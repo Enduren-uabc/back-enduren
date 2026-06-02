@@ -1,7 +1,3 @@
-import {
-  WorkoutSessionDomainError,
-  WorkoutSessionErrorCode,
-} from '../../../domain/errors/workout-session-domain.error';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
 import {
@@ -9,12 +5,13 @@ import {
   WorkoutSessionOutput,
 } from '../workout-session-output.mapper';
 
-export type ResumeWorkoutSessionOutput = WorkoutSessionOutput;
+export type ResumeWorkoutSessionOutput = WorkoutSessionOutput | null;
 
 /**
  * ResumeWorkoutSession use case (RF-12.0.7).
  * Finds the user's in-progress session and returns it with
  * current exercise, completed sets, and pending sets restored.
+ * Returns null if no session is in progress.
  */
 export class ResumeWorkoutSessionUseCase {
   constructor(
@@ -29,11 +26,7 @@ export class ResumeWorkoutSessionUseCase {
     );
 
     if (!session) {
-      throw new WorkoutSessionDomainError(
-        WorkoutSessionErrorCode.SESSION_NOT_IN_PROGRESS,
-        'No workout session in progress for this user',
-        { userId: actor.userId },
-      );
+      return null;
     }
 
     return mapWorkoutSessionToOutput(session);

@@ -22,12 +22,17 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
     const data = ExtractedCertificateData.create({
       fullName: 'Juan Perez Lopez',
       certificateName: nameWithoutExt,
-      issuingOrganization: 'NASM',
+      issuingOrganization: 'CONOCER',
       issueDate: new Date('2024-01-15'),
       expirationDate: new Date('2027-01-15'),
       folioNumber:
         'CERT-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
       ocrConfidence: 0.89 + Math.random() * 0.1,
+      curp: 'JUPE900101HDFRRN01',
+      documentType: 'certificate',
+      certifyingInstitution: 'ICEM',
+      competencyStandardCode: 'EC0474',
+      competencyStandardName: 'Acondicionamiento físico de jóvenes y adultos',
     });
 
     return { success: true, data };
@@ -51,6 +56,7 @@ export class FakeDocumentExtractionService implements DocumentExtractionPort {
       expirationDate: new Date('2030-05-20'),
       documentIdentifier: 'INE****5678',
       ocrConfidence: 0.92 + Math.random() * 0.07,
+      curp: 'JUPE900101HDFRRN01',
     });
 
     return { success: true, data };

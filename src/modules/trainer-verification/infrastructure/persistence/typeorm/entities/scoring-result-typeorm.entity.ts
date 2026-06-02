@@ -22,16 +22,16 @@ export class ScoringResultTypeormEntity {
   @Column({ name: 'recommended_action', type: 'varchar', length: 30 })
   recommendedAction: string;
 
-  @Column({ name: 'summary', type: 'text' })
+  @Column({ type: 'text' })
   summary: string;
 
-  @Column({ name: 'positive_signals', type: 'json' })
+  @Column({ type: 'json', name: 'positive_signals' })
   positiveSignals: string[];
 
-  @Column({ name: 'alerts', type: 'json' })
+  @Column({ type: 'json' })
   alerts: Array<{ code: string; severity: string; message: string }>;
 
-  @Column({ name: 'overrides', type: 'json' })
+  @Column({ type: 'json' })
   overrides: string[];
 
   @Column({ name: 'created_at', type: 'timestamp' })

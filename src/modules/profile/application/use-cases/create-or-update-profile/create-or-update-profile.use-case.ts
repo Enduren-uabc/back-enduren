@@ -22,6 +22,7 @@ export interface CreateOrUpdateProfileInput {
   mainGoal: MainGoal;
   daysAvailablePerWeek?: number;
   weightUnit?: WeightUnit;
+  defaultTrainingStrategyKey?: string | null;
 }
 
 export interface CreateOrUpdateProfileOutput {
@@ -36,6 +37,7 @@ export interface CreateOrUpdateProfileOutput {
   mainGoal: string;
   daysAvailablePerWeek: number;
   weightUnit: string;
+  defaultTrainingStrategyKey: string | null;
   onboardingCompleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -66,6 +68,7 @@ export class CreateOrUpdateProfileUseCase {
         input.mainGoal,
         input.daysAvailablePerWeek ?? 3,
         input.weightUnit ?? 'kg',
+        input.defaultTrainingStrategyKey ?? existing.defaultTrainingStrategyKey,
       );
       profile = await this.profileRepository.save(existing);
     } else {
@@ -81,6 +84,7 @@ export class CreateOrUpdateProfileUseCase {
         input.mainGoal,
         input.daysAvailablePerWeek ?? 3,
         input.weightUnit ?? 'kg',
+        input.defaultTrainingStrategyKey ?? null,
       );
       profile = await this.profileRepository.save(profile);
     }
@@ -97,6 +101,7 @@ export class CreateOrUpdateProfileUseCase {
       mainGoal: profile.mainGoal,
       daysAvailablePerWeek: profile.daysAvailablePerWeek,
       weightUnit: profile.weightUnit,
+      defaultTrainingStrategyKey: profile.defaultTrainingStrategyKey,
       onboardingCompleted: profile.onboardingCompleted,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,

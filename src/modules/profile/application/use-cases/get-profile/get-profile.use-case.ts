@@ -20,6 +20,7 @@ export interface GetProfileOutput {
   mainGoal: string;
   daysAvailablePerWeek: number;
   weightUnit: string;
+  defaultTrainingStrategyKey: string | null;
   onboardingCompleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +52,7 @@ export class GetProfileUseCase {
       mainGoal: profile.mainGoal,
       daysAvailablePerWeek: profile.daysAvailablePerWeek,
       weightUnit: profile.weightUnit,
+      defaultTrainingStrategyKey: profile.defaultTrainingStrategyKey,
       onboardingCompleted: profile.onboardingCompleted,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,

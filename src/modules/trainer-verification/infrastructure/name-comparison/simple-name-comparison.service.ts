@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   NameComparisonPort,
   NameComparisonResult,
+  CurpComparisonResult,
 } from '../../application/ports/name-comparison.port';
 
 @Injectable()
@@ -13,7 +14,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (normalizedCert === normalizedId) {
       return {
         level: 'exact',
-        score: 23,
+        score: 20,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -39,7 +40,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     ) {
       return {
         level: 'strong',
-        score: 20,
+        score: 17,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -66,7 +67,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (similarity >= 0.8) {
       return {
         level: 'strong',
-        score: 20,
+        score: 17,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -74,7 +75,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (similarity >= 0.5) {
       return {
         level: 'partial',
-        score: 14,
+        score: 12,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -82,7 +83,7 @@ export class SimpleNameComparisonService implements NameComparisonPort {
     if (similarity >= 0.2) {
       return {
         level: 'low',
-        score: 6,
+        score: 5,
         normalizedCertName: normalizedCert,
         normalizedIdName: normalizedId,
       };
@@ -93,6 +94,42 @@ export class SimpleNameComparisonService implements NameComparisonPort {
       score: 0,
       normalizedCertName: normalizedCert,
       normalizedIdName: normalizedId,
+    };
+  }
+
+  compareCurp(
+    certCurp: string | undefined,
+    idCurp: string | undefined,
+  ): CurpComparisonResult {
+    const normalizedCert = (certCurp ?? '')
+      .toUpperCase()
+      .replace(/\s+/g, '')
+      .trim();
+    const normalizedId = (idCurp ?? '')
+      .toUpperCase()
+      .replace(/\s+/g, '')
+      .trim();
+
+    if (!normalizedCert || !normalizedId) {
+      return {
+        level: 'mismatch',
+        normalizedCertCurp: normalizedCert,
+        normalizedIdCurp: normalizedId,
+      };
+    }
+
+    if (normalizedCert === normalizedId) {
+      return {
+        level: 'exact',
+        normalizedCertCurp: normalizedCert,
+        normalizedIdCurp: normalizedId,
+      };
+    }
+
+    return {
+      level: 'mismatch',
+      normalizedCertCurp: normalizedCert,
+      normalizedIdCurp: normalizedId,
     };
   }
 

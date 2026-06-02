@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CurrentActor } from '../../ports/current-actor.port';
 import {
   UserRepository,
@@ -26,6 +27,7 @@ import { assertAdmin } from '../trainer-verification-use-case.helpers';
 import { TrainerVerification } from '../../../domain/entities/trainer-verification.entity';
 import { AdvancedVerificationStatus } from '../../../domain/value-objects/advanced-verification-status.vo';
 import { generateTrainerCode } from '../../../../trainer-link/application/constants/trainer-code-generator';
+import { TrainerVerificationReviewedEvent } from '../../../../shared/email/domain/events/trainer-verification-reviewed.event';
 
 export interface ReviewTrainerVerificationInput {
   actor: CurrentActor;
@@ -56,6 +58,7 @@ export class ReviewTrainerVerificationUseCase {
     private readonly stateMachine: TrainerVerificationStateMachineService,
     @Inject(TRAINER_FLOW_CONFIG_PORT)
     private readonly flowConfig: TrainerFlowConfigPort,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -143,17 +146,28 @@ export class ReviewTrainerVerificationUseCase {
     await this.auditRepository.recordStatusChange(change);
     await this.auditRepository.recordAuditEvent(auditEvent);
 
-    if (input.decision === 'approved') {
-      const trainer = await this.userRepository.findById(verification.userId);
-      if (trainer) {
-        if (trainer.role !== 'trainer') {
-          trainer.upgradeToTrainer();
-        }
-        if (!trainer.trainerCode) {
-          trainer.setTrainerCode(generateTrainerCode());
-        }
-        await this.userRepository.save(trainer);
+    const user = await this.userRepository.findById(verification.userId);
+
+    if (input.decision === 'approved' && user) {
+      if (user.role !== 'trainer') {
+        user.upgradeToTrainer();
       }
+      if (!user.trainerCode) {
+        user.setTrainerCode(generateTrainerCode());
+      }
+      await this.userRepository.save(user);
+    }
+
+    if (user) {
+      this.eventEmitter.emit(
+        'trainer-verification.reviewed',
+        new TrainerVerificationReviewedEvent(
+          user.email,
+          user.username,
+          input.decision,
+          input.userVisibleMessage ?? input.rejectionReason,
+        ),
+      );
     }
 
     return {
@@ -197,6 +211,17 @@ export class ReviewTrainerVerificationUseCase {
     }
 
     const saved = await this.verificationRepository.save(verification);
+
+    this.eventEmitter.emit(
+      'trainer-verification.reviewed',
+      new TrainerVerificationReviewedEvent(
+        trainer.email,
+        trainer.username,
+        input.decision,
+        input.rejectionReason,
+      ),
+    );
+
     return {
       verificationId: saved.id,
       decision: input.decision,

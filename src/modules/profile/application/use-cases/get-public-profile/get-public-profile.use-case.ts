@@ -1,11 +1,13 @@
-import {
-  ProfileDomainError,
-  ProfileErrorCode,
-} from '../../../domain/errors/profile-domain.error';
+import { Inject } from '@nestjs/common';
+import { SocialProfile } from '../../../domain/entities/social-profile.entity';
 import { ProfileFollowRepository } from '../../../domain/repositories/profile-follow.repository';
 import { SocialProfileRepository } from '../../../domain/repositories/social-profile.repository';
 import { PublicProfileDto } from '../../dto/profile.dto';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  USER_REPOSITORY_PORT,
+  UserRepository,
+} from '../../../../users/domain/repositories/user.repository';
 
 export interface GetPublicProfileInput {
   userId: string;
@@ -15,25 +17,36 @@ export class GetPublicProfileUseCase {
   constructor(
     private readonly profileRepository: SocialProfileRepository,
     private readonly followRepository: ProfileFollowRepository,
+    @Inject(USER_REPOSITORY_PORT)
+    private readonly userRepository: UserRepository,
   ) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: GetPublicProfileInput,
   ): Promise<PublicProfileDto> {
-    const profile = await this.profileRepository.findByUserId(input.userId);
+    let profile = await this.profileRepository.findByUserId(input.userId);
 
     if (profile === null) {
-      throw new ProfileDomainError(
-        ProfileErrorCode.PROFILE_NOT_FOUND,
-        `Profile with user id "${input.userId}" not found`,
-        { userId: input.userId },
+      const user = await this.userRepository.findById(input.userId);
+      if (!user) {
+        throw new Error(`User with id "${input.userId}" not found`);
+      }
+      profile = SocialProfile.create(
+        user.id,
+        user.username,
+        `@${user.username}`,
       );
+      await this.profileRepository.save(profile);
     }
 
-    const [followersCount, followingCount] = await Promise.all([
+    const [followersCount, followingCount, followRelation] = await Promise.all([
       this.followRepository.countFollowersOf(input.userId),
       this.followRepository.countFollowingOf(input.userId),
+      this.followRepository.findByFollowerAndFollowed(
+        actor.userId,
+        input.userId,
+      ),
     ]);
 
     return {
@@ -44,6 +57,7 @@ export class GetPublicProfileUseCase {
       avatarUrl: profile.avatarUrl.value,
       followersCount,
       followingCount,
+      isFollowing: followRelation !== null,
     };
   }
 }

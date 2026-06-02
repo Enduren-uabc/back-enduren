@@ -5,6 +5,7 @@ import {
 import { PublicationContent } from '../value-objects/publication-content.value-object';
 import { PublicationMediaUrls } from '../value-objects/publication-media-urls.value-object';
 import { PublicationTitle } from '../value-objects/publication-title.value-object';
+import { ExerciseSummary } from '../value-objects/exercise-summary.value-object';
 
 export class Publication {
   public readonly id: string;
@@ -12,6 +13,8 @@ export class Publication {
   public readonly title: PublicationTitle;
   public readonly content: PublicationContent;
   public readonly mediaUrls: PublicationMediaUrls;
+  public readonly workoutSessionId: string | null;
+  public readonly exerciseSummary: ExerciseSummary | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -21,6 +24,8 @@ export class Publication {
     title: PublicationTitle,
     content: PublicationContent,
     mediaUrls: PublicationMediaUrls,
+    workoutSessionId: string | null,
+    exerciseSummary: ExerciseSummary | null,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -29,6 +34,8 @@ export class Publication {
     this.title = title;
     this.content = content;
     this.mediaUrls = mediaUrls;
+    this.workoutSessionId = workoutSessionId;
+    this.exerciseSummary = exerciseSummary;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -39,6 +46,8 @@ export class Publication {
     title: PublicationTitle,
     content: PublicationContent,
     mediaUrls: PublicationMediaUrls = PublicationMediaUrls.create(),
+    workoutSessionId?: string | null,
+    exerciseSummary?: ExerciseSummary | null,
   ): Publication {
     if (!authorUserId || authorUserId.trim().length === 0) {
       throw new PublicationDomainError(
@@ -55,6 +64,8 @@ export class Publication {
       title,
       content,
       mediaUrls,
+      workoutSessionId ?? null,
+      exerciseSummary ?? null,
       now,
       now,
     );
@@ -66,6 +77,8 @@ export class Publication {
     title: PublicationTitle,
     content: PublicationContent,
     mediaUrls: PublicationMediaUrls,
+    workoutSessionId: string | null,
+    exerciseSummary: ExerciseSummary | null,
     createdAt: Date,
     updatedAt: Date,
   ): Publication {
@@ -75,6 +88,8 @@ export class Publication {
       title,
       content,
       mediaUrls,
+      workoutSessionId,
+      exerciseSummary,
       createdAt,
       updatedAt,
     );
@@ -113,6 +128,8 @@ export class Publication {
       input.title ?? this.title,
       input.content ?? this.content,
       input.mediaUrls ?? this.mediaUrls,
+      this.workoutSessionId,
+      this.exerciseSummary,
       this.createdAt,
       new Date(),
     );

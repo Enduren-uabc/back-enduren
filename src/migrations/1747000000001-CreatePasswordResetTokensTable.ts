@@ -17,16 +17,22 @@ export class CreatePasswordResetTokensTable1747000000001 implements MigrationInt
       true,
     );
 
-    await queryRunner.createIndex('password_reset_tokens', new TableIndex({
-      name: 'IDX_PASSWORD_RESET_TOKEN',
-      columnNames: ['token'],
-      isUnique: true,
-    }));
+    await queryRunner.createIndex(
+      'password_reset_tokens',
+      new TableIndex({
+        name: 'IDX_PASSWORD_RESET_TOKEN',
+        columnNames: ['token'],
+        isUnique: true,
+      }),
+    );
 
-    await queryRunner.createIndex('password_reset_tokens', new TableIndex({
-      name: 'IDX_PASSWORD_RESET_USER_ID',
-      columnNames: ['userId'],
-    }));
+    await queryRunner.createIndex(
+      'password_reset_tokens',
+      new TableIndex({
+        name: 'IDX_PASSWORD_RESET_USER_ID',
+        columnNames: ['userId'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

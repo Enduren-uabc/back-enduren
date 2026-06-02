@@ -1,12 +1,11 @@
-import { ResumeWorkoutSessionUseCase } from './resume-workout-session.use-case';
+import {
+  ResumeWorkoutSessionUseCase,
+  ResumeWorkoutSessionOutput,
+} from './resume-workout-session.use-case';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
 import { WorkoutSession } from '../../../domain/entities/workout-session.entity';
 import { WorkoutExercise } from '../../../domain/value-objects/workout-exercise.value-object';
-import {
-  WorkoutSessionDomainError,
-  WorkoutSessionErrorCode,
-} from '../../../domain/errors/workout-session-domain.error';
 
 describe('ResumeWorkoutSessionUseCase', () => {
   let useCase: ResumeWorkoutSessionUseCase;
@@ -24,6 +23,8 @@ describe('ResumeWorkoutSessionUseCase', () => {
       save: jest.fn(),
       findById: jest.fn(),
       findInProgressByUserId: jest.fn(),
+      findFinishedByUserId: jest.fn(),
+      findFinishedByUserIdAndExerciseId: jest.fn(),
     };
     useCase = new ResumeWorkoutSessionUseCase(workoutSessionRepository);
   });
@@ -41,7 +42,9 @@ describe('ResumeWorkoutSessionUseCase', () => {
         workoutSessionRepository.findInProgressByUserId as jest.Mock
       ).mockResolvedValue(session);
 
-      const result = await useCase.execute(actor);
+      const result = (await useCase.execute(
+        actor,
+      )) as NonNullable<ResumeWorkoutSessionOutput>;
 
       expect(result.id).toBe('session-1');
       expect(result.userId).toBe('user-1');
@@ -66,7 +69,9 @@ describe('ResumeWorkoutSessionUseCase', () => {
         workoutSessionRepository.findInProgressByUserId as jest.Mock
       ).mockResolvedValue(session);
 
-      const result = await useCase.execute(actor);
+      const result = (await useCase.execute(
+        actor,
+      )) as NonNullable<ResumeWorkoutSessionOutput>;
 
       expect(result.exercises[0].workoutSets[0].setNumber).toBe(1);
       expect(result.exercises[0].workoutSets[0].completed).toBe(false);
@@ -75,24 +80,15 @@ describe('ResumeWorkoutSessionUseCase', () => {
     });
   });
 
-  describe('SESSION_NOT_IN_PROGRESS error', () => {
-    it('should reject when no session is in progress', async () => {
+  describe('no session in progress', () => {
+    it('should return null when no session is in progress', async () => {
       (
         workoutSessionRepository.findInProgressByUserId as jest.Mock
       ).mockResolvedValue(null);
 
-      await expect(useCase.execute(actor)).rejects.toThrow(
-        WorkoutSessionDomainError,
-      );
+      const result = await useCase.execute(actor);
 
-      try {
-        await useCase.execute(actor);
-      } catch (error) {
-        expect(error).toBeInstanceOf(WorkoutSessionDomainError);
-        expect((error as WorkoutSessionDomainError).code).toBe(
-          WorkoutSessionErrorCode.SESSION_NOT_IN_PROGRESS,
-        );
-      }
+      expect(result).toBeNull();
     });
   });
 });

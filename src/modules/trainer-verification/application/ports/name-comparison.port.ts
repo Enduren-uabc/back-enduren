@@ -9,6 +9,18 @@ export interface NameComparisonResult {
   normalizedIdName: string;
 }
 
+export type CurpMatchLevel = 'exact' | 'mismatch';
+
+export interface CurpComparisonResult {
+  level: CurpMatchLevel;
+  normalizedCertCurp: string;
+  normalizedIdCurp: string;
+}
+
 export interface NameComparisonPort {
   compare(certName: string, idName: string): NameComparisonResult;
+  compareCurp(
+    certCurp: string | undefined,
+    idCurp: string | undefined,
+  ): CurpComparisonResult;
 }

@@ -117,7 +117,7 @@ export class WorkoutSet {
       this.setNumber,
       repsPerformed,
       weightUsed,
-      this.completed,
+      true, // Registrado exitosamente implica completado
       this.targetReps,
       this.targetWeight,
     );
@@ -145,6 +145,21 @@ export class WorkoutSet {
       repsPerformed,
       weightUsed,
       true,
+      this.targetReps,
+      this.targetWeight,
+    );
+  }
+
+  /**
+   * Marks this set as pending (uncomplete).
+   * Keeps actual reps and weight values intact for further editing.
+   */
+  public markAsPending(): WorkoutSet {
+    return new WorkoutSet(
+      this.setNumber,
+      this.repsPerformed,
+      this.weightUsed,
+      false,
       this.targetReps,
       this.targetWeight,
     );

@@ -23,7 +23,18 @@ describe('CreatePublicationUseCase', () => {
       findFeedByAuthorUserIds: jest.fn(),
       countFeedByAuthorUserIds: jest.fn(),
     };
-    useCase = new CreatePublicationUseCase(publicationRepository);
+    const mediaRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      findByPublicationId: jest.fn(),
+      delete: jest.fn(),
+      linkToPublication: jest.fn(),
+      deleteByPublicationId: jest.fn(),
+    };
+    useCase = new CreatePublicationUseCase(
+      publicationRepository,
+      mediaRepository,
+    );
   });
 
   it('creates RF-SOC-POST-01 publication using current actor as author', async () => {

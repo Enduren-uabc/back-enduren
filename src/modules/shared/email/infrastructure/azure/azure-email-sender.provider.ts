@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EmailClient } from '@azure/communication-email';
-import {
-  EmailSenderPort,
-} from '../../domain/ports/email-sender.port';
+import { EmailSenderPort } from '../../domain/ports/email-sender.port';
 import { EmailMessage } from '../../domain/value-objects/email-message.vo';
 
 @Injectable()
@@ -12,11 +10,18 @@ export class AzureEmailSender implements EmailSenderPort {
   private readonly senderAddress: string;
 
   constructor(private readonly configService: ConfigService) {
-    const connString = this.configService.get<string>('AZURE_COMMUNICATION_CONNECTION_STRING');
+    const connString = this.configService.get<string>(
+      'AZURE_COMMUNICATION_CONNECTION_STRING',
+    );
     if (!connString) {
-      throw new Error('AZURE_COMMUNICATION_CONNECTION_STRING is not configured');
+      throw new Error(
+        'AZURE_COMMUNICATION_CONNECTION_STRING is not configured',
+      );
     }
-    this.senderAddress = this.configService.get<string>('AZURE_SENDER_EMAIL', 'DoNotReply@endure.com');
+    this.senderAddress = this.configService.get<string>(
+      'AZURE_SENDER_EMAIL',
+      'DoNotReply@endure.com',
+    );
     this.client = new EmailClient(connString);
   }
 

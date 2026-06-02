@@ -1,6 +1,8 @@
 import { EmailVerificationToken } from '../entities/email-verification-token.entity';
 
-export const EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT = Symbol('EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT');
+export const EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT = Symbol(
+  'EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT',
+);
 
 export interface EmailVerificationTokenRepository {
   save(token: EmailVerificationToken): Promise<EmailVerificationToken>;

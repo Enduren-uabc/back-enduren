@@ -6,12 +6,17 @@ import {
 
 @Injectable()
 export class DevSocialVerifier implements SocialAuthVerifierPort {
-  async verify(provider: 'google' | 'apple', idToken: string): Promise<SocialUserData> {
+  async verify(
+    provider: 'google' | 'apple',
+    idToken: string,
+  ): Promise<SocialUserData> {
     const prefix = provider === 'google' ? 'google|' : 'apple|';
     if (idToken.startsWith(prefix)) {
       const email = idToken.substring(prefix.length);
       if (!email.includes('@')) {
-        throw new Error(`Invalid dev token format. Expected "${prefix}<email>"`);
+        throw new Error(
+          `Invalid dev token format. Expected "${prefix}<email>"`,
+        );
       }
       const name = email.split('@')[0];
       return {

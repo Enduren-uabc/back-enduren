@@ -24,7 +24,11 @@ export class EmailVerificationToken {
     this.createdAt = props.createdAt;
   }
 
-  static create(userId: string, token: string, expiresAt: Date): EmailVerificationToken {
+  static create(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): EmailVerificationToken {
     return new EmailVerificationToken({
       id: crypto.randomUUID(),
       userId,
@@ -35,7 +39,9 @@ export class EmailVerificationToken {
     });
   }
 
-  static reconstitute(props: EmailVerificationTokenProps): EmailVerificationToken {
+  static reconstitute(
+    props: EmailVerificationTokenProps,
+  ): EmailVerificationToken {
     return new EmailVerificationToken(props);
   }
 

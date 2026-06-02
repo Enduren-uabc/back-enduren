@@ -4,12 +4,15 @@ import {
   RoutineErrorCode,
 } from '../../../domain/errors/routine-domain.error';
 import { CurrentActor } from '../../ports/current-actor.port';
+import type { RoutineTargetAudience } from '../../../domain/value-objects/routine-target-audience.value-object';
 
 export interface GetRoutineDetailOutput {
   id: string;
   name: string;
   userId: string;
   isActive: boolean;
+  trainingStrategyKey: string | null;
+  targetAudience: RoutineTargetAudience;
   days: Array<{
     dayOfWeek: string;
     exercises: Array<{
@@ -54,6 +57,8 @@ export class GetRoutineDetailUseCase {
       name: routine.name,
       userId: routine.userId,
       isActive: routine.isActive,
+      trainingStrategyKey: routine.trainingStrategyKey,
+      targetAudience: routine.targetAudience,
       days: routine.days.map((d) => ({
         dayOfWeek: d.dayOfWeek,
         exercises: d.exercises.map((e) => ({

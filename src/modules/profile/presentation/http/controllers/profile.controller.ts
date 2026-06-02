@@ -10,14 +10,21 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseFilters,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../../../auth/presentation/http/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../../auth/presentation/http/guards/jwt-auth.guard';
 import { JwtPayload } from '../../../../auth/presentation/http/strategies/jwt.strategy';
 import { CurrentActor } from '../../../application/ports/current-actor.port';
 import { ProfilePublicationQueryPort } from '../../../application/ports/profile-publication-query.port';
+import {
+  USER_REPOSITORY_PORT,
+  UserRepository,
+} from '../../../../../modules/users/domain/repositories/user.repository';
 import { CheckOnboardingStatusUseCase } from '../../../application/use-cases/check-onboarding-status/check-onboarding-status.use-case';
 import { CreateOrUpdateProfileUseCase } from '../../../application/use-cases/create-or-update-profile/create-or-update-profile.use-case';
 import {
@@ -34,6 +41,8 @@ import { ListProfilePublicationsUseCase } from '../../../application/use-cases/l
 import { SearchProfilesUseCase } from '../../../application/use-cases/search-profiles/search-profiles.use-case';
 import { UnfollowProfileUseCase } from '../../../application/use-cases/unfollow-profile/unfollow-profile.use-case';
 import { UpdateOwnProfileUseCase } from '../../../application/use-cases/update-own-profile/update-own-profile.use-case';
+import { UploadAvatarUseCase } from '../../../application/use-cases/upload-avatar/upload-avatar.use-case';
+import { SetupSocialProfileUseCase } from '../../../application/use-cases/setup-social-profile/setup-social-profile.use-case';
 import { ProfileFollowRepository } from '../../../domain/repositories/profile-follow.repository';
 import { SocialProfileRepository } from '../../../domain/repositories/social-profile.repository';
 import { CreateProfileRequestDto } from '../dtos/create-profile.request';
@@ -61,8 +70,8 @@ export class ProfileController {
   private readonly listFollowersUseCase: ListProfileFollowersUseCase;
   private readonly listFollowingUseCase: ListProfileFollowingUseCase;
   private readonly searchProfilesUseCase: SearchProfilesUseCase;
-  private readonly listPublicationsUseCase: ListProfilePublicationsUseCase;
   private readonly updateOwnProfileUseCase: UpdateOwnProfileUseCase;
+  private readonly listPublicationsUseCase: ListProfilePublicationsUseCase;
 
   constructor(
     @Inject(SOCIAL_PROFILE_REPOSITORY_PORT)
@@ -71,9 +80,13 @@ export class ProfileController {
     followRepository: ProfileFollowRepository,
     @Inject(PROFILE_PUBLICATION_QUERY_PORT)
     publicationQuery: ProfilePublicationQueryPort,
+    @Inject(USER_REPOSITORY_PORT)
+    userRepository: UserRepository,
     private readonly createOrUpdateProfileUseCase: CreateOrUpdateProfileUseCase,
     private readonly getProfileUseCase: GetProfileUseCase,
     private readonly checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
+    private readonly uploadAvatarUseCase: UploadAvatarUseCase,
+    private readonly setupSocialProfileUseCase: SetupSocialProfileUseCase,
   ) {
     this.followProfileUseCase = new FollowProfileUseCase(
       profileRepository,
@@ -86,6 +99,7 @@ export class ProfileController {
     this.getPublicProfileUseCase = new GetPublicProfileUseCase(
       profileRepository,
       followRepository,
+      userRepository,
     );
     this.listFollowersUseCase = new ListProfileFollowersUseCase(
       profileRepository,
@@ -98,10 +112,12 @@ export class ProfileController {
     this.searchProfilesUseCase = new SearchProfilesUseCase(profileRepository);
     this.updateOwnProfileUseCase = new UpdateOwnProfileUseCase(
       profileRepository,
+      userRepository,
     );
     this.listPublicationsUseCase = new ListProfilePublicationsUseCase(
       profileRepository,
       publicationQuery,
+      userRepository,
     );
   }
 
@@ -122,6 +138,7 @@ export class ProfileController {
       mainGoal: dto.mainGoal,
       daysAvailablePerWeek: dto.daysAvailablePerWeek,
       weightUnit: dto.weightUnit,
+      defaultTrainingStrategyKey: dto.defaultTrainingStrategyKey,
     });
 
     return this.mapToOnboardingResponse(result);
@@ -147,6 +164,23 @@ export class ProfileController {
     return this.checkOnboardingStatusUseCase.execute(user.sub);
   }
 
+  @Post('onboarding/social')
+  @UseInterceptors(FileInterceptor('avatar'))
+  public async setupSocialProfile(
+    @CurrentUser() user: JwtPayload,
+    @Body('displayName') displayName: string,
+    @Body('bio') bio?: string,
+    @UploadedFile() avatarFile?: Express.Multer.File,
+  ): Promise<{ completed: boolean }> {
+    await this.setupSocialProfileUseCase.execute({
+      userId: user.sub,
+      displayName,
+      bio,
+      avatarFile,
+    });
+    return { completed: true };
+  }
+
   @Get('profiles/search')
   public async search(
     @CurrentUser() user: JwtPayload,
@@ -166,8 +200,26 @@ export class ProfileController {
   ): Promise<SocialProfileResponseDto> {
     const profile = await this.updateOwnProfileUseCase.execute(
       this.getActor(user),
-      { bio: dto.bio, avatarUrl: dto.avatarUrl },
+      {
+        displayName: dto.displayName,
+        bio: dto.bio,
+        avatarUrl: dto.avatarUrl,
+        handle: dto.handle,
+      },
     );
+    return ProfilePresenter.toHttp(profile);
+  }
+
+  @Post('profiles/me/avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  public async uploadAvatar(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<SocialProfileResponseDto> {
+    const profile = await this.uploadAvatarUseCase.execute({
+      actor: this.getActor(user),
+      file,
+    });
     return ProfilePresenter.toHttp(profile);
   }
 
@@ -276,6 +328,7 @@ export class ProfileController {
     mainGoal: string;
     daysAvailablePerWeek: number;
     weightUnit: string;
+    defaultTrainingStrategyKey: string | null;
     onboardingCompleted: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -295,6 +348,7 @@ export class ProfileController {
     response.mainGoal = result.mainGoal;
     response.daysAvailablePerWeek = result.daysAvailablePerWeek;
     response.weightUnit = result.weightUnit;
+    response.defaultTrainingStrategyKey = result.defaultTrainingStrategyKey;
     response.onboardingCompleted = result.onboardingCompleted;
     response.createdAt = result.createdAt;
     response.updatedAt = result.updatedAt;

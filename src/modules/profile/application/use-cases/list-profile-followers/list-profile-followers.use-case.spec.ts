@@ -16,6 +16,7 @@ describe('ListProfileFollowersUseCase', () => {
       save: jest.fn(),
       findByUserId: jest.fn(),
       findByUserIds: jest.fn(),
+      findByHandle: jest.fn(),
       searchByQuery: jest.fn(),
     };
     followRepository = {

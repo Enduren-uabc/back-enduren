@@ -44,6 +44,9 @@ export class ExtractedIdDataTypeormEntity {
   @Column({ name: 'ocr_confidence', type: 'float' })
   ocrConfidence!: number;
 
+  @Column({ name: 'curp', type: 'varchar', length: 18, nullable: true })
+  curp!: string | null;
+
   @Column({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

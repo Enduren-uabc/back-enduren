@@ -1,15 +1,24 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  MaxLength,
+  Length,
+} from 'class-validator';
 
 export class RegisterRequestDto {
   @IsEmail()
   email!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(30)
   username!: string;
 
   @IsString()
   @MinLength(8)
+  @MaxLength(128)
   password!: string;
 }
 
@@ -18,7 +27,8 @@ export class LoginRequestDto {
   email!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(1)
+  @MaxLength(128)
   password!: string;
 }
 
@@ -29,11 +39,12 @@ export class PasswordRecoveryRequestDto {
 
 export class PasswordResetRequestDto {
   @IsString()
-  @IsNotEmpty()
+  @Length(6, 6)
   token!: string;
 
   @IsString()
   @MinLength(8)
+  @MaxLength(128)
   password!: string;
 }
 

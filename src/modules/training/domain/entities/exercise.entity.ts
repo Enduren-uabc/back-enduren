@@ -16,24 +16,32 @@ export class Exercise {
   public readonly name: string;
   public readonly order: number;
   public readonly sets: RoutineExerciseSet[];
+  public readonly catalogId: string | null;
 
   private constructor(
     id: string,
     name: string,
     order: number,
     sets: RoutineExerciseSet[],
+    catalogId: string | null,
   ) {
     this.id = id;
     this.name = name;
     this.order = order;
     this.sets = sets;
+    this.catalogId = catalogId;
   }
 
   /**
    * Creates a new Exercise with core invariants enforced:
    * - Name must be non-empty (RF-10).
    */
-  public static create(id: string, name: string, order: number): Exercise {
+  public static create(
+    id: string,
+    name: string,
+    order: number,
+    catalogId?: string | null,
+  ): Exercise {
     if (!name || name.trim().length === 0) {
       throw new RoutineDomainError(
         RoutineErrorCode.EXERCISE_NAME_REQUIRED,
@@ -42,7 +50,7 @@ export class Exercise {
       );
     }
 
-    return new Exercise(id, name.trim(), order, []);
+    return new Exercise(id, name.trim(), order, [], catalogId ?? null);
   }
 
   /**
@@ -53,8 +61,9 @@ export class Exercise {
     name: string,
     order: number,
     sets: RoutineExerciseSet[] = [],
+    catalogId: string | null = null,
   ): Exercise {
-    return new Exercise(id, name, order, sets);
+    return new Exercise(id, name, order, sets, catalogId);
   }
 
   /**
@@ -71,6 +80,12 @@ export class Exercise {
       );
     }
 
-    return new Exercise(this.id, this.name, this.order, [...sets]);
+    return new Exercise(
+      this.id,
+      this.name,
+      this.order,
+      [...sets],
+      this.catalogId,
+    );
   }
 }

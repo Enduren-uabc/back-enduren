@@ -375,6 +375,7 @@ export class TrainerVerificationController {
     return {
       userId: user.sub,
       role: user.role,
+      email: user.email,
     };
   }
 

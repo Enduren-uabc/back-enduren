@@ -1,3 +1,5 @@
+import { Inject } from '@nestjs/common';
+import { SocialProfile } from '../../../domain/entities/social-profile.entity';
 import {
   ProfileDomainError,
   ProfileErrorCode,
@@ -8,6 +10,10 @@ import {
   ProfilePublicationQueryPort,
 } from '../../ports/profile-publication-query.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import {
+  USER_REPOSITORY_PORT,
+  UserRepository,
+} from '../../../../users/domain/repositories/user.repository';
 
 export const DEFAULT_PROFILE_PUBLICATIONS_LIMIT = 20;
 export const MAX_PROFILE_PUBLICATIONS_LIMIT = 50;
@@ -22,20 +28,27 @@ export class ListProfilePublicationsUseCase {
   constructor(
     private readonly profileRepository: SocialProfileRepository,
     private readonly publicationQuery: ProfilePublicationQueryPort,
+    @Inject(USER_REPOSITORY_PORT)
+    private readonly userRepository: UserRepository,
   ) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: ListProfilePublicationsInput,
   ): Promise<ProfilePublicationPage> {
-    const profile = await this.profileRepository.findByUserId(input.userId);
+    let profile = await this.profileRepository.findByUserId(input.userId);
 
     if (profile === null) {
-      throw new ProfileDomainError(
-        ProfileErrorCode.PROFILE_NOT_FOUND,
-        `Profile with user id "${input.userId}" not found`,
-        { userId: input.userId },
+      const user = await this.userRepository.findById(input.userId);
+      if (!user) {
+        throw new Error(`User with id "${input.userId}" not found`);
+      }
+      profile = SocialProfile.create(
+        user.id,
+        user.username,
+        `@user_${user.id.slice(0, 8)}`,
       );
+      await this.profileRepository.save(profile);
     }
 
     const limit = input.limit ?? DEFAULT_PROFILE_PUBLICATIONS_LIMIT;
@@ -59,6 +72,7 @@ export class ListProfilePublicationsUseCase {
       authorUserId: input.userId,
       limit,
       offset,
+      currentUserId: actor.userId,
     });
   }
 }

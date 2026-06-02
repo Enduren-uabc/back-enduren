@@ -151,6 +151,20 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           verification.extractedCertificateData.qrUrl ?? null;
         extractedEntity.ocrConfidence =
           verification.extractedCertificateData.ocrConfidence;
+        extractedEntity.curp =
+          verification.extractedCertificateData.curp ?? null;
+        extractedEntity.documentType =
+          verification.extractedCertificateData.documentType ?? null;
+        extractedEntity.certifyingInstitution =
+          verification.extractedCertificateData.certifyingInstitution ?? null;
+        extractedEntity.competencyStandardCode =
+          verification.extractedCertificateData.competencyStandardCode ?? null;
+        extractedEntity.competencyStandardName =
+          verification.extractedCertificateData.competencyStandardName ?? null;
+        extractedEntity.hasVeracityCode =
+          verification.extractedCertificateData.hasVeracityCode ?? null;
+        extractedEntity.veracityCode =
+          verification.extractedCertificateData.veracityCode ?? null;
         extractedEntity.createdAt = new Date();
         await manager
           .getRepository(ExtractedCertificateDataTypeormEntity)
@@ -174,6 +188,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
           verification.extractedIdData.documentIdentifier ?? null;
         extractedEntity.ocrConfidence =
           verification.extractedIdData.ocrConfidence;
+        extractedEntity.curp = verification.extractedIdData.curp ?? null;
         extractedEntity.createdAt = new Date();
         await manager
           .getRepository(ExtractedIdDataTypeormEntity)
@@ -433,6 +448,10 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             verification.extractedCertificateData.folioNumber ?? undefined,
           qrUrl: verification.extractedCertificateData.qrUrl ?? undefined,
           ocrConfidence: verification.extractedCertificateData.ocrConfidence,
+          hasVeracityCode:
+            verification.extractedCertificateData.hasVeracityCode ?? undefined,
+          veracityCode:
+            verification.extractedCertificateData.veracityCode ?? undefined,
         }
       : null;
 
@@ -609,6 +628,16 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
             folioNumber: extractedCertData.folioNumber ?? undefined,
             qrUrl: extractedCertData.qrUrl ?? undefined,
             ocrConfidence: extractedCertData.ocrConfidence,
+            curp: extractedCertData.curp ?? undefined,
+            documentType: extractedCertData.documentType ?? undefined,
+            certifyingInstitution:
+              extractedCertData.certifyingInstitution ?? undefined,
+            competencyStandardCode:
+              extractedCertData.competencyStandardCode ?? undefined,
+            competencyStandardName:
+              extractedCertData.competencyStandardName ?? undefined,
+            hasVeracityCode: extractedCertData.hasVeracityCode ?? undefined,
+            veracityCode: extractedCertData.veracityCode ?? undefined,
           })
         : null,
       extractedIdData: extractedId
@@ -624,6 +653,7 @@ export class TypeormTrainerVerificationRepository implements TrainerVerification
               : undefined,
             documentIdentifier: extractedId.documentIdentifier ?? undefined,
             ocrConfidence: extractedId.ocrConfidence,
+            curp: extractedId.curp ?? undefined,
           })
         : null,
       scoringResult: scoringData

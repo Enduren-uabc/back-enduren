@@ -4,6 +4,8 @@ export interface WorkoutSessionOutput {
   id: string;
   userId: string;
   routineId: string;
+  sourceType: string;
+  assignedRoutineId: string | null;
   dayOfWeek: string;
   status: string;
   currentExerciseIndex: number;
@@ -36,6 +38,8 @@ export function mapWorkoutSessionToOutput(
     id: session.id,
     userId: session.userId,
     routineId: session.routineId,
+    sourceType: session.sourceType,
+    assignedRoutineId: session.assignedRoutineId,
     dayOfWeek: session.dayOfWeek,
     status: session.status,
     currentExerciseIndex: session.currentExerciseIndex,

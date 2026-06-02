@@ -92,16 +92,19 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       calculate: jest.fn().mockReturnValue(makeScoringResult()),
     };
 
+    const eventEmitter = { emit: jest.fn() };
+
     const useCase = new SubmitPowerspikeVerificationUseCase(
       repository,
       auditRepo,
       specialtyRepo,
       stateMachine,
       riskScoring as any,
+      eventEmitter,
     );
 
     const result = await useCase.execute({
-      actor: { userId: 'user-1', role: 'trainer' },
+      actor: { userId: 'user-1', role: 'trainer', email: 'user1@test.com' },
       specialtyKeys: ['strength'],
       yearsOfExperience: 3,
       shortBio: 'Bio actualizada',
@@ -146,16 +149,19 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
       calculate: jest.fn().mockReturnValue(makeScoringResult()),
     };
 
+    const eventEmitter = { emit: jest.fn() };
+
     const useCase = new SubmitPowerspikeVerificationUseCase(
       repository,
       auditRepo,
       specialtyRepo,
       stateMachine,
       riskScoring as any,
+      eventEmitter,
     );
 
     const result = await useCase.execute({
-      actor: { userId: 'user-1', role: 'trainer' },
+      actor: { userId: 'user-1', role: 'trainer', email: 'user1@test.com' },
       specialtyKeys: ['strength'],
       yearsOfExperience: 3,
       shortBio: 'Bio',
@@ -200,17 +206,20 @@ describe('SubmitPowerspikeVerificationUseCase', () => {
     const stateMachine = new TrainerVerificationStateMachineService();
     const riskScoring = { calculate: jest.fn() };
 
+    const eventEmitter = { emit: jest.fn() };
+
     const useCase = new SubmitPowerspikeVerificationUseCase(
       repository,
       auditRepo,
       specialtyRepo,
       stateMachine,
       riskScoring as any,
+      eventEmitter,
     );
 
     await expect(
       useCase.execute({
-        actor: { userId: 'user-1', role: 'trainer' },
+        actor: { userId: 'user-1', role: 'trainer', email: 'user1@test.com' },
         specialtyKeys: ['strength'],
         yearsOfExperience: 3,
         shortBio: 'Bio',

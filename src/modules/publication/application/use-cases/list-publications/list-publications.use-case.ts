@@ -3,6 +3,11 @@ import {
   PublicationErrorCode,
 } from '../../../domain/errors/publication-domain.error';
 import { PublicationRepository } from '../../../domain/repositories/publication.repository';
+import { PublicationMediaRepository } from '../../../domain/repositories/publication-media.repository';
+import { PublicationReactionRepository } from '../../../domain/repositories/publication-reaction.repository';
+import { PublicationCommentRepository } from '../../../domain/repositories/publication-comment.repository';
+import { PublicationComment } from '../../../domain/entities/publication-comment.entity';
+import { AuthorProfileQueryPort } from '../../ports/author-profile-query.port';
 import { ListPublicationsDto } from '../../dto/list-publications.dto';
 import { PublicationDto } from '../../dto/publication.dto';
 import { PublicationApplicationMapper } from '../../mappers/publication.mapper';
@@ -13,6 +18,9 @@ export const DEFAULT_PUBLICATION_FEED_LIMIT = 20;
 export const MAX_PUBLICATION_FEED_LIMIT = 50;
 export const PUBLICATION_FOLLOWED_USERS_QUERY_PORT = Symbol(
   'PUBLICATION_FOLLOWED_USERS_QUERY_PORT',
+);
+export const PUBLICATION_REACTION_REPOSITORY_PORT = Symbol(
+  'PUBLICATION_REACTION_REPOSITORY_PORT',
 );
 
 export interface ListPublicationsOutput {
@@ -26,7 +34,11 @@ export interface ListPublicationsOutput {
 export class ListPublicationsUseCase {
   constructor(
     private readonly publicationRepository: PublicationRepository,
+    private readonly publicationMediaRepository?: PublicationMediaRepository,
     private readonly followedUsersQuery?: FollowedUsersQueryPort,
+    private readonly authorProfileQuery?: AuthorProfileQueryPort,
+    private readonly reactionRepository?: PublicationReactionRepository,
+    private readonly commentRepository?: PublicationCommentRepository,
   ) {}
 
   public async execute(
@@ -59,43 +71,142 @@ export class ListPublicationsUseCase {
       );
     }
 
+    let publications: any[] = [];
+    let total = 0;
+
     if (filter === 'following') {
       const followedUserIds =
-        await this.followedUsersQuery?.findFollowedUserIds(actor.userId);
+        (await this.followedUsersQuery?.findFollowedUserIds(actor.userId)) ??
+        [];
 
-      if (!followedUserIds || followedUserIds.length === 0) {
-        return { items: [], limit, offset, total: 0, hasMore: false };
-      }
+      // Include self in following feed
+      const authorUserIds = [...new Set([...followedUserIds, actor.userId])];
 
-      const [publications, total] = await Promise.all([
+      const [pubs, tot] = await Promise.all([
         this.publicationRepository.findFeedByAuthorUserIds({
-          authorUserIds: followedUserIds,
+          authorUserIds,
           limit,
           offset,
         }),
-        this.publicationRepository.countFeedByAuthorUserIds(followedUserIds),
+        this.publicationRepository.countFeedByAuthorUserIds(authorUserIds),
       ]);
-
-      return {
-        items: publications.map((publication) =>
-          PublicationApplicationMapper.toDto(publication),
-        ),
-        limit,
-        offset,
-        total,
-        hasMore: offset + publications.length < total,
-      };
+      publications = pubs;
+      total = tot;
+    } else {
+      const [pubs, tot] = await Promise.all([
+        this.publicationRepository.findFeed({ limit, offset }),
+        this.publicationRepository.countFeed(),
+      ]);
+      publications = pubs;
+      total = tot;
     }
 
-    const [publications, total] = await Promise.all([
-      this.publicationRepository.findFeed({ limit, offset }),
-      this.publicationRepository.countFeed(),
+    // Enrich with author info
+    const authorIds = [...new Set(publications.map((p) => p.authorUserId))];
+    const profiles =
+      (await this.authorProfileQuery?.ensureProfilesExist(authorIds)) ?? [];
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    // Batch load media for all publications
+    const publicationIds = publications.map((p) => p.id);
+    const mediaEntries = this.publicationMediaRepository
+      ? await Promise.all(
+          publicationIds.map((id) =>
+            this.publicationMediaRepository!.findByPublicationId(id),
+          ),
+        )
+      : [];
+    const mediaMap = new Map<string, PublicationDto['media']>();
+    publicationIds.forEach((id, i) => {
+      const media = (mediaEntries[i] ?? []).map((m) => ({
+        id: m.id,
+        url: m.url,
+        fileName: m.fileName,
+        fileSize: m.fileSize,
+        mimeType: m.mimeType,
+        sortOrder: m.sortOrder,
+        createdAt: m.createdAt.toISOString(),
+      }));
+      mediaMap.set(id, media);
+    });
+
+    // Batch load reaction counts and recent reactors
+    const [reactionCounts, recentReactorUserIdsMap] = await Promise.all([
+      this.reactionRepository?.countByPublicationIds(publicationIds) ??
+        Promise.resolve(new Map<string, number>()),
+      this.reactionRepository?.findRecentAuthorUserIdsByPublicationIds(
+        publicationIds,
+        3,
+      ) ?? Promise.resolve(new Map<string, string[]>()),
     ]);
 
-    return {
-      items: publications.map((publication) =>
-        PublicationApplicationMapper.toDto(publication),
+    // Resolve display names for recent reactors
+    const allReactorIds = [
+      ...new Set([...recentReactorUserIdsMap.values()].flat()),
+    ];
+    const reactorProfiles =
+      (await this.authorProfileQuery?.ensureProfilesExist(allReactorIds)) ?? [];
+    const reactorNameMap = new Map(
+      reactorProfiles.map((p) => [p.userId, p.displayName]),
+    );
+
+    // Check which publications the current user has reacted to
+    const reactedPublicationIds: Set<string> =
+      (await this.reactionRepository?.findPublicationIdsWithReactionByAuthorUserId(
+        publicationIds,
+        actor.userId,
+      )) ?? new Set<string>();
+
+    // Batch load comment counts and recent comments
+    const [commentCounts, recentCommentsMap] = await Promise.all([
+      this.commentRepository?.countByPublicationIds(publicationIds) ??
+        Promise.resolve(new Map<string, number>()),
+      this.commentRepository?.findRecentByPublicationIds(publicationIds, 2) ??
+        Promise.resolve(new Map<string, PublicationComment[]>()),
+    ]);
+
+    const allCommentAuthorIds = [
+      ...new Set(
+        [...recentCommentsMap.values()].flat().map((c) => c.authorUserId),
       ),
+    ];
+    const commentAuthorProfiles =
+      (await this.authorProfileQuery?.ensureProfilesExist(
+        allCommentAuthorIds,
+      )) ?? [];
+    const commentAuthorNameMap = new Map(
+      commentAuthorProfiles.map((p) => [p.userId, p.displayName]),
+    );
+
+    return {
+      items: publications.map((publication) => {
+        const recentComments = (
+          recentCommentsMap.get(publication.id) ?? []
+        ).map((comment) =>
+          PublicationApplicationMapper.commentToPreviewDto(
+            comment,
+            commentAuthorNameMap.get(comment.authorUserId),
+          ),
+        );
+        const likedByMe = reactedPublicationIds.has(publication.id);
+        const dto = PublicationApplicationMapper.toDto(
+          publication,
+          mediaMap.get(publication.id) ?? [],
+          reactionCounts.get(publication.id) ?? 0,
+          (recentReactorUserIdsMap.get(publication.id) ?? []).map(
+            (uid) => reactorNameMap.get(uid) ?? 'Usuario',
+          ),
+          commentCounts.get(publication.id) ?? 0,
+          recentComments,
+          likedByMe,
+        );
+        const profile = profileMap.get(publication.authorUserId);
+        if (profile) {
+          dto.authorDisplayName = profile.displayName;
+          dto.authorAvatarUrl = profile.avatarUrl ?? undefined;
+        }
+        return dto;
+      }),
       limit,
       offset,
       total,

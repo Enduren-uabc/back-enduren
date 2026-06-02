@@ -10,6 +10,7 @@ export class ExerciseResponseDto {
   id!: string;
   name!: string;
   order!: number;
+  catalogId!: string | null;
   sets!: ExerciseSetResponseDto[];
 }
 
@@ -24,6 +25,7 @@ export class RoutineResponseDto {
   userId!: string;
   isActive!: boolean;
   trainingStrategyKey!: string | null;
+  targetAudience!: 'self' | 'client';
   dayOfWeeks!: string[];
   days!: RoutineDayResponseDto[];
   createdAt!: Date;

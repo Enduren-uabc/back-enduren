@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ReviewTrainerVerificationUseCase,
   ReviewTrainerVerificationInput,
@@ -34,7 +35,11 @@ describe('ReviewTrainerVerificationUseCase', () => {
   let stateMachine: jest.Mocked<TrainerVerificationStateMachineService>;
   let flowConfig: jest.Mocked<TrainerFlowConfigPort>;
 
-  const adminActor: CurrentActor = { userId: 'admin-1', role: 'admin' };
+  const adminActor: CurrentActor = {
+    userId: 'admin-1',
+    role: 'admin',
+    email: 'admin@endure.com',
+  };
 
   function createMockVerification(
     overrides: Record<string, unknown> = {},
@@ -54,8 +59,12 @@ describe('ReviewTrainerVerificationUseCase', () => {
   function createMockUser(overrides: Record<string, unknown> = {}): any {
     return {
       id: 'user-1',
+      email: 'user1@test.com',
+      username: 'testuser',
       role: 'user',
+      trainerCode: null,
       upgradeToTrainer: jest.fn(),
+      setTrainerCode: jest.fn(),
       save: jest.fn(),
       ...overrides,
     };
@@ -104,6 +113,10 @@ describe('ReviewTrainerVerificationUseCase', () => {
             isPowerspikeEnabled: jest.fn(),
           },
         },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -151,8 +164,10 @@ describe('ReviewTrainerVerificationUseCase', () => {
 
     it('rejects verification without upgrading user', async () => {
       const verification = createMockVerification();
+      const trainer = createMockUser({ role: 'user' });
       verificationRepository.findById.mockResolvedValue(verification);
       verificationRepository.save.mockResolvedValue(verification);
+      userRepository.findById.mockResolvedValue(trainer);
 
       const result = await useCase.execute({
         actor: adminActor,
@@ -162,13 +177,15 @@ describe('ReviewTrainerVerificationUseCase', () => {
       });
 
       expect(result.decision).toBe('rejected');
-      expect(userRepository.findById).not.toHaveBeenCalled();
+      expect(trainer.upgradeToTrainer).not.toHaveBeenCalled();
     });
 
     it('accepts correction_required with userVisibleMessage', async () => {
       const verification = createMockVerification();
+      const trainer = createMockUser({ role: 'user' });
       verificationRepository.findById.mockResolvedValue(verification);
       verificationRepository.save.mockResolvedValue(verification);
+      userRepository.findById.mockResolvedValue(trainer);
 
       const result = await useCase.execute({
         actor: adminActor,

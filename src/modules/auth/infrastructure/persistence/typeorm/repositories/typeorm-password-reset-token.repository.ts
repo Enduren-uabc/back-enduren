@@ -46,7 +46,9 @@ export class TypeormPasswordResetTokenRepository implements PasswordResetTokenRe
     return entity;
   }
 
-  private toDomain(entity: PasswordResetTokenTypeormEntity): PasswordResetToken {
+  private toDomain(
+    entity: PasswordResetTokenTypeormEntity,
+  ): PasswordResetToken {
     return PasswordResetToken.reconstitute({
       id: entity.id,
       userId: entity.userId,

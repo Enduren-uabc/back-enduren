@@ -10,6 +10,7 @@ export class ProfileResponseDto {
   mainGoal!: string;
   daysAvailablePerWeek!: number;
   weightUnit!: string;
+  defaultTrainingStrategyKey!: string | null;
   onboardingCompleted!: boolean;
   createdAt!: Date;
   updatedAt!: Date;

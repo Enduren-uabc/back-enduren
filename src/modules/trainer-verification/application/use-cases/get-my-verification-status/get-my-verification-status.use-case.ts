@@ -21,14 +21,28 @@ export interface GetMyVerificationStatusOutput {
   certificateExtractionStatus?: 'pending' | 'extracted' | 'failed' | null;
   idExtractionStatus?: 'pending' | 'extracted' | 'failed' | null;
   extractedCertificateInfo?: {
+    fullName: string;
     name: string;
     institution: string;
+    certifyingInstitution?: string;
+    issueDate?: string;
+    expirationDate?: string;
+    folioNumber?: string;
+    qrUrl?: string;
     ocrConfidence: number;
+    curp?: string;
+    competencyStandardCode?: string;
+    competencyStandardName?: string;
   };
   extractedIdInfo?: {
     fullName: string;
     documentType: string;
+    issuingCountry?: string;
+    birthDate?: string;
+    expirationDate?: string;
+    documentIdentifier?: string;
     ocrConfidence: number;
+    curp?: string;
   };
   riskLevel?: string;
   riskScore?: number;
@@ -94,18 +108,40 @@ export class GetMyVerificationStatusUseCase {
     }
 
     if (verification.extractedCertificateData) {
+      const cert = verification.extractedCertificateData;
       result.extractedCertificateInfo = {
-        name: verification.extractedCertificateData.certificateName,
-        institution: verification.extractedCertificateData.issuingOrganization,
-        ocrConfidence: verification.extractedCertificateData.ocrConfidence,
+        fullName: cert.fullName,
+        name: cert.certificateName,
+        institution: cert.issuingOrganization,
+        certifyingInstitution: cert.certifyingInstitution ?? undefined,
+        issueDate: cert.issueDate ? cert.issueDate.toISOString() : undefined,
+        expirationDate: cert.expirationDate
+          ? cert.expirationDate.toISOString()
+          : undefined,
+        folioNumber: cert.folioNumber ?? undefined,
+        qrUrl: cert.qrUrl ?? undefined,
+        ocrConfidence: cert.ocrConfidence,
+        curp: cert.curp ?? undefined,
+        competencyStandardCode: cert.competencyStandardCode ?? undefined,
+        competencyStandardName: cert.competencyStandardName ?? undefined,
       };
     }
 
     if (verification.extractedIdData) {
+      const idData = verification.extractedIdData;
       result.extractedIdInfo = {
-        fullName: verification.extractedIdData.fullName,
-        documentType: verification.extractedIdData.documentType,
-        ocrConfidence: verification.extractedIdData.ocrConfidence,
+        fullName: idData.fullName,
+        documentType: idData.documentType,
+        issuingCountry: idData.issuingCountry ?? undefined,
+        birthDate: idData.birthDate
+          ? idData.birthDate.toISOString()
+          : undefined,
+        expirationDate: idData.expirationDate
+          ? idData.expirationDate.toISOString()
+          : undefined,
+        documentIdentifier: idData.documentIdentifier ?? undefined,
+        ocrConfidence: idData.ocrConfidence,
+        curp: idData.curp ?? undefined,
       };
     }
 
