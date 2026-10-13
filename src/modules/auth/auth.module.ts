@@ -47,6 +47,7 @@ import { SocialVerifierFactory } from './infrastructure/providers/social-verifie
 import { GoogleVerifier } from './infrastructure/providers/google-verifier.provider';
 import { AppleVerifier } from './infrastructure/providers/apple-verifier.provider';
 import { DevSocialVerifier } from './infrastructure/providers/dev-social-verifier.provider';
+import { EmailVerificationPolicy } from './infrastructure/providers/email-verification-policy.provider';
 import { GoogleOAuthService } from './infrastructure/providers/google-oauth.service';
 import { OAuthStateStore } from './infrastructure/providers/oauth-state.store';
 import { AdminSeeder } from './infrastructure/providers/admin-seeder.service';
@@ -85,6 +86,8 @@ import { ProfileModule } from '../profile/profile.module';
   providers: [
     JwtStrategy,
     JwtAuthGuard,
+    // TASK-012 DEV BYPASS: política compartida del bypass de verificación.
+    EmailVerificationPolicy,
     {
       provide: REFRESH_TOKEN_REPOSITORY_PORT,
       useClass: TypeormRefreshTokenRepository,

@@ -9,6 +9,7 @@ import {
   UserRepository,
   USER_REPOSITORY_PORT,
 } from '../../../../users/domain/repositories/user.repository';
+import { EmailVerificationPolicy } from '../../../infrastructure/providers/email-verification-policy.provider';
 
 export interface RefreshTokenOutput {
   accessToken: string;
@@ -24,6 +25,7 @@ export class RefreshTokenUseCase {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailVerificationPolicy: EmailVerificationPolicy,
   ) {}
 
   async execute(tokenValue: string): Promise<RefreshTokenOutput> {
@@ -41,11 +43,13 @@ export class RefreshTokenUseCase {
       throw new UnauthorizedException('User not found');
     }
 
-    // Mark old refresh token as used (rotation)
-    stored.markAsUsed();
-    await this.refreshTokenRepository.save(stored);
-
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    // TASK-012 DEV BYPASS: el claim refleja el estado efectivo de verificación.
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      emailVerified: this.emailVerificationPolicy.resolveEmailVerified(user),
+    };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: this.configService.get<string>(
@@ -71,7 +75,13 @@ export class RefreshTokenUseCase {
       user.id,
       new Date(Date.now() + refreshExpiresDays * 24 * 60 * 60 * 1000),
     );
-    await this.refreshTokenRepository.save(newRefreshToken);
+    const rotated = await this.refreshTokenRepository.rotate(
+      stored,
+      newRefreshToken,
+    );
+    if (!rotated) {
+      throw new UnauthorizedException('Refresh token already used');
+    }
 
     return { accessToken, refreshToken: newRefreshTokenValue };
   }

@@ -3,6 +3,7 @@ import {
   UserRepository,
   USER_REPOSITORY_PORT,
 } from '../../../../users/domain/repositories/user.repository';
+import { EmailVerificationPolicy } from '../../../infrastructure/providers/email-verification-policy.provider';
 
 export interface CheckTokenOutput {
   id: string;
@@ -17,6 +18,7 @@ export class CheckTokenUseCase {
   constructor(
     @Inject(USER_REPOSITORY_PORT)
     private readonly userRepository: UserRepository,
+    private readonly emailVerificationPolicy: EmailVerificationPolicy,
   ) {}
 
   async execute(userId: string): Promise<CheckTokenOutput | null> {
@@ -29,7 +31,8 @@ export class CheckTokenUseCase {
       email: user.email,
       username: user.username,
       role: user.role,
-      emailVerified: user.emailVerified,
+      // TASK-012 DEV BYPASS: con la bandera activa se reporta verificado.
+      emailVerified: this.emailVerificationPolicy.resolveEmailVerified(user),
     };
   }
 }

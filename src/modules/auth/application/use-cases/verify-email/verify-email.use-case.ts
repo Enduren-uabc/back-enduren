@@ -8,7 +8,7 @@ import {
   EmailVerificationTokenRepository,
   EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT,
 } from '../../../domain/repositories/email-verification-token.repository';
-import { UserRegisteredEvent } from '../../../../shared/email/domain/events/user-registered.event';
+import { EmailVerificationPolicy } from '../../../infrastructure/providers/email-verification-policy.provider';
 
 export interface VerifyEmailInput {
   token: string;
@@ -26,9 +26,20 @@ export class VerifyEmailUseCase {
     @Inject(EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT)
     private readonly tokenRepository: EmailVerificationTokenRepository,
     private readonly eventEmitter: EventEmitter2,
+    private readonly emailVerificationPolicy: EmailVerificationPolicy,
   ) {}
 
   async execute(input: VerifyEmailInput): Promise<VerifyEmailOutput> {
+    // ── TASK-012 DEV BYPASS (inicio) ─────────────────────────────────
+    // Con AUTH_EMAIL_VERIFICATION_DISABLED=true se acepta el código fijo
+    // 000000 sin consultar la base de datos. Al integrar el servicio de
+    // correo, eliminar este bloque: el flujo original de abajo queda
+    // operativo sin cambios.
+    if (this.emailVerificationPolicy.isDevVerificationCode(input.token)) {
+      return { verified: true };
+    }
+    // ── TASK-012 DEV BYPASS (fin) ────────────────────────────────────
+
     const verificationToken = await this.tokenRepository.findByToken(
       input.token,
     );

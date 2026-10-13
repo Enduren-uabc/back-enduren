@@ -21,6 +21,7 @@ import {
   EMAIL_VERIFICATION_TOKEN_REPOSITORY_PORT,
 } from '../../../domain/repositories/email-verification-token.repository';
 import { EmailVerificationToken } from '../../../domain/entities/email-verification-token.entity';
+import { EmailVerificationPolicy } from '../../../infrastructure/providers/email-verification-policy.provider';
 import { UserRegisteredEvent } from '../../../../shared/email/domain/events/user-registered.event';
 import { SOCIAL_PROFILE_REPOSITORY_PORT } from '../../../../profile/application/use-cases/follow-profile/follow-profile.use-case';
 import { SocialProfileRepository } from '../../../../profile/domain/repositories/social-profile.repository';
@@ -59,6 +60,7 @@ export class RegisterUserUseCase {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly emailVerificationPolicy: EmailVerificationPolicy,
     @Inject(SOCIAL_PROFILE_REPOSITORY_PORT)
     private readonly socialProfileRepository: SocialProfileRepository,
   ) {}
@@ -94,6 +96,18 @@ export class RegisterUserUseCase {
       passwordHash,
       role,
     );
+
+    // ── TASK-012 DEV BYPASS (inicio) ─────────────────────────────────
+    // Sin servicio de correo, en desarrollo la cuenta se marca verificada
+    // desde el registro. Al integrar el envío de correos, eliminar este
+    // bloque para volver a emailVerified=false y restaurar el flujo
+    // original de abajo.
+    const emailVerificationDisabled = this.emailVerificationPolicy.isDisabled();
+    if (emailVerificationDisabled) {
+      user.verifyEmail();
+    }
+    // ── TASK-012 DEV BYPASS (fin) ────────────────────────────────────
+
     const saved = await this.userRepository.save(user);
 
     const socialProfile = SocialProfile.create(
@@ -103,24 +117,29 @@ export class RegisterUserUseCase {
     );
     await this.socialProfileRepository.save(socialProfile);
 
-    const tokenValue = String(Math.floor(100000 + Math.random() * 900000)); // sonarqube:prng-safe-context
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const verificationToken = EmailVerificationToken.create(
-      saved.id,
-      tokenValue,
-      expiresAt,
-    );
-    await this.emailVerificationTokenRepository.save(verificationToken);
-
-    this.eventEmitter.emit(
-      'user.registered',
-      new UserRegisteredEvent(
+    // Flujo original de verificación por correo. TASK-012 DEV BYPASS: se
+    // omite por completo cuando la bandera de desarrollo está activa; al
+    // integrar el servicio de correo queda operativo sin cambios.
+    if (!emailVerificationDisabled) {
+      const tokenValue = String(Math.floor(100000 + Math.random() * 900000)); // sonarqube:prng-safe-context
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const verificationToken = EmailVerificationToken.create(
         saved.id,
-        saved.email,
-        saved.username,
         tokenValue,
-      ),
-    );
+        expiresAt,
+      );
+      await this.emailVerificationTokenRepository.save(verificationToken);
+
+      this.eventEmitter.emit(
+        'user.registered',
+        new UserRegisteredEvent(
+          saved.id,
+          saved.email,
+          saved.username,
+          tokenValue,
+        ),
+      );
+    }
 
     const tokens = await this.generateTokens(saved);
     return {

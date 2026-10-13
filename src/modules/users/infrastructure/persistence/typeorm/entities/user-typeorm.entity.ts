@@ -32,7 +32,7 @@ export class UserTypeormEntity {
   @Column('int', { default: 0, name: 'failed_login_attempts' })
   failedLoginAttempts!: number;
 
-  @Column('timestamp', { nullable: true, name: 'locked_until' })
+  @Column(process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamp', { nullable: true, name: 'locked_until' })
   lockedUntil!: Date | null;
 
   @Column('varchar', { unique: true, nullable: true, name: 'trainer_code' })

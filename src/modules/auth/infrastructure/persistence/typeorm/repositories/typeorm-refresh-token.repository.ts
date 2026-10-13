@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan, IsNull } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RefreshToken } from '../../../../domain/entities/refresh-token.entity';
+import { RefreshToken, refreshTokenHash } from '../../../../domain/entities/refresh-token.entity';
 import { RefreshTokenRepository } from '../../../../domain/repositories/refresh-token.repository';
 import { RefreshTokenTypeormEntity } from '../entities/refresh-token-typeorm.entity';
 
@@ -19,7 +19,7 @@ export class TypeormRefreshTokenRepository implements RefreshTokenRepository {
   }
 
   async findByToken(token: string): Promise<RefreshToken | null> {
-    const entity = await this.ormRepo.findOne({ where: { token } });
+    const entity = await this.ormRepo.findOne({ where: { token: refreshTokenHash(token) } });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -28,7 +28,21 @@ export class TypeormRefreshTokenRepository implements RefreshTokenRepository {
   }
 
   async deleteByToken(token: string): Promise<void> {
-    await this.ormRepo.delete({ token });
+    await this.ormRepo.delete({ token: refreshTokenHash(token) });
+  }
+
+  async rotate(previous: RefreshToken, replacement: RefreshToken): Promise<boolean> {
+    return this.ormRepo.manager.transaction(async (manager) => {
+      const result = await manager.update(RefreshTokenTypeormEntity, {
+        id: previous.id,
+        token: previous.token,
+        usedAt: IsNull(),
+        expiresAt: MoreThan(new Date()),
+      }, { usedAt: new Date() });
+      if (result.affected !== 1) return false;
+      await manager.save(RefreshTokenTypeormEntity, this.toOrm(replacement));
+      return true;
+    });
   }
 
   private toOrm(token: RefreshToken): RefreshTokenTypeormEntity {

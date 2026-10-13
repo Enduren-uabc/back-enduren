@@ -9,4 +9,5 @@ export interface RefreshTokenRepository {
   findByToken(token: string): Promise<RefreshToken | null>;
   deleteByUserId(userId: string): Promise<void>;
   deleteByToken(token: string): Promise<void>;
+  rotate(previous: RefreshToken, replacement: RefreshToken): Promise<boolean>;
 }

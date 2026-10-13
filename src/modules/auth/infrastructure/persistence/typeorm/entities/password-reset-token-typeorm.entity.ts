@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   Index,
+  type ColumnType,
 } from 'typeorm';
+
+const dateTimeColumnType: ColumnType = process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamp';
 
 @Entity('password_reset_tokens')
 export class PasswordResetTokenTypeormEntity {
@@ -18,10 +21,10 @@ export class PasswordResetTokenTypeormEntity {
   @Column('varchar', { length: 6 })
   token!: string;
 
-  @Column('timestamp', { name: 'expires_at' })
+  @Column(dateTimeColumnType, { name: 'expires_at' })
   expiresAt!: Date;
 
-  @Column('timestamp', { nullable: true, name: 'used_at' })
+  @Column(dateTimeColumnType, { nullable: true, name: 'used_at' })
   usedAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

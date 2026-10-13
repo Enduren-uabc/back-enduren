@@ -1,3 +1,9 @@
+import { createHash } from 'crypto';
+
+export function refreshTokenHash(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
 export interface RefreshTokenProps {
   id: string;
   token: string;
@@ -32,7 +38,7 @@ export class RefreshToken {
   ): RefreshToken {
     return new RefreshToken({
       id,
-      token,
+      token: refreshTokenHash(token),
       userId,
       expiresAt,
       createdAt: new Date(),

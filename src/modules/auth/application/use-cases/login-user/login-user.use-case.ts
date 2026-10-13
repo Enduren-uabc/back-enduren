@@ -15,6 +15,7 @@ import {
 } from '../../../domain/repositories/refresh-token.repository';
 import { RefreshToken } from '../../../domain/entities/refresh-token.entity';
 import { User } from '../../../../users/domain/entities/user.entity';
+import { EmailVerificationPolicy } from '../../../infrastructure/providers/email-verification-policy.provider';
 import { AccountLockedException } from './account-locked.exception';
 
 export interface LoginInput {
@@ -45,6 +46,7 @@ export class LoginUserUseCase {
     private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailVerificationPolicy: EmailVerificationPolicy,
   ) {}
 
   async execute(input: LoginInput): Promise<LoginOutput> {
@@ -87,7 +89,8 @@ export class LoginUserUseCase {
         email: user.email,
         username: user.username,
         role: user.role,
-        emailVerified: user.emailVerified,
+        // TASK-012 DEV BYPASS: con la bandera activa se reporta verificado.
+        emailVerified: this.emailVerificationPolicy.resolveEmailVerified(user),
       },
       ...tokens,
     };
@@ -100,7 +103,8 @@ export class LoginUserUseCase {
       sub: user.id,
       email: user.email,
       role: user.role,
-      emailVerified: user.emailVerified,
+      // TASK-012 DEV BYPASS: mantener el claim coherente con la respuesta.
+      emailVerified: this.emailVerificationPolicy.resolveEmailVerified(user),
     };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),

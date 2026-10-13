@@ -57,13 +57,7 @@ import {
 } from '../../../domain/repositories/social-auth-code.repository';
 import { SocialAuthCode } from '../../../domain/entities/social-auth-code.entity';
 import { ConfigService } from '@nestjs/config';
-
-const ALLOWED_RETURN_SCHEMES = [
-  'com.endure.app://',
-  'exp://',
-  'http://localhost',
-  'https://localhost',
-];
+import { configuredList, isMobileRequest } from '../../../infrastructure/providers/web-session-policy';
 
 function generateTempCode(length = 32): string {
   const chars =
@@ -106,7 +100,13 @@ export class AuthController {
   ) {}
 
   private isMobileClient(req: Request): boolean {
-    return req.headers['x-client-type'] === 'mobile';
+    return isMobileRequest(req);
+  }
+
+  private setCookiesIfWeb(req: Request, res: Response, accessToken: string, refreshToken: string): void {
+    if (!this.isMobileClient(req)) {
+      this.cookieHelper.setAuthCookies(res, accessToken, refreshToken);
+    }
   }
 
   private buildAuthResponse(
@@ -146,7 +146,7 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<AuthResponseDto> {
     const result = await this.registerUseCase.execute(dto);
-    this.cookieHelper.setAuthCookies(
+    this.setCookiesIfWeb(req,
       res,
       result.accessToken,
       result.refreshToken,
@@ -164,7 +164,7 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<AuthResponseDto> {
     const result = await this.loginUseCase.execute(dto);
-    this.cookieHelper.setAuthCookies(
+    this.setCookiesIfWeb(req,
       res,
       result.accessToken,
       result.refreshToken,
@@ -179,11 +179,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() body?: { refreshToken?: string },
   ): Promise<{ success: boolean }> {
-    const refreshToken = req.cookies?.refresh_token ?? body?.refreshToken;
+    const refreshToken = this.isMobileClient(req) ? body?.refreshToken : req.cookies?.refresh_token;
     if (refreshToken) {
       await this.logoutUseCase.execute(refreshToken);
     }
-    this.cookieHelper.clearAuthCookies(res);
+    if (!this.isMobileClient(req)) this.cookieHelper.clearAuthCookies(res);
     return { success: true };
   }
 
@@ -199,13 +199,13 @@ export class AuthController {
     accessToken?: string;
     refreshToken?: string;
   }> {
-    const refreshToken = req.cookies?.refresh_token ?? body?.refreshToken;
+    const refreshToken = this.isMobileClient(req) ? body?.refreshToken : req.cookies?.refresh_token;
     if (!refreshToken) {
-      this.cookieHelper.clearAuthCookies(res);
+      if (!this.isMobileClient(req)) this.cookieHelper.clearAuthCookies(res);
       return { success: false };
     }
     const result = await this.refreshUseCase.execute(refreshToken);
-    this.cookieHelper.setAuthCookies(
+    this.setCookiesIfWeb(req,
       res,
       result.accessToken,
       result.refreshToken,
@@ -281,7 +281,7 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<AuthResponseDto> {
     const result = await this.socialLoginUseCase.execute(dto);
-    this.cookieHelper.setAuthCookies(
+    this.setCookiesIfWeb(req,
       res,
       result.accessToken,
       result.refreshToken,
@@ -311,9 +311,9 @@ export class AuthController {
       return;
     }
 
-    const allowed = ALLOWED_RETURN_SCHEMES.some((s) => returnTo.startsWith(s));
+    const allowed = configuredList(this.configService.get<string>('OAUTH_ALLOWED_RETURN_URLS')).includes(returnTo);
     if (!allowed) {
-      this.logger.warn(`returnTo inválido rechazado: ${returnTo}`);
+      this.logger.warn('returnTo inválido rechazado');
       res
         .status(400)
         .json({ message: 'returnTo inválido. Esquema no permitido.' });
@@ -334,9 +334,7 @@ export class AuthController {
     this.oauthStateStore.set(state, returnTo);
 
     const authUrl = this.googleOAuthService.generateAuthUrl(state);
-    this.logger.log(
-      `Iniciando OAuth Google, state=${state.substring(0, 8)}..., returnTo=${returnTo}`,
-    );
+    this.logger.log('Iniciando OAuth Google');
 
     res.redirect(authUrl);
   }
@@ -376,9 +374,7 @@ export class AuthController {
         'Callback Google recibido, intercambiando code por perfil...',
       );
       const profile = await this.googleOAuthService.getProfileFromCode(code);
-      this.logger.log(
-        `Perfil Google obtenido: ${profile.email} (${profile.id})`,
-      );
+      this.logger.log('Perfil Google obtenido');
 
       const provider = 'google';
       const user = await this.findOrCreateGoogleUser(profile, provider);
@@ -487,9 +483,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async exchangeSocialCode(
     @Body() dto: ExchangeSocialCodeDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     this.logger.log(`Intercambiando código temporal...`);
     const result = await this.socialExchangeCodeUseCase.execute(dto);
+    this.setCookiesIfWeb(req, res, result.accessToken, result.refreshToken);
 
     const response = new AuthResponseDto();
     response.id = result.user.id;
@@ -497,8 +496,10 @@ export class AuthController {
     response.username = result.user.username;
     response.role = result.user.role;
     response.emailVerified = result.user.emailVerified;
-    response.accessToken = result.accessToken;
-    response.refreshToken = result.refreshToken;
+    if (this.isMobileClient(req)) {
+      response.accessToken = result.accessToken;
+      response.refreshToken = result.refreshToken;
+    }
 
     this.logger.log(
       `Código canjeado exitosamente para usuario ${result.user.id}`,
