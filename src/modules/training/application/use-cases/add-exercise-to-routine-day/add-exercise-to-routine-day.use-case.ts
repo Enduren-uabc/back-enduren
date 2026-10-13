@@ -6,6 +6,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface AddExerciseToRoutineDayInput {
   routineId: string;
@@ -43,7 +44,7 @@ export class AddExerciseToRoutineDayUseCase {
   constructor(private readonly routineRepository: RoutineRepository) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: AddExerciseToRoutineDayInput,
   ): Promise<AddExerciseToRoutineDayOutput> {
     // Validate routine exists
@@ -55,6 +56,8 @@ export class AddExerciseToRoutineDayUseCase {
         { routineId: input.routineId },
       );
     }
+
+    assertCanMutateRoutine(actor, routine);
 
     // Validate exercise name is non-empty (RF-10.0.3 — day selection required is enforced by route)
     if (!input.name || input.name.trim().length === 0) {

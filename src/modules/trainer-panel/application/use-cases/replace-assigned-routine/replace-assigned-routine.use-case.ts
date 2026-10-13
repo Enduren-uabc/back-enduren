@@ -66,6 +66,10 @@ export class ReplaceAssignedRoutineUseCase {
       throw new NotFoundException('Assigned routine not found');
     }
 
+    if (existing.clientId !== input.clientId) {
+      throw new NotFoundException('Assigned routine not found');
+    }
+
     if (!existing.status.canBeReplaced()) {
       throw new ForbiddenException(
         'Cannot replace a non-active assigned routine',

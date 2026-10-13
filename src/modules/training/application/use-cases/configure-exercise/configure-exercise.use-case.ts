@@ -6,6 +6,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface ConfigureExerciseSetInput {
   setNumber: number;
@@ -50,7 +51,7 @@ export class ConfigureExerciseUseCase {
   constructor(private readonly routineRepository: RoutineRepository) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: ConfigureExerciseInput,
   ): Promise<ConfigureExerciseOutput> {
     // Validate routine exists (RF-11.0.5)
@@ -62,6 +63,8 @@ export class ConfigureExerciseUseCase {
         { routineId: input.routineId },
       );
     }
+
+    assertCanMutateRoutine(actor, routine);
 
     const sets = input.sets.map((s) =>
       RoutineExerciseSet.create(s.setNumber, s.reps, s.weight, s.restSeconds),

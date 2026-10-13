@@ -106,6 +106,10 @@ export class EditAssignedRoutineContentUseCase {
       throw new NotFoundException('Assigned routine not found');
     }
 
+    if (assigned.clientId !== input.clientId) {
+      throw new NotFoundException('Assigned routine not found');
+    }
+
     if (!assigned.status.isActive()) {
       throw new ForbiddenException('Cannot edit a non-active assigned routine');
     }

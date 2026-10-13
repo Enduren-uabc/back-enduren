@@ -5,6 +5,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface RemoveExerciseFromRoutineInput {
   routineId: string;
@@ -41,7 +42,7 @@ export class RemoveExerciseFromRoutineUseCase {
   constructor(private readonly routineRepository: RoutineRepository) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: RemoveExerciseFromRoutineInput,
   ): Promise<RemoveExerciseFromRoutineOutput> {
     // Validate routine exists
@@ -53,6 +54,8 @@ export class RemoveExerciseFromRoutineUseCase {
         { routineId: input.routineId },
       );
     }
+
+    assertCanMutateRoutine(actor, routine);
 
     // Delegate to aggregate root — enforces day exists and exercise exists in day
     const updatedRoutine = routine.removeExerciseFromDay(

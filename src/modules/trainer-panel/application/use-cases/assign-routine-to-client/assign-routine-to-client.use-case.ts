@@ -100,6 +100,12 @@ export class AssignRoutineToClientUseCase {
       throw new ForbiddenException('Routine does not belong to this trainer');
     }
 
+    if (routine.targetAudience !== 'client') {
+      throw new ForbiddenException(
+        'Only routines marked for clients can be assigned',
+      );
+    }
+
     const existingActive =
       await this.assignedRoutineRepository.findActiveByClientAndTrainer(
         input.clientId,

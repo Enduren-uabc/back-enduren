@@ -5,6 +5,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface RemoveDayFromRoutineInput {
   routineId: string;
@@ -40,7 +41,7 @@ export class RemoveDayFromRoutineUseCase {
   constructor(private readonly routineRepository: RoutineRepository) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: RemoveDayFromRoutineInput,
   ): Promise<RemoveDayFromRoutineOutput> {
     const routine = await this.routineRepository.findById(input.routineId);
@@ -51,6 +52,8 @@ export class RemoveDayFromRoutineUseCase {
         { routineId: input.routineId },
       );
     }
+
+    assertCanMutateRoutine(actor, routine);
 
     const updatedRoutine = routine.removeDay(input.dayOfWeek);
 

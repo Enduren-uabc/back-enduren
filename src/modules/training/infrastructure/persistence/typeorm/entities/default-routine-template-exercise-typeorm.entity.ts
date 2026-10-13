@@ -1,6 +1,9 @@
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { DefaultRoutineTemplateTypeormEntity } from './default-routine-template-typeorm.entity';
 
+const timestampType = process.env.NODE_ENV === 'test' ? 'datetime' : 'timestamp';
+const now = () => process.env.NODE_ENV === 'test' ? 'CURRENT_TIMESTAMP' : 'NOW()';
+
 @Entity('default_routine_template_exercises')
 export class DefaultRoutineTemplateExerciseTypeormEntity {
   @PrimaryColumn('uuid')
@@ -27,7 +30,7 @@ export class DefaultRoutineTemplateExerciseTypeormEntity {
   @Column('decimal', { name: 'initial_weight', precision: 5, scale: 2 })
   initialWeight!: number;
 
-  @Column('timestamp', { name: 'created_at', default: () => 'NOW()' })
+  @Column(timestampType, { name: 'created_at', default: now })
   createdAt!: Date;
 
   @ManyToOne(() => DefaultRoutineTemplateTypeormEntity, (t) => t.exercises, {

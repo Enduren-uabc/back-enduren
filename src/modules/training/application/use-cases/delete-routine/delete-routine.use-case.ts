@@ -4,6 +4,7 @@ import {
   RoutineErrorCode,
 } from '../../../domain/errors/routine-domain.error';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface DeleteRoutineInput {
   routineId: string;
@@ -33,6 +34,8 @@ export class DeleteRoutineUseCase {
         { routineId: input.routineId },
       );
     }
+
+    assertCanMutateRoutine(actor, routine);
 
     // Domain invariant: cannot delete an active routine
     // User must deactivate first

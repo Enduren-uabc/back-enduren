@@ -5,6 +5,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export const UPDATE_ROUTINE_NAME_REPOSITORY_PORT = Symbol(
   'UPDATE_ROUTINE_NAME_REPOSITORY_PORT',
@@ -57,13 +58,7 @@ export class UpdateRoutineNameUseCase {
       );
     }
 
-    if (routine.userId !== actor.userId) {
-      throw new RoutineDomainError(
-        RoutineErrorCode.ROUTINE_NOT_OWNED,
-        'Routine does not belong to the current user',
-        { routineId: input.routineId, userId: actor.userId },
-      );
-    }
+    assertCanMutateRoutine(actor, routine);
 
     const renamed = routine.rename(input.name);
     const saved = await this.routineRepository.save(renamed);

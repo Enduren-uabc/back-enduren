@@ -9,6 +9,7 @@ import {
   TrainingStrategyErrorCode,
 } from '../../../domain/errors/training-strategy-domain.error';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export const ROUTINE_REPOSITORY_PORT_FOR_STRATEGY = Symbol(
   'ROUTINE_REPOSITORY_PORT_FOR_STRATEGY',
@@ -71,13 +72,7 @@ export class SetRoutineTrainingStrategyUseCase {
       );
     }
 
-    if (routine.userId !== actor.userId) {
-      throw new RoutineDomainError(
-        RoutineErrorCode.ROUTINE_NOT_OWNED,
-        'Routine does not belong to the current user',
-        { routineId: input.routineId, userId: actor.userId },
-      );
-    }
+    assertCanMutateRoutine(actor, routine);
 
     if (input.strategyKey !== null) {
       const strategy = await this.trainingStrategyRepository.findByKey(

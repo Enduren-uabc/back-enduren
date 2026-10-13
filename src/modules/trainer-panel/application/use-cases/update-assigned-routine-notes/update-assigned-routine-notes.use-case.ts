@@ -54,6 +54,10 @@ export class UpdateAssignedRoutineNotesUseCase {
       throw new NotFoundException('Assigned routine not found');
     }
 
+    if (assigned.clientId !== input.clientId) {
+      throw new NotFoundException('Assigned routine not found');
+    }
+
     const updated = assigned.updateNotes(input.notes);
     const saved = await this.assignedRoutineRepository.save(updated);
 

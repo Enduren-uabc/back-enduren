@@ -15,6 +15,7 @@ import {
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { WorkoutSessionRepository } from '../../../domain/repositories/workout-session.repository.port';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface ForkExerciseOverride {
   sourceExerciseId: string;
@@ -50,7 +51,15 @@ export class ForkWorkoutToRoutineUseCase {
       input.routineId,
       actor.userId,
     );
+    assertCanMutateRoutine(actor, routine);
     const session = await this.findSessionOrThrow(input.sourceWorkoutSessionId);
+    if (session.userId !== actor.userId) {
+      throw new RoutineDomainError(
+        RoutineErrorCode.ROUTINE_NOT_OWNED,
+        'Workout session does not belong to the current user',
+        { sessionId: input.sourceWorkoutSessionId, userId: actor.userId },
+      );
+    }
     this.validateDayOfWeek(input.dayOfWeek);
 
     const overrideMap = this.buildOverrideMap(input.exercises);

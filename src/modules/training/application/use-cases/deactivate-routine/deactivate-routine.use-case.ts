@@ -5,6 +5,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export const DEACTIVATE_ROUTINE_REPOSITORY_PORT = Symbol(
   'DEACTIVATE_ROUTINE_REPOSITORY_PORT',
@@ -56,13 +57,7 @@ export class DeactivateRoutineUseCase {
       );
     }
 
-    if (routine.userId !== actor.userId) {
-      throw new RoutineDomainError(
-        RoutineErrorCode.ROUTINE_NOT_OWNED,
-        'Routine does not belong to the current user',
-        { routineId: input.routineId, userId: actor.userId },
-      );
-    }
+    assertCanMutateRoutine(actor, routine);
 
     // Idempotent: if already inactive, return unchanged
     if (!routine.isActive) {
