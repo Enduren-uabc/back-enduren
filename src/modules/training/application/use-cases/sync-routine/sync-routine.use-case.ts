@@ -12,6 +12,7 @@ import {
 } from '../../../domain/errors/routine-domain.error';
 import { RoutineRepository } from '../../../domain/repositories/routine.repository';
 import { CurrentActor } from '../../ports/current-actor.port';
+import { assertCanMutateRoutine } from '../../policies/routine-mutation.policy';
 
 export interface SyncRoutineExerciseSetInput {
   setNumber: number;
@@ -66,7 +67,7 @@ export class SyncRoutineUseCase {
   constructor(private readonly routineRepository: RoutineRepository) {}
 
   public async execute(
-    _actor: CurrentActor,
+    actor: CurrentActor,
     input: SyncRoutineInput,
   ): Promise<SyncRoutineOutput> {
     const routine = await this.routineRepository.findById(input.routineId);
@@ -77,6 +78,8 @@ export class SyncRoutineUseCase {
         { routineId: input.routineId },
       );
     }
+
+    assertCanMutateRoutine(actor, routine);
 
     // Reconstruct each day from the payload, preserving existing IDs
     const updatedDays = routine.days.map((day) => {
