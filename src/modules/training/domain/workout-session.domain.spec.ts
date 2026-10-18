@@ -46,7 +46,7 @@ describe('WorkoutSession domain entity', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
-        });
+        );
       }
     });
 
@@ -61,7 +61,7 @@ describe('WorkoutSession domain entity', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_NO_ACTIVE_ROUTINE,
-        });
+        );
       }
     });
 
@@ -133,7 +133,7 @@ describe('WorkoutSession domain entity', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
 
@@ -189,7 +189,7 @@ describe('WorkoutSession domain entity', () => {
         0,
         startedAt,
         finishedAt,
-      });
+      );
 
       expect(session.id).toBe('session-1');
       expect(session.status).toBe(WorkoutSessionStatus.FINISHED);
@@ -226,14 +226,14 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => session.registerSetRepsAndWeight(0, 1, 10, 50)).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
 
       try {
         session.registerSetRepsAndWeight(0, 1, 10, 50);
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
 
@@ -247,10 +247,10 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => session.registerSetRepsAndWeight(-1, 1, 10, 50)).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
       expect(() => session.registerSetRepsAndWeight(5, 1, 10, 50)).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
 
       try {
         session.registerSetRepsAndWeight(5, 1, 10, 50);
@@ -303,14 +303,14 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => session.markSetAsCompleted(0, 1)).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
 
       try {
         session.markSetAsCompleted(0, 1);
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
 
@@ -324,7 +324,7 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => session.markSetAsCompleted(5, 1)).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
     });
   });
 
@@ -367,14 +367,14 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => withReps.advanceToNextExercise()).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
 
       try {
         withReps.advanceToNextExercise();
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_EXERCISE_SETS_INCOMPLETE,
-        });
+        );
       }
     });
 
@@ -388,14 +388,14 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => session.advanceToNextExercise()).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
 
       try {
         session.advanceToNextExercise();
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_AT_LAST_EXERCISE,
-        });
+        );
       }
     });
 
@@ -410,14 +410,14 @@ describe('WorkoutSession domain entity', () => {
 
       expect(() => session.advanceToNextExercise()).toThrow(
         WorkoutSessionDomainError,
-      });
+      );
 
       try {
         session.advanceToNextExercise();
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
   });

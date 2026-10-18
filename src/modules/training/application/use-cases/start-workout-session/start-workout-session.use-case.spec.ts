@@ -277,7 +277,7 @@ describe('StartWorkoutSessionUseCase', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_IN_PROGRESS,
-        });
+        );
       }
     });
   });

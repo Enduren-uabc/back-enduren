@@ -38,10 +38,10 @@ describe('DiscardWorkoutSessionUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      });
+      );
       (workoutSessionRepository.save as jest.Mock).mockImplementation(
         (s: WorkoutSession) => Promise.resolve(s),
-      });
+      );
 
       const result = await useCase.execute(actor, {
         sessionId: 'session-1',
@@ -81,7 +81,7 @@ describe('DiscardWorkoutSessionUseCase', () => {
       });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-2' }),
@@ -101,7 +101,7 @@ describe('DiscardWorkoutSessionUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         finishedSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-1' }),
@@ -113,7 +113,7 @@ describe('DiscardWorkoutSessionUseCase', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
 
@@ -128,7 +128,7 @@ describe('DiscardWorkoutSessionUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         discardedSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-1' }),
@@ -140,7 +140,7 @@ describe('DiscardWorkoutSessionUseCase', () => {
         expect(error).toBeInstanceOf(WorkoutSessionDomainError);
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
   });

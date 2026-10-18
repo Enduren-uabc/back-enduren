@@ -39,10 +39,10 @@ describe('MarkSetAsCompletedUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      });
+      );
       (workoutSessionRepository.save as jest.Mock).mockImplementation(
         (s: WorkoutSession) => Promise.resolve(s),
-      });
+      );
 
       const result = await useCase.execute(actor, {
         sessionId: 'session-1',
@@ -130,7 +130,7 @@ describe('MarkSetAsCompletedUseCase', () => {
       });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, {
@@ -151,7 +151,7 @@ describe('MarkSetAsCompletedUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      });
+      );
 
       await expect(
         useCase.execute(actor, {

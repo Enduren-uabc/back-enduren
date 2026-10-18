@@ -105,7 +105,7 @@ describe('AdvanceToNextExerciseUseCase', () => {
       });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-2' }),
@@ -123,7 +123,7 @@ describe('AdvanceToNextExerciseUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      });
+      );
 
       await expect(
         useCase.execute(actor, { sessionId: 'session-1' }),
