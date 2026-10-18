@@ -6,28 +6,80 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
+
+# SonarQube Server scanning remains suspended. SonarCloud and Codacy are
+# independent integrations managed outside this workflow.
 jobs:
-  tests:
-    name: Unit tests (non-blocking)
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      # The package.json lint script uses --fix; CI must only check files.
+      - run: pnpm exec eslint "{src,apps,libs,test}/**/*.ts"
+
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
-      # Existing non-blocking behavior; addressed separately by CI reliability work.
-      - run: pnpm test:cov || true
+      - run: pnpm test:cov --runInBand --no-cache --json --outputFile=coverage/jest-results.json
 
-      # SonarQube Server scanning is temporarily suspended by maintainer decision.
-      # Re-enable only with a verified endpoint and a newly issued GitHub secret.
-      # The independent SonarCloud integration is managed outside this workflow.
+      # Preserve evidence even when Jest fails; its exit code still fails the job.
+      - name: Upload test results and coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: unit-tests-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            coverage/jest-results.json
+            coverage/coverage-final.json
+            coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 14
