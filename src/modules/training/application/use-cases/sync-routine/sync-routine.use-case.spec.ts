@@ -5,15 +5,12 @@ import { Routine } from '../../../domain/entities/routine.entity';
 import { RoutineDay } from '../../../domain/value-objects/routine-day.value-object';
 import { Exercise } from '../../../domain/entities/exercise.entity';
 import { RoutineExerciseSet } from '../../../domain/value-objects/routine-exercise-set.value-object';
-import {
-  RoutineDomainError,
-  RoutineErrorCode,
-} from '../../../domain/errors/routine-domain.error';
+import { RoutineErrorCode } from '../../../domain/errors/routine-domain.error';
 
 describe('SyncRoutineUseCase', () => {
   let useCase: SyncRoutineUseCase;
   let routineRepository: RoutineRepository;
-  const actor: CurrentActor = { userId: 'user-1' };
+  const actor: CurrentActor = { userId: 'user-1', role: 'user' };
 
   beforeEach(() => {
     routineRepository = {
@@ -37,6 +34,7 @@ describe('SyncRoutineUseCase', () => {
       order: number;
       sets?: Array<{ setNumber: number; reps: number; weight: number }>;
     }>,
+    targetAudience: 'self' | 'client' = 'self',
   ): Routine => {
     const exerciseEntities = exercises.map((ex) => {
       const sets =
@@ -65,15 +63,17 @@ describe('SyncRoutineUseCase', () => {
       exerciseEntities,
       `day-${dayOfWeek}`,
     );
-    return Routine.reconstitute(
-      'routine-1',
-      'My Routine',
-      'user-1',
-      [day],
-      false,
-      new Date(),
-      new Date(),
-    );
+    return Routine.reconstitute({
+      id: 'routine-1',
+      name: 'My Routine',
+      userId: 'user-1',
+      days: [day],
+      isActive: false,
+      trainingStrategyKey: null,
+      targetAudience,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   };
 
   describe('happy path', () => {
@@ -199,15 +199,17 @@ describe('SyncRoutineUseCase', () => {
         tuesdayExercises,
         'day-tuesday',
       );
-      const routine = Routine.reconstitute(
-        'routine-1',
-        'My Routine',
-        'user-1',
-        [day1, day2],
-        false,
-        new Date(),
-        new Date(),
-      );
+      const routine = Routine.reconstitute({
+        id: 'routine-1',
+        name: 'My Routine',
+        userId: 'user-1',
+        days: [day1, day2],
+        isActive: false,
+        trainingStrategyKey: null,
+        targetAudience: 'self',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
       (routineRepository.save as jest.Mock).mockImplementation((r: Routine) =>
@@ -269,8 +271,140 @@ describe('SyncRoutineUseCase', () => {
     });
   });
 
+  describe('authorization', () => {
+    it.each<{
+      description: string;
+      currentActor: CurrentActor;
+      targetAudience: 'self' | 'client';
+      code: RoutineErrorCode;
+    }>([
+      {
+        description: 'another user modifying a personal routine',
+        currentActor: { userId: 'other-user', role: 'user' },
+        targetAudience: 'self',
+        code: RoutineErrorCode.ROUTINE_NOT_OWNED,
+      },
+      {
+        description: 'an owner without trainer role modifying a client routine',
+        currentActor: actor,
+        targetAudience: 'client',
+        code: RoutineErrorCode.ROUTINE_TARGET_AUDIENCE_FORBIDDEN,
+      },
+      {
+        description: 'an owner with no role modifying a client routine',
+        currentActor: { userId: 'user-1' },
+        targetAudience: 'client',
+        code: RoutineErrorCode.ROUTINE_TARGET_AUDIENCE_FORBIDDEN,
+      },
+      {
+        description: 'an admin owner modifying a client routine',
+        currentActor: { userId: 'user-1', role: 'admin' },
+        targetAudience: 'client',
+        code: RoutineErrorCode.ROUTINE_TARGET_AUDIENCE_FORBIDDEN,
+      },
+      {
+        description: 'another trainer modifying a personal routine',
+        currentActor: { userId: 'other-trainer', role: 'trainer' },
+        targetAudience: 'self',
+        code: RoutineErrorCode.ROUTINE_NOT_OWNED,
+      },
+      {
+        description: 'another trainer modifying a client routine',
+        currentActor: { userId: 'other-trainer', role: 'trainer' },
+        targetAudience: 'client',
+        code: RoutineErrorCode.ROUTINE_NOT_OWNED,
+      },
+    ])(
+      'should reject $description before reconstruction or save',
+      async ({ currentActor, targetAudience, code }) => {
+        const routine = createRoutineWithExercises(
+          'monday',
+          [{ id: 'ex-1', name: 'Original exercise', order: 0 }],
+          targetAudience,
+        );
+        const before = JSON.stringify(routine);
+        (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
+        const reconstitute = jest.spyOn(Routine, 'reconstitute');
+
+        try {
+          await expect(
+            useCase.execute(currentActor, {
+              routineId: routine.id,
+              days: [
+                {
+                  dayOfWeek: 'monday',
+                  exercises: [
+                    { id: 'ex-1', name: 'Changed exercise', order: 1 },
+                  ],
+                },
+                { dayOfWeek: 'friday', exercises: [] },
+              ],
+            }),
+          ).rejects.toMatchObject({ name: 'RoutineDomainError', code });
+
+          expect(reconstitute).not.toHaveBeenCalled();
+          expect(routineRepository.save).not.toHaveBeenCalled();
+          expect(JSON.stringify(routine)).toBe(before);
+        } finally {
+          reconstitute.mockRestore();
+        }
+      },
+    );
+
+    it.each<{
+      description: string;
+      currentActor: CurrentActor;
+      targetAudience: 'self' | 'client';
+    }>([
+      {
+        description: 'the owner of a personal routine',
+        currentActor: actor,
+        targetAudience: 'self',
+      },
+      {
+        description: 'the trainer owner of a client routine',
+        currentActor: { userId: 'user-1', role: 'trainer' },
+        targetAudience: 'client',
+      },
+    ])(
+      'should allow $description',
+      async ({ currentActor, targetAudience }) => {
+        const routine = createRoutineWithExercises(
+          'monday',
+          [],
+          targetAudience,
+        );
+        (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
+        (routineRepository.save as jest.Mock).mockImplementation((r: Routine) =>
+          Promise.resolve(r),
+        );
+
+        const result = await useCase.execute(currentActor, {
+          routineId: routine.id,
+          days: [
+            {
+              dayOfWeek: 'monday',
+              exercises: [{ name: 'Push-ups', order: 0 }],
+            },
+          ],
+        });
+
+        expect(result.userId).toBe(currentActor.userId);
+        expect(result.targetAudience).toBe(targetAudience);
+        expect(result.days[0].exercises[0].name).toBe('Push-ups');
+        expect(routineRepository.save).toHaveBeenCalledTimes(1);
+        expect(routineRepository.save).toHaveBeenCalledWith(
+          expect.objectContaining({
+            userId: currentActor.userId,
+            targetAudience,
+          }),
+        );
+      },
+    );
+  });
+
   describe('routine not found', () => {
-    it('should reject when routine does not exist', async () => {
+    it('should reject with ROUTINE_NOT_FOUND without writing', async () => {
       (routineRepository.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(
@@ -278,51 +412,59 @@ describe('SyncRoutineUseCase', () => {
           routineId: 'nonexistent',
           days: [{ dayOfWeek: 'monday', exercises: [] }],
         }),
-      ).rejects.toThrow(RoutineDomainError);
+      ).rejects.toMatchObject({
+        name: 'RoutineDomainError',
+        code: RoutineErrorCode.ROUTINE_NOT_FOUND,
+      });
 
-      try {
-        await useCase.execute(actor, {
-          routineId: 'nonexistent',
-          days: [{ dayOfWeek: 'monday', exercises: [] }],
-        });
-      } catch (error) {
-        expect(error).toBeInstanceOf(RoutineDomainError);
-        expect((error as RoutineDomainError).code).toBe(
-          RoutineErrorCode.ROUTINE_NOT_FOUND,
-        );
-      }
+      expect(routineRepository.save).not.toHaveBeenCalled();
     });
   });
 
-  describe('day not found', () => {
-    it('should reject when a payload day does not exist in routine', async () => {
+  describe('new days', () => {
+    it('should append a valid payload day and preserve days omitted from the payload', async () => {
+      const routine = createRoutineWithExercises('monday', [
+        { id: 'ex-1', name: 'Bench Press', order: 0 },
+      ]);
+      (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
+      (routineRepository.save as jest.Mock).mockImplementation((r: Routine) =>
+        Promise.resolve(r),
+      );
+
+      const result = await useCase.execute(actor, {
+        routineId: routine.id,
+        days: [
+          {
+            dayOfWeek: 'friday',
+            exercises: [{ name: 'Squats', order: 0 }],
+          },
+        ],
+      });
+
+      expect(result.days.map((day) => day.dayOfWeek)).toEqual([
+        'monday',
+        'friday',
+      ]);
+      expect(result.days[0].exercises[0].id).toBe('ex-1');
+      expect(result.days[1].exercises[0].name).toBe('Squats');
+      expect(routineRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject an invalid new day without writing', async () => {
       const routine = createRoutineWithExercises('monday', []);
       (routineRepository.findById as jest.Mock).mockResolvedValue(routine);
 
       await expect(
         useCase.execute(actor, {
-          routineId: 'routine-1',
-          days: [
-            { dayOfWeek: 'monday', exercises: [] },
-            { dayOfWeek: 'friday', exercises: [] },
-          ],
+          routineId: routine.id,
+          days: [{ dayOfWeek: 'invalid-day', exercises: [] }],
         }),
-      ).rejects.toThrow(RoutineDomainError);
+      ).rejects.toMatchObject({
+        name: 'RoutineDomainError',
+        code: RoutineErrorCode.ROUTINE_DAY_INVALID_DAY_OF_WEEK,
+      });
 
-      try {
-        await useCase.execute(actor, {
-          routineId: 'routine-1',
-          days: [
-            { dayOfWeek: 'monday', exercises: [] },
-            { dayOfWeek: 'friday', exercises: [] },
-          ],
-        });
-      } catch (error) {
-        expect(error).toBeInstanceOf(RoutineDomainError);
-        expect((error as RoutineDomainError).code).toBe(
-          RoutineErrorCode.EXERCISE_DAY_NOT_FOUND,
-        );
-      }
+      expect(routineRepository.save).not.toHaveBeenCalled();
     });
   });
 });
