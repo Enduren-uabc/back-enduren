@@ -39,10 +39,10 @@ describe('RegisterSetRepsAndWeightUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      });
+      );
       (workoutSessionRepository.save as jest.Mock).mockImplementation(
         (s: WorkoutSession) => Promise.resolve(s),
-      });
+      );
 
       const result = await useCase.execute(actor, {
         sessionId: 'session-1',
@@ -68,7 +68,7 @@ describe('RegisterSetRepsAndWeightUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         session,
-      });
+      );
       const saveMock = jest
         .fn()
         .mockImplementation((s: WorkoutSession) => Promise.resolve(s));
@@ -86,7 +86,7 @@ describe('RegisterSetRepsAndWeightUseCase', () => {
         expect.objectContaining({
           id: 'session-1',
         }),
-      });
+      );
     });
   });
 
@@ -128,7 +128,7 @@ describe('RegisterSetRepsAndWeightUseCase', () => {
       });
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         otherUserSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, {
@@ -154,7 +154,7 @@ describe('RegisterSetRepsAndWeightUseCase', () => {
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
         finishedSession,
-      });
+      );
 
       await expect(
         useCase.execute(actor, {
@@ -177,7 +177,7 @@ describe('RegisterSetRepsAndWeightUseCase', () => {
       } catch (error) {
         expect((error as WorkoutSessionDomainError).code).toBe(
           WorkoutSessionErrorCode.SESSION_ALREADY_FINISHED,
-        });
+        );
       }
     });
   });
