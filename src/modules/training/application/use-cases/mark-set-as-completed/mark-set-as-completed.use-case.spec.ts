@@ -56,9 +56,12 @@ describe('MarkSetAsCompletedUseCase', () => {
     });
 
     it('should unmark a set (completed = false) when called on an already completed set (toggle behavior)', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise,
-      ]);
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       session = session.registerSetRepsAndWeight(0, 1, 10, 50);
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
@@ -81,9 +84,12 @@ describe('MarkSetAsCompletedUseCase', () => {
     });
 
     it('should save the updated session', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise,
-      ]);
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       session = session.registerSetRepsAndWeight(0, 1, 10, 50);
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
@@ -144,9 +150,12 @@ describe('MarkSetAsCompletedUseCase', () => {
 
   describe('SESSION_ALREADY_FINISHED error', () => {
     it('should reject when session is already finished', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise,
-      ]);
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise],
+      });
       session = session.finish();
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(

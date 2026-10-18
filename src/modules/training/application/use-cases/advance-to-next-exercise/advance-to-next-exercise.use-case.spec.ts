@@ -35,10 +35,12 @@ describe('AdvanceToNextExerciseUseCase', () => {
 
   describe('RF-12.0.4: Advance to next exercise', () => {
     it('should advance to next exercise when all sets of current exercise are completed', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise1,
-        exercise2,
-      ]);
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise1, exercise2],
+      });
       session = session.registerSetRepsAndWeight(0, 1, 10, 50);
       session = session.markSetAsCompleted(0, 1);
       session = session.registerSetRepsAndWeight(0, 2, 10, 50);
@@ -59,10 +61,12 @@ describe('AdvanceToNextExerciseUseCase', () => {
     });
 
     it('should save the updated session', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise1,
-        exercise2,
-      ]);
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise1, exercise2],
+      });
       session = session.registerSetRepsAndWeight(0, 1, 10, 50);
       session = session.markSetAsCompleted(0, 1);
       session = session.registerSetRepsAndWeight(0, 2, 10, 50);
@@ -115,10 +119,12 @@ describe('AdvanceToNextExerciseUseCase', () => {
 
   describe('SESSION_ALREADY_FINISHED error', () => {
     it('should reject when session is already finished', async () => {
-      let session = WorkoutSession.create('session-1', 'user-1', 'routine-1', [
-        exercise1,
-        exercise2,
-      ]);
+      let session = WorkoutSession.create({
+        id: 'session-1',
+        userId: 'user-1',
+        routineId: 'routine-1',
+        exercises: [exercise1, exercise2],
+      });
       session = session.finish();
 
       (workoutSessionRepository.findById as jest.Mock).mockResolvedValue(
