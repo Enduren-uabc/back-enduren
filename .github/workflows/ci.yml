@@ -7,8 +7,8 @@ on:
     branches: [master]
 
 jobs:
-  sonarqube:
-    name: SonarQube Scan
+  tests:
+    name: Unit tests (non-blocking)
     runs-on: ubuntu-latest
 
     steps:
@@ -25,14 +25,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Existing non-blocking behavior; addressed separately by CI reliability work.
       - run: pnpm test:cov || true
 
-      - uses: sonarsource/sonarqube-scan-action@v5
-        if: always()
-        with:
-          args: >
-            -Dsonar.projectKey=enduren-back
-            -Dsonar.sources=src
-        env:
-          SONAR_TOKEN: squ_f8efac174584cb4f0aa1e7a07b9420c500e75c52
-          SONAR_HOST_URL: https://kindling-obstacle-freebie.ngrok-free.dev
+      # SonarQube Server scanning is temporarily suspended by maintainer decision.
+      # Re-enable only with a verified endpoint and a newly issued GitHub secret.
+      # The independent SonarCloud integration is managed outside this workflow.
