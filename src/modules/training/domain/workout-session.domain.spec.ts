@@ -180,16 +180,19 @@ describe('WorkoutSession domain entity', () => {
     it('should reconstitute a session from persistence', () => {
       const startedAt = new Date('2026-01-01T10:00:00Z');
       const finishedAt = new Date('2026-01-01T11:00:00Z');
-      const session = WorkoutSession.reconstitute(
-        'session-1',
-        validUserId,
-        validRoutineId,
-        WorkoutSessionStatus.FINISHED,
-        [validExercise],
-        0,
+      const session = WorkoutSession.reconstitute({
+        id: 'session-1',
+        userId: validUserId,
+        routineId: validRoutineId,
+        sourceType: 'personal',
+        assignedRoutineId: null,
+        dayOfWeek: 'monday',
+        status: WorkoutSessionStatus.FINISHED,
+        exercises: [validExercise],
+        currentExerciseIndex: 0,
         startedAt,
         finishedAt,
-      );
+      });
 
       expect(session.id).toBe('session-1');
       expect(session.status).toBe(WorkoutSessionStatus.FINISHED);

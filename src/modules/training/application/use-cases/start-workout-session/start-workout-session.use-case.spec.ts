@@ -47,16 +47,17 @@ describe('StartWorkoutSessionUseCase', () => {
     ]),
   ]);
 
-  const routine = Routine.reconstitute(
-    'routine-1',
-    'My Routine',
-    'user-1',
-    [routineDay, tuesdayDay],
-    true,
-    null,
-    new Date('2026-01-01'),
-    new Date('2026-01-01'),
-  );
+  const routine = Routine.reconstitute({
+    id: 'routine-1',
+    name: 'My Routine',
+    userId: 'user-1',
+    days: [routineDay, tuesdayDay],
+    isActive: true,
+    trainingStrategyKey: null,
+    targetAudience: 'self',
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  });
 
   beforeEach(() => {
     workoutSessionRepository = {
@@ -188,16 +189,17 @@ describe('StartWorkoutSessionUseCase', () => {
     });
 
     it('should reject when routine belongs to another user', async () => {
-      const otherUserRoutine = Routine.reconstitute(
-        'routine-2',
-        'Other Routine',
-        'user-2',
-        [routineDay],
-        true,
-        null,
-        new Date(),
-        new Date(),
-      );
+      const otherUserRoutine = Routine.reconstitute({
+        id: 'routine-2',
+        name: 'Other Routine',
+        userId: 'user-2',
+        days: [routineDay],
+        isActive: true,
+        trainingStrategyKey: null,
+        targetAudience: 'self',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       (routineRepository.findById as jest.Mock).mockResolvedValue(
         otherUserRoutine,
       );
@@ -211,16 +213,17 @@ describe('StartWorkoutSessionUseCase', () => {
     });
 
     it('should reject when routine is not active', async () => {
-      const inactiveRoutine = Routine.reconstitute(
-        'routine-1',
-        'Inactive Routine',
-        'user-1',
-        [routineDay],
-        false,
-        null,
-        new Date(),
-        new Date(),
-      );
+      const inactiveRoutine = Routine.reconstitute({
+        id: 'routine-1',
+        name: 'Inactive Routine',
+        userId: 'user-1',
+        days: [routineDay],
+        isActive: false,
+        trainingStrategyKey: null,
+        targetAudience: 'self',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       (routineRepository.findById as jest.Mock).mockResolvedValue(
         inactiveRoutine,
       );
