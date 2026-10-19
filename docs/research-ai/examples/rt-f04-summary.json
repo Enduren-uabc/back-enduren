@@ -1,0 +1,31 @@
+{
+  "caseId": "RT-F04",
+  "snapshotSchema": "research-case-v0.1",
+  "packetId": "ctx-597a657733b7d153413aa14a7960f38bdb64cf648fe7ace2809ebb868548126e",
+  "packetContentBytes": 5569,
+  "envelopeId": "env-25253b1184598ea366826278e859c82a63368e3d8dc3f19e2540ef23e72abd89",
+  "serializedEnvelopeBytes": 22376,
+  "admittedFields": [
+    "availableEquipment",
+    "availableWeekdays",
+    "daysAvailablePerWeek",
+    "experienceLevel",
+    "goal",
+    "healthConstraints",
+    "loadHistory",
+    "sessionTimeLimitSeconds",
+    "technique"
+  ],
+  "excludedFields": [
+    {
+      "path": "ageYears",
+      "reason": "NOT_ADMITTED_BY_POLICY"
+    }
+  ],
+  "selectedKnowledge": 7,
+  "weeks": 4,
+  "sessions": 8,
+  "exerciseOccurrences": 24,
+  "sets": 60,
+  "exactReplay": true
+}

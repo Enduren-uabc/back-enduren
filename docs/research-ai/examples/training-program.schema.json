@@ -1,0 +1,1701 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rg-das:training-program:0.1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "enum": [
+        "training-program/0.1"
+      ]
+    },
+    "proposalId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "caseRef": {
+      "type": "object",
+      "properties": {
+        "caseId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "snapshotId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "caseId",
+        "snapshotId"
+      ],
+      "additionalProperties": false
+    },
+    "knowledgeReleaseRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "horizon": {
+      "type": "object",
+      "properties": {
+        "weeks": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "weeks"
+      ],
+      "additionalProperties": false
+    },
+    "schedule": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "format": {
+              "enum": [
+                "WEEKLY_TEMPLATE"
+              ]
+            },
+            "templateId": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+            },
+            "continuation": {
+              "enum": [
+                "REPEAT_TEMPLATE_THEN_APPLY_RULES"
+              ]
+            },
+            "sessions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                  },
+                  "order": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "weekday": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "enum": [
+                              "SPECIFIED"
+                            ]
+                          },
+                          "value": {
+                            "enum": [
+                              "MONDAY",
+                              "TUESDAY",
+                              "WEDNESDAY",
+                              "THURSDAY",
+                              "FRIDAY",
+                              "SATURDAY",
+                              "SUNDAY"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "enum": [
+                              "UNSPECIFIED",
+                              "NOT_APPLICABLE"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "pattern": "\\S"
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "exercises": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "\\S"
+                        },
+                        "catalogRef": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "pattern": "\\S"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "version"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          ]
+                        },
+                        "sets": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "enum": [
+                                    "SPECIFIED"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "setId": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                                      },
+                                      "order": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                      },
+                                      "repetitions": {
+                                        "oneOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "state": {
+                                                "enum": [
+                                                  "SPECIFIED"
+                                                ]
+                                              },
+                                              "value": {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {
+                                                        "enum": [
+                                                          "COUNT"
+                                                        ]
+                                                      },
+                                                      "count": {
+                                                        "type": "integer",
+                                                        "minimum": 1
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "kind",
+                                                      "count"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "kind": {
+                                                        "enum": [
+                                                          "RANGE"
+                                                        ]
+                                                      },
+                                                      "min": {
+                                                        "type": "integer",
+                                                        "minimum": 1
+                                                      },
+                                                      "max": {
+                                                        "type": "integer",
+                                                        "minimum": 1
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "kind",
+                                                      "min",
+                                                      "max"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "state",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "state": {
+                                                "enum": [
+                                                  "UNSPECIFIED",
+                                                  "NOT_APPLICABLE"
+                                                ]
+                                              },
+                                              "reason": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "pattern": "\\S"
+                                              }
+                                            },
+                                            "required": [
+                                              "state",
+                                              "reason"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "intensity": {
+                                        "oneOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "state": {
+                                                "enum": [
+                                                  "SPECIFIED"
+                                                ]
+                                              },
+                                              "value": {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "method": {
+                                                        "enum": [
+                                                          "RIR"
+                                                        ]
+                                                      },
+                                                      "value": {
+                                                        "type": "number",
+                                                        "minimum": 0
+                                                      },
+                                                      "unit": {
+                                                        "enum": [
+                                                          "repetitions_in_reserve"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "method",
+                                                      "value",
+                                                      "unit"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "method": {
+                                                        "enum": [
+                                                          "RPE"
+                                                        ]
+                                                      },
+                                                      "value": {
+                                                        "type": "number",
+                                                        "minimum": 0
+                                                      },
+                                                      "unit": {
+                                                        "enum": [
+                                                          "score"
+                                                        ]
+                                                      },
+                                                      "scale": {
+                                                        "enum": [
+                                                          "RPE_0_10",
+                                                          "RPE_6_20"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "method",
+                                                      "value",
+                                                      "unit",
+                                                      "scale"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "method": {
+                                                        "enum": [
+                                                          "ABSOLUTE_LOAD"
+                                                        ]
+                                                      },
+                                                      "value": {
+                                                        "type": "number",
+                                                        "minimum": 0
+                                                      },
+                                                      "unit": {
+                                                        "enum": [
+                                                          "kg"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "method",
+                                                      "value",
+                                                      "unit"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "method": {
+                                                        "enum": [
+                                                          "PERCENT_1RM"
+                                                        ]
+                                                      },
+                                                      "value": {
+                                                        "type": "number",
+                                                        "minimum": 0
+                                                      },
+                                                      "unit": {
+                                                        "enum": [
+                                                          "percent_1rm"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "method",
+                                                      "value",
+                                                      "unit"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "state",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "state": {
+                                                "enum": [
+                                                  "UNSPECIFIED",
+                                                  "NOT_APPLICABLE"
+                                                ]
+                                              },
+                                              "reason": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "pattern": "\\S"
+                                              }
+                                            },
+                                            "required": [
+                                              "state",
+                                              "reason"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "restBetweenSets": {
+                                        "oneOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "state": {
+                                                "enum": [
+                                                  "SPECIFIED"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "value": {
+                                                    "type": "number",
+                                                    "minimum": 0
+                                                  },
+                                                  "unit": {
+                                                    "enum": [
+                                                      "seconds"
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "value",
+                                                  "unit"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "state",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "state": {
+                                                "enum": [
+                                                  "UNSPECIFIED",
+                                                  "NOT_APPLICABLE"
+                                                ]
+                                              },
+                                              "reason": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "pattern": "\\S"
+                                              }
+                                            },
+                                            "required": [
+                                              "state",
+                                              "reason"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "setId",
+                                      "order",
+                                      "repetitions",
+                                      "intensity",
+                                      "restBetweenSets"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "minItems": 1
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "enum": [
+                                    "UNSPECIFIED",
+                                    "NOT_APPLICABLE"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "pattern": "\\S"
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "reason"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "restBetweenExercises": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "enum": [
+                                    "SPECIFIED"
+                                  ]
+                                },
+                                "value": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "unit": {
+                                      "enum": [
+                                        "seconds"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "unit"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "enum": [
+                                    "UNSPECIFIED",
+                                    "NOT_APPLICABLE"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "pattern": "\\S"
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "reason"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "order",
+                        "name",
+                        "catalogRef",
+                        "sets",
+                        "restBetweenExercises"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 0
+                  }
+                },
+                "required": [
+                  "sessionId",
+                  "order",
+                  "weekday",
+                  "exercises"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0
+            },
+            "temporalRules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ruleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                  },
+                  "weekNumbers": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "minItems": 1
+                  },
+                  "exerciseTemplateIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                    },
+                    "minItems": 1
+                  },
+                  "replacementSets": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "enum": [
+                              "SPECIFIED"
+                            ]
+                          },
+                          "value": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "setId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                                },
+                                "order": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "repetitions": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "state": {
+                                          "enum": [
+                                            "SPECIFIED"
+                                          ]
+                                        },
+                                        "value": {
+                                          "oneOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "enum": [
+                                                    "COUNT"
+                                                  ]
+                                                },
+                                                "count": {
+                                                  "type": "integer",
+                                                  "minimum": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "count"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "enum": [
+                                                    "RANGE"
+                                                  ]
+                                                },
+                                                "min": {
+                                                  "type": "integer",
+                                                  "minimum": 1
+                                                },
+                                                "max": {
+                                                  "type": "integer",
+                                                  "minimum": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "min",
+                                                "max"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "state",
+                                        "value"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "state": {
+                                          "enum": [
+                                            "UNSPECIFIED",
+                                            "NOT_APPLICABLE"
+                                          ]
+                                        },
+                                        "reason": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "pattern": "\\S"
+                                        }
+                                      },
+                                      "required": [
+                                        "state",
+                                        "reason"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                "intensity": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "state": {
+                                          "enum": [
+                                            "SPECIFIED"
+                                          ]
+                                        },
+                                        "value": {
+                                          "oneOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "method": {
+                                                  "enum": [
+                                                    "RIR"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "number",
+                                                  "minimum": 0
+                                                },
+                                                "unit": {
+                                                  "enum": [
+                                                    "repetitions_in_reserve"
+                                                  ]
+                                                }
+                                              },
+                                              "required": [
+                                                "method",
+                                                "value",
+                                                "unit"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "method": {
+                                                  "enum": [
+                                                    "RPE"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "number",
+                                                  "minimum": 0
+                                                },
+                                                "unit": {
+                                                  "enum": [
+                                                    "score"
+                                                  ]
+                                                },
+                                                "scale": {
+                                                  "enum": [
+                                                    "RPE_0_10",
+                                                    "RPE_6_20"
+                                                  ]
+                                                }
+                                              },
+                                              "required": [
+                                                "method",
+                                                "value",
+                                                "unit",
+                                                "scale"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "method": {
+                                                  "enum": [
+                                                    "ABSOLUTE_LOAD"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "number",
+                                                  "minimum": 0
+                                                },
+                                                "unit": {
+                                                  "enum": [
+                                                    "kg"
+                                                  ]
+                                                }
+                                              },
+                                              "required": [
+                                                "method",
+                                                "value",
+                                                "unit"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "method": {
+                                                  "enum": [
+                                                    "PERCENT_1RM"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "number",
+                                                  "minimum": 0
+                                                },
+                                                "unit": {
+                                                  "enum": [
+                                                    "percent_1rm"
+                                                  ]
+                                                }
+                                              },
+                                              "required": [
+                                                "method",
+                                                "value",
+                                                "unit"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "state",
+                                        "value"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "state": {
+                                          "enum": [
+                                            "UNSPECIFIED",
+                                            "NOT_APPLICABLE"
+                                          ]
+                                        },
+                                        "reason": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "pattern": "\\S"
+                                        }
+                                      },
+                                      "required": [
+                                        "state",
+                                        "reason"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                "restBetweenSets": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "state": {
+                                          "enum": [
+                                            "SPECIFIED"
+                                          ]
+                                        },
+                                        "value": {
+                                          "type": "object",
+                                          "properties": {
+                                            "value": {
+                                              "type": "number",
+                                              "minimum": 0
+                                            },
+                                            "unit": {
+                                              "enum": [
+                                                "seconds"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "value",
+                                            "unit"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "state",
+                                        "value"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "state": {
+                                          "enum": [
+                                            "UNSPECIFIED",
+                                            "NOT_APPLICABLE"
+                                          ]
+                                        },
+                                        "reason": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "pattern": "\\S"
+                                        }
+                                      },
+                                      "required": [
+                                        "state",
+                                        "reason"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "setId",
+                                "order",
+                                "repetitions",
+                                "intensity",
+                                "restBetweenSets"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "minItems": 1
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "enum": [
+                              "UNSPECIFIED",
+                              "NOT_APPLICABLE"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "pattern": "\\S"
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ruleId",
+                  "weekNumbers",
+                  "exerciseTemplateIds",
+                  "replacementSets"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "format",
+            "templateId",
+            "continuation",
+            "sessions",
+            "temporalRules"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "format": {
+              "enum": [
+                "EXPLICIT_WEEKS"
+              ]
+            },
+            "weeks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "weekId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                  },
+                  "weekNumber": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "sessions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "sessionId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "weekday": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "enum": [
+                                    "SPECIFIED"
+                                  ]
+                                },
+                                "value": {
+                                  "enum": [
+                                    "MONDAY",
+                                    "TUESDAY",
+                                    "WEDNESDAY",
+                                    "THURSDAY",
+                                    "FRIDAY",
+                                    "SATURDAY",
+                                    "SUNDAY"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "enum": [
+                                    "UNSPECIFIED",
+                                    "NOT_APPLICABLE"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "pattern": "\\S"
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "reason"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "exercises": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "exerciseId": {
+                                "type": "string",
+                                "minLength": 1,
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 1
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "pattern": "\\S"
+                              },
+                              "catalogRef": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                                      },
+                                      "version": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "pattern": "\\S"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "version"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                ]
+                              },
+                              "sets": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "state": {
+                                        "enum": [
+                                          "SPECIFIED"
+                                        ]
+                                      },
+                                      "value": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "setId": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                                            },
+                                            "order": {
+                                              "type": "integer",
+                                              "minimum": 1
+                                            },
+                                            "repetitions": {
+                                              "oneOf": [
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "state": {
+                                                      "enum": [
+                                                        "SPECIFIED"
+                                                      ]
+                                                    },
+                                                    "value": {
+                                                      "oneOf": [
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "kind": {
+                                                              "enum": [
+                                                                "COUNT"
+                                                              ]
+                                                            },
+                                                            "count": {
+                                                              "type": "integer",
+                                                              "minimum": 1
+                                                            }
+                                                          },
+                                                          "required": [
+                                                            "kind",
+                                                            "count"
+                                                          ],
+                                                          "additionalProperties": false
+                                                        },
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "kind": {
+                                                              "enum": [
+                                                                "RANGE"
+                                                              ]
+                                                            },
+                                                            "min": {
+                                                              "type": "integer",
+                                                              "minimum": 1
+                                                            },
+                                                            "max": {
+                                                              "type": "integer",
+                                                              "minimum": 1
+                                                            }
+                                                          },
+                                                          "required": [
+                                                            "kind",
+                                                            "min",
+                                                            "max"
+                                                          ],
+                                                          "additionalProperties": false
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "state",
+                                                    "value"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "state": {
+                                                      "enum": [
+                                                        "UNSPECIFIED",
+                                                        "NOT_APPLICABLE"
+                                                      ]
+                                                    },
+                                                    "reason": {
+                                                      "type": "string",
+                                                      "minLength": 1,
+                                                      "pattern": "\\S"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "state",
+                                                    "reason"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              ]
+                                            },
+                                            "intensity": {
+                                              "oneOf": [
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "state": {
+                                                      "enum": [
+                                                        "SPECIFIED"
+                                                      ]
+                                                    },
+                                                    "value": {
+                                                      "oneOf": [
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "method": {
+                                                              "enum": [
+                                                                "RIR"
+                                                              ]
+                                                            },
+                                                            "value": {
+                                                              "type": "number",
+                                                              "minimum": 0
+                                                            },
+                                                            "unit": {
+                                                              "enum": [
+                                                                "repetitions_in_reserve"
+                                                              ]
+                                                            }
+                                                          },
+                                                          "required": [
+                                                            "method",
+                                                            "value",
+                                                            "unit"
+                                                          ],
+                                                          "additionalProperties": false
+                                                        },
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "method": {
+                                                              "enum": [
+                                                                "RPE"
+                                                              ]
+                                                            },
+                                                            "value": {
+                                                              "type": "number",
+                                                              "minimum": 0
+                                                            },
+                                                            "unit": {
+                                                              "enum": [
+                                                                "score"
+                                                              ]
+                                                            },
+                                                            "scale": {
+                                                              "enum": [
+                                                                "RPE_0_10",
+                                                                "RPE_6_20"
+                                                              ]
+                                                            }
+                                                          },
+                                                          "required": [
+                                                            "method",
+                                                            "value",
+                                                            "unit",
+                                                            "scale"
+                                                          ],
+                                                          "additionalProperties": false
+                                                        },
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "method": {
+                                                              "enum": [
+                                                                "ABSOLUTE_LOAD"
+                                                              ]
+                                                            },
+                                                            "value": {
+                                                              "type": "number",
+                                                              "minimum": 0
+                                                            },
+                                                            "unit": {
+                                                              "enum": [
+                                                                "kg"
+                                                              ]
+                                                            }
+                                                          },
+                                                          "required": [
+                                                            "method",
+                                                            "value",
+                                                            "unit"
+                                                          ],
+                                                          "additionalProperties": false
+                                                        },
+                                                        {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "method": {
+                                                              "enum": [
+                                                                "PERCENT_1RM"
+                                                              ]
+                                                            },
+                                                            "value": {
+                                                              "type": "number",
+                                                              "minimum": 0
+                                                            },
+                                                            "unit": {
+                                                              "enum": [
+                                                                "percent_1rm"
+                                                              ]
+                                                            }
+                                                          },
+                                                          "required": [
+                                                            "method",
+                                                            "value",
+                                                            "unit"
+                                                          ],
+                                                          "additionalProperties": false
+                                                        }
+                                                      ]
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "state",
+                                                    "value"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "state": {
+                                                      "enum": [
+                                                        "UNSPECIFIED",
+                                                        "NOT_APPLICABLE"
+                                                      ]
+                                                    },
+                                                    "reason": {
+                                                      "type": "string",
+                                                      "minLength": 1,
+                                                      "pattern": "\\S"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "state",
+                                                    "reason"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              ]
+                                            },
+                                            "restBetweenSets": {
+                                              "oneOf": [
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "state": {
+                                                      "enum": [
+                                                        "SPECIFIED"
+                                                      ]
+                                                    },
+                                                    "value": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "value": {
+                                                          "type": "number",
+                                                          "minimum": 0
+                                                        },
+                                                        "unit": {
+                                                          "enum": [
+                                                            "seconds"
+                                                          ]
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "value",
+                                                        "unit"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "state",
+                                                    "value"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "state": {
+                                                      "enum": [
+                                                        "UNSPECIFIED",
+                                                        "NOT_APPLICABLE"
+                                                      ]
+                                                    },
+                                                    "reason": {
+                                                      "type": "string",
+                                                      "minLength": 1,
+                                                      "pattern": "\\S"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "state",
+                                                    "reason"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "setId",
+                                            "order",
+                                            "repetitions",
+                                            "intensity",
+                                            "restBetweenSets"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        "minItems": 1
+                                      }
+                                    },
+                                    "required": [
+                                      "state",
+                                      "value"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "state": {
+                                        "enum": [
+                                          "UNSPECIFIED",
+                                          "NOT_APPLICABLE"
+                                        ]
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "pattern": "\\S"
+                                      }
+                                    },
+                                    "required": [
+                                      "state",
+                                      "reason"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              "restBetweenExercises": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "state": {
+                                        "enum": [
+                                          "SPECIFIED"
+                                        ]
+                                      },
+                                      "value": {
+                                        "type": "object",
+                                        "properties": {
+                                          "value": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          },
+                                          "unit": {
+                                            "enum": [
+                                              "seconds"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "value",
+                                          "unit"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "state",
+                                      "value"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "state": {
+                                        "enum": [
+                                          "UNSPECIFIED",
+                                          "NOT_APPLICABLE"
+                                        ]
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "pattern": "\\S"
+                                      }
+                                    },
+                                    "required": [
+                                      "state",
+                                      "reason"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "exerciseId",
+                              "order",
+                              "name",
+                              "catalogRef",
+                              "sets",
+                              "restBetweenExercises"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 0
+                        }
+                      },
+                      "required": [
+                        "sessionId",
+                        "order",
+                        "weekday",
+                        "exercises"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 0
+                  }
+                },
+                "required": [
+                  "weekId",
+                  "weekNumber",
+                  "sessions"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "format",
+            "weeks"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "omissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+          },
+          "state": {
+            "enum": [
+              "UNSPECIFIED",
+              "NOT_APPLICABLE"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "component",
+          "state",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "caseRef",
+    "knowledgeReleaseRef",
+    "horizon",
+    "schedule",
+    "omissions"
+  ],
+  "additionalProperties": false
+}
