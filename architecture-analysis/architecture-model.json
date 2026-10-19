@@ -1,0 +1,333 @@
+{
+  "system": {
+    "name": "RG-DAS S1B",
+    "scope": "Persistencia local implementada sobre S1A; sin endpoints ni ModelGateway real.",
+    "description": "Análisis acotado del subdominio Research AI, no inventario completo de Endure."
+  },
+  "repositories": [
+    {
+      "id": "REP-BACKEND",
+      "path": ".",
+      "kind": "backend-api",
+      "technologies": [
+        "TypeScript",
+        "NestJS",
+        "TypeORM",
+        "PostgreSQL"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "CMP-ARTIFACTS",
+      "name": "Contratos y reconstrucción Research AI",
+      "responsibility": "Validar y reconstruir evidencia S1A de forma determinista.",
+      "provides": [
+        "IF-ARTIFACTS"
+      ],
+      "requires": [],
+      "repository_refs": [
+        "REP-BACKEND"
+      ],
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-S1A",
+        "EV-ENVELOPE",
+        "EV-REPLAY"
+      ]
+    },
+    {
+      "id": "CMP-PERSISTENCE",
+      "name": "Persistencia de ejecuciones Research AI",
+      "responsibility": "Conservar entradas inmutables y coordinar el estado técnico de cada ejecución.",
+      "provides": [
+        "IF-RUNSTORE"
+      ],
+      "requires": [
+        "IF-ARTIFACTS",
+        "IF-POSTGRES"
+      ],
+      "repository_refs": [
+        "REP-BACKEND"
+      ],
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-CONTRACTS",
+        "EV-STORE",
+        "EV-SCHEMA",
+        "EV-MODULE"
+      ],
+      "notes": "Implementado y probado aisladamente; no conectado a AppModule."
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "IF-ARTIFACTS",
+      "name": "Validación y reconstrucción de artefactos",
+      "contract": "Contratos S1A y funciones buildContextPacket/buildPromptEnvelope; igualdad de serialización canónica.",
+      "provided_by": [
+        "CMP-ARTIFACTS"
+      ],
+      "required_by": [
+        "CMP-PERSISTENCE"
+      ],
+      "protocol_realization": "Llamadas TypeScript en proceso",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-S1A",
+        "EV-ENVELOPE",
+        "EV-REPLAY"
+      ]
+    },
+    {
+      "id": "IF-RUNSTORE",
+      "name": "ResearchRunStore",
+      "contract": "Registro atómico, recuperación exacta, reserva por revisión/intento, errores tipados e interrupción de reservas vencidas.",
+      "provided_by": [
+        "CMP-PERSISTENCE"
+      ],
+      "required_by": [],
+      "protocol_realization": "Puerto TypeScript asíncrono; token Nest RESEARCH_RUN_STORE",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-CONTRACTS",
+        "EV-STORE",
+        "EV-DOMAIN"
+      ]
+    },
+    {
+      "id": "IF-POSTGRES",
+      "name": "Transacciones y restricciones PostgreSQL",
+      "contract": "Persistencia SQL con atomicidad, referencias y restricciones de research_ai.",
+      "provided_by": [
+        "EXT-POSTGRES"
+      ],
+      "required_by": [
+        "CMP-PERSISTENCE"
+      ],
+      "protocol_realization": "TypeORM/pg sobre conexión PostgreSQL",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-STORE",
+        "EV-SCHEMA",
+        "EV-INTEGRATION"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "REL-ARTIFACTS",
+      "type": "provided-interface",
+      "source": "CMP-ARTIFACTS",
+      "target": "IF-ARTIFACTS",
+      "purpose": "Proporciona reconstrucción determinista",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-S1A",
+        "EV-ENVELOPE"
+      ]
+    },
+    {
+      "id": "REL-REPLAY",
+      "type": "required-interface",
+      "source": "CMP-PERSISTENCE",
+      "target": "IF-ARTIFACTS",
+      "purpose": "Valida entradas al registrar y recuperar",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-REPLAY",
+        "EV-STORE"
+      ]
+    },
+    {
+      "id": "REL-STORE",
+      "type": "provided-interface",
+      "source": "CMP-PERSISTENCE",
+      "target": "IF-RUNSTORE",
+      "purpose": "Expone operaciones de ejecución",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-CONTRACTS",
+        "EV-MODULE"
+      ]
+    },
+    {
+      "id": "REL-DATABASE",
+      "type": "provided-interface",
+      "source": "EXT-POSTGRES",
+      "target": "IF-POSTGRES",
+      "purpose": "Proporciona transacciones SQL",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-INTEGRATION"
+      ]
+    },
+    {
+      "id": "REL-SQL",
+      "type": "required-interface",
+      "source": "CMP-PERSISTENCE",
+      "target": "IF-POSTGRES",
+      "purpose": "Almacena evidencia y coordina transiciones",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-STORE",
+        "EV-SCHEMA"
+      ]
+    },
+    {
+      "id": "REL-MIGRATION",
+      "type": "manifestation",
+      "source": "ART-MIGRATION",
+      "target": "CMP-PERSISTENCE",
+      "purpose": "Materializa las restricciones persistentes del componente",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-SCHEMA"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "ART-MIGRATION",
+      "name": "ResearchRunPersistence1792368000000",
+      "artifact_type": "Migración SQL TypeORM",
+      "manifests": [
+        "CMP-PERSISTENCE"
+      ],
+      "evidence_refs": [
+        "EV-SCHEMA"
+      ]
+    }
+  ],
+  "external_elements": [
+    {
+      "id": "EXT-POSTGRES",
+      "name": "PostgreSQL",
+      "role": "Motor transaccional externo; instancia 16.15 descartable observada en pruebas.",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-INTEGRATION",
+        "EV-REPORT"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-CONTRACTS",
+      "type": "contract",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/run-persistence.port.ts",
+      "symbol": "ResearchRunStore",
+      "observation": "Puerto interno de registro, lectura, reserva, fallo y recuperación; reutiliza cuatro contratos S1A."
+    },
+    {
+      "id": "EV-S1A",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/context-intelligence.ts",
+      "symbol": "buildContextPacket",
+      "observation": "Selección reproducible de contexto desde snapshot, conocimiento y política."
+    },
+    {
+      "id": "EV-ENVELOPE",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/prompt-envelope.ts",
+      "symbol": "buildPromptEnvelope",
+      "observation": "Construye un envelope independiente del proveedor con trazas exactas."
+    },
+    {
+      "id": "EV-REPLAY",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/persisted-artifacts.ts",
+      "symbol": "validateArtifactBundle",
+      "observation": "Reconstruye y compara los contratos S1A antes de persistir."
+    },
+    {
+      "id": "EV-STORE",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/persistence/postgres-run-store.ts",
+      "symbol": "PostgresRunStore",
+      "observation": "Transacciones cortas, idempotencia, control de revisión e intento y recuperación sin reintento incierto."
+    },
+    {
+      "id": "EV-SCHEMA",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/persistence/migrations/1792368000000-ResearchRunPersistence.ts",
+      "symbol": "ResearchRunPersistence1792368000000",
+      "observation": "Seis tablas, referencias, hashes, guardas y eventos atómicos en research_ai."
+    },
+    {
+      "id": "EV-MODULE",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/persistence/research-persistence.module.ts",
+      "symbol": "ResearchPersistenceModule",
+      "observation": "Composición Nest opt-in que exporta RESEARCH_RUN_STORE."
+    },
+    {
+      "id": "EV-ROOT",
+      "type": "config",
+      "repository": "REP-BACKEND",
+      "path": "src/app.module.ts",
+      "symbol": "AppModule",
+      "observation": "La composición raíz no importa ResearchPersistenceModule; no hay activación productiva de S1B."
+    },
+    {
+      "id": "EV-CONFIG",
+      "type": "config",
+      "repository": "REP-BACKEND",
+      "path": "src/database/typeorm-options.ts",
+      "symbol": "createTypeOrmDataSourceOptions",
+      "observation": "Descubrimiento global actual de migraciones y entidades; no incluye la migración específica de S1B."
+    },
+    {
+      "id": "EV-INTEGRATION",
+      "type": "test",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/persistence/postgres-run-store.integration.spec.ts",
+      "symbol": "S1B PostgreSQL real constraints and transactions",
+      "observation": "Pruebas contra PostgreSQL real, rol limitado, rollback, concurrencia, inmutabilidad y nuevo proceso."
+    },
+    {
+      "id": "EV-REPORT",
+      "type": "doc",
+      "repository": "REP-BACKEND",
+      "path": "docs/research-ai/S1B-REPORT.md",
+      "symbol": "Validación",
+      "observation": "Resultados observados: 78 casos aprobados, 22 de integración PostgreSQL, sin omisiones."
+    },
+    {
+      "id": "EV-DOMAIN",
+      "type": "contract",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/domain/generation-run.ts",
+      "symbol": "GenerationRun",
+      "observation": "Estados y errores técnicos tipados, configuración cerrada y referencias de intento."
+    }
+  ],
+  "views": [
+    {
+      "id": "VIEW-S1B",
+      "kind": "application-components",
+      "purpose": "Mostrar responsabilidad, contratos e integración SQL observada.",
+      "element_ids": [
+        "CMP-ARTIFACTS",
+        "CMP-PERSISTENCE",
+        "IF-ARTIFACTS",
+        "IF-RUNSTORE",
+        "IF-POSTGRES",
+        "EXT-POSTGRES",
+        "ART-MIGRATION"
+      ]
+    }
+  ],
+  "open_questions": [
+    "Activación operativa, autorización y política de conservación antes de datos reales.",
+    "Proveedor, reconciliación e idempotencia externa para S1C."
+  ],
+  "status": "READY_FOR_DIAGRAM"
+}
