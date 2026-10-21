@@ -7,8 +7,14 @@ import {
 import { buildContextPacket, contentHash } from './context-intelligence';
 import { stableSerialize } from '../domain/contract';
 import type { RegisterRunInput } from './run-persistence.port';
+import type { RunConfiguration } from '../domain/generation-run';
 
-function input(): RegisterRunInput {
+function input(): RegisterRunInput & {
+  configuration: Extract<
+    RunConfiguration,
+    { schemaVersion: 'generation-run-config/0.1' }
+  >;
+} {
   const fixture = buildRtF04Example();
   return {
     snapshot: fixture.snapshot,
@@ -94,7 +100,7 @@ describe('S1B artifact admission boundary', () => {
           ...request.configuration,
           apiKey: 'synthetic-test-marker',
         },
-      } as RegisterRunInput),
+      } as unknown as RegisterRunInput),
     ).toThrow('INVALID_INPUT');
   });
 
