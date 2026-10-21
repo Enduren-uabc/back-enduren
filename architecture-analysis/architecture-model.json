@@ -1,8 +1,8 @@
 {
   "system": {
-    "name": "RG-DAS S1B",
-    "scope": "Persistencia local implementada sobre S1A; sin endpoints ni ModelGateway real.",
-    "description": "Análisis acotado del subdominio Research AI, no inventario completo de Endure."
+    "name": "RG-DAS S1C",
+    "scope": "Research AI: contratos S1A, persistencia S1B y generación S1C mediante OpenAI Responses implementada para validación offline; sin activación en AppModule ni llamadas externas autorizadas.",
+    "description": "Modelo de arquitectura observada al 2026-10-20. El alcance no es el backend Endure completo. S1B es la base previa y conserva su migración; S1C añade coordinación, adaptador y evidencia persistente."
   },
   "repositories": [
     {
@@ -21,7 +21,7 @@
     {
       "id": "CMP-ARTIFACTS",
       "name": "Contratos y reconstrucción Research AI",
-      "responsibility": "Validar y reconstruir evidencia S1A de forma determinista.",
+      "responsibility": "Validar y reconstruir artefactos S1A y aplicar políticas deterministas de ejecución.",
       "provides": [
         "IF-ARTIFACTS"
       ],
@@ -33,19 +33,24 @@
       "evidence_refs": [
         "EV-S1A",
         "EV-ENVELOPE",
-        "EV-REPLAY"
+        "EV-REPLAY",
+        "EV-PROPOSAL",
+        "EV-POLICY",
+        "EV-S1C-REPORT"
       ]
     },
     {
       "id": "CMP-PERSISTENCE",
       "name": "Persistencia de ejecuciones Research AI",
-      "responsibility": "Conservar entradas inmutables y coordinar el estado técnico de cada ejecución.",
+      "responsibility": "Conservar evidencia inmutable, coordinar intentos y autorizaciones monetarias y confirmar resultado/consumo/estado atómicamente.",
       "provides": [
-        "IF-RUNSTORE"
+        "IF-RUNSTORE",
+        "IF-EXECUTIONSTORE"
       ],
       "requires": [
         "IF-ARTIFACTS",
-        "IF-POSTGRES"
+        "IF-POSTGRES",
+        "IF-MODEL"
       ],
       "repository_refs": [
         "REP-BACKEND"
@@ -55,9 +60,58 @@
         "EV-CONTRACTS",
         "EV-STORE",
         "EV-SCHEMA",
-        "EV-MODULE"
+        "EV-MODULE",
+        "EV-EXECUTION-PORT",
+        "EV-EXECUTION-STORE",
+        "EV-EXECUTION-SCHEMA",
+        "EV-S1C-REPORT"
       ],
-      "notes": "Implementado y probado aisladamente; no conectado a AppModule."
+      "notes": "Composición opt-in. Usa sólo preparación y decodificación puras del adaptador para revalidar evidencia; no despacha HTTP. La validación final registra 55 casos PostgreSQL reales entre S1B, workflow y ejecución."
+    },
+    {
+      "id": "CMP-WORKFLOW",
+      "name": "Coordinación de generación Research AI",
+      "responsibility": "Secuenciar un intento durable, clasificar salida y validar dominio antes de solicitar su finalización.",
+      "provides": [
+        "IF-GENERATION"
+      ],
+      "requires": [
+        "IF-ARTIFACTS",
+        "IF-RUNSTORE",
+        "IF-EXECUTIONSTORE",
+        "IF-MODEL"
+      ],
+      "repository_refs": [
+        "REP-BACKEND"
+      ],
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-GENERATION-MODULE",
+        "EV-S1C-REPORT"
+      ]
+    },
+    {
+      "id": "CMP-GATEWAY",
+      "name": "Adaptación OpenAI Responses",
+      "responsibility": "Traducir contratos internos al intercambio Responses, limitar el transporte y reconstruir sólo evidencia observable.",
+      "provides": [
+        "IF-MODEL"
+      ],
+      "requires": [
+        "IF-ARTIFACTS",
+        "IF-RESPONSES"
+      ],
+      "repository_refs": [
+        "REP-BACKEND"
+      ],
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-GATEWAY",
+        "EV-TRANSPORT",
+        "EV-WIRE",
+        "EV-S1C-REPORT"
+      ]
     }
   ],
   "interfaces": [
@@ -69,14 +123,18 @@
         "CMP-ARTIFACTS"
       ],
       "required_by": [
-        "CMP-PERSISTENCE"
+        "CMP-PERSISTENCE",
+        "CMP-WORKFLOW",
+        "CMP-GATEWAY"
       ],
       "protocol_realization": "Llamadas TypeScript en proceso",
       "confidence": "confirmed",
       "evidence_refs": [
         "EV-S1A",
         "EV-ENVELOPE",
-        "EV-REPLAY"
+        "EV-REPLAY",
+        "EV-PROPOSAL",
+        "EV-POLICY"
       ]
     },
     {
@@ -86,13 +144,16 @@
       "provided_by": [
         "CMP-PERSISTENCE"
       ],
-      "required_by": [],
+      "required_by": [
+        "CMP-WORKFLOW"
+      ],
       "protocol_realization": "Puerto TypeScript asíncrono; token Nest RESEARCH_RUN_STORE",
       "confidence": "confirmed",
       "evidence_refs": [
         "EV-CONTRACTS",
         "EV-STORE",
-        "EV-DOMAIN"
+        "EV-DOMAIN",
+        "EV-WORKFLOW"
       ]
     },
     {
@@ -111,6 +172,77 @@
         "EV-STORE",
         "EV-SCHEMA",
         "EV-INTEGRATION"
+      ]
+    },
+    {
+      "id": "IF-GENERATION",
+      "name": "Generación técnica de una propuesta",
+      "contract": "Ejecutar o consultar una ejecución por registro idempotente; devolver GenerationRun sin publicación profesional.",
+      "provided_by": [
+        "CMP-WORKFLOW"
+      ],
+      "required_by": [],
+      "protocol_realization": "Llamada TypeScript interna, exportada por módulo opt-in",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-GENERATION-MODULE"
+      ]
+    },
+    {
+      "id": "IF-EXECUTIONSTORE",
+      "name": "Evidencia y presupuesto de invocación",
+      "contract": "Autorizar, reservar una invocación por intento y finalizar con resultado observable y consumo.",
+      "provided_by": [
+        "CMP-PERSISTENCE"
+      ],
+      "required_by": [
+        "CMP-WORKFLOW"
+      ],
+      "protocol_realization": "Puerto TypeScript asíncrono GenerationExecutionStore",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-EXECUTION-PORT",
+        "EV-EXECUTION-STORE",
+        "EV-WORKFLOW"
+      ]
+    },
+    {
+      "id": "IF-MODEL",
+      "name": "Preparación y ejecución de modelo",
+      "contract": "Preparar solicitud inmutable, invocar una vez y decodificar salida. Persistencia utiliza sólo las operaciones puras.",
+      "provided_by": [
+        "CMP-GATEWAY"
+      ],
+      "required_by": [
+        "CMP-WORKFLOW",
+        "CMP-PERSISTENCE"
+      ],
+      "protocol_realization": "Puerto TypeScript ModelGateway; sin SDK en dominio/aplicación",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-MODEL-PORT",
+        "EV-GATEWAY",
+        "EV-WORKFLOW",
+        "EV-EXECUTION-STORE"
+      ]
+    },
+    {
+      "id": "IF-RESPONSES",
+      "name": "Contrato Responses consumido",
+      "contract": "Solicitud JSON con salida estructurada strict y respuesta observable; protocolo codificado por el consumidor, aceptación remota no verificada.",
+      "provided_by": [
+        "EXT-OPENAI"
+      ],
+      "required_by": [
+        "CMP-GATEWAY"
+      ],
+      "protocol_realization": "HTTPS POST /v1/responses; evidencia sólo del consumidor local",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-TRANSPORT",
+        "EV-GATEWAY",
+        "EV-S1C-DESIGN"
       ]
     }
   ],
@@ -184,6 +316,162 @@
       "evidence_refs": [
         "EV-SCHEMA"
       ]
+    },
+    {
+      "id": "REL-GENERATION",
+      "type": "provided-interface",
+      "source": "CMP-WORKFLOW",
+      "target": "IF-GENERATION",
+      "purpose": "Proporciona coordinación interna de ejecución",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-GENERATION-MODULE"
+      ]
+    },
+    {
+      "id": "REL-WORKFLOW-ARTIFACTS",
+      "type": "required-interface",
+      "source": "CMP-WORKFLOW",
+      "target": "IF-ARTIFACTS",
+      "purpose": "Valida salida contra evidencia persistida",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-PROPOSAL"
+      ]
+    },
+    {
+      "id": "REL-WORKFLOW-RUNS",
+      "type": "required-interface",
+      "source": "CMP-WORKFLOW",
+      "target": "IF-RUNSTORE",
+      "purpose": "Registra y reserva el intento",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-CONTRACTS"
+      ]
+    },
+    {
+      "id": "REL-EXECUTIONSTORE",
+      "type": "provided-interface",
+      "source": "CMP-PERSISTENCE",
+      "target": "IF-EXECUTIONSTORE",
+      "purpose": "Proporciona reserva y confirmación de evidencia",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-EXECUTION-PORT",
+        "EV-EXECUTION-STORE"
+      ]
+    },
+    {
+      "id": "REL-WORKFLOW-EXECUTION",
+      "type": "required-interface",
+      "source": "CMP-WORKFLOW",
+      "target": "IF-EXECUTIONSTORE",
+      "purpose": "Reserva presupuesto y confirma resultado",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-EXECUTION-PORT"
+      ]
+    },
+    {
+      "id": "REL-MODEL",
+      "type": "provided-interface",
+      "source": "CMP-GATEWAY",
+      "target": "IF-MODEL",
+      "purpose": "Realiza el contrato interno de modelo",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-MODEL-PORT",
+        "EV-GATEWAY"
+      ]
+    },
+    {
+      "id": "REL-WORKFLOW-MODEL",
+      "type": "required-interface",
+      "source": "CMP-WORKFLOW",
+      "target": "IF-MODEL",
+      "purpose": "Prepara, invoca y decodifica una salida",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WORKFLOW",
+        "EV-MODEL-PORT"
+      ]
+    },
+    {
+      "id": "REL-PERSISTENCE-MODEL",
+      "type": "required-interface",
+      "source": "CMP-PERSISTENCE",
+      "target": "IF-MODEL",
+      "purpose": "Revalida solicitud y salida exclusivamente mediante operaciones puras",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-EXECUTION-STORE",
+        "EV-GATEWAY",
+        "EV-WIRE"
+      ]
+    },
+    {
+      "id": "REL-GATEWAY-ARTIFACTS",
+      "type": "required-interface",
+      "source": "CMP-GATEWAY",
+      "target": "IF-ARTIFACTS",
+      "purpose": "Consume envelope, contratos y perfil de ejecución",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-GATEWAY",
+        "EV-WIRE",
+        "EV-POLICY"
+      ]
+    },
+    {
+      "id": "REL-RESPONSES",
+      "type": "provided-interface",
+      "source": "EXT-OPENAI",
+      "target": "IF-RESPONSES",
+      "purpose": "Proveedor externo esperado por el cliente codificado; sin observación de ejecución remota",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-TRANSPORT",
+        "EV-S1C-DESIGN"
+      ]
+    },
+    {
+      "id": "REL-GATEWAY-RESPONSES",
+      "type": "required-interface",
+      "source": "CMP-GATEWAY",
+      "target": "IF-RESPONSES",
+      "purpose": "Consume el protocolo Responses cuando se habilite y autorice explícitamente",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-GATEWAY",
+        "EV-TRANSPORT"
+      ]
+    },
+    {
+      "id": "REL-EXECUTION-MIGRATION",
+      "type": "manifestation",
+      "source": "ART-EXECUTION-MIGRATION",
+      "target": "CMP-PERSISTENCE",
+      "purpose": "Materializa restricciones adicionales de autorización, invocación, resultado y éxito",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-EXECUTION-SCHEMA"
+      ]
+    },
+    {
+      "id": "REL-WIRE-ARTIFACT",
+      "type": "manifestation",
+      "source": "ART-WIRE",
+      "target": "CMP-GATEWAY",
+      "purpose": "Materializa la representación externa y su conversión reversible",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WIRE"
+      ]
     }
   ],
   "artifacts": [
@@ -196,6 +484,32 @@
       ],
       "evidence_refs": [
         "EV-SCHEMA"
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "id": "ART-EXECUTION-MIGRATION",
+      "name": "ResearchModelExecution1792454400000",
+      "artifact_type": "Migración SQL TypeORM aditiva",
+      "manifests": [
+        "CMP-PERSISTENCE"
+      ],
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-EXECUTION-SCHEMA"
+      ]
+    },
+    {
+      "id": "ART-WIRE",
+      "name": "openai-rt-wire/0.1",
+      "artifact_type": "JSON Schema y códec de transporte",
+      "manifests": [
+        "CMP-GATEWAY"
+      ],
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-WIRE",
+        "EV-WIRE-TEST"
       ]
     }
   ],
@@ -203,11 +517,23 @@
     {
       "id": "EXT-POSTGRES",
       "name": "PostgreSQL",
-      "role": "Motor transaccional externo; instancia 16.15 descartable observada en pruebas.",
+      "role": "Motor SQL requerido por persistencia. Base S1B histórica y 55 casos PostgreSQL reales finales (22 S1B, 14 workflow, 19 ejecución) documentados en sus informes; no implica despliegue productivo.",
       "confidence": "confirmed",
       "evidence_refs": [
         "EV-INTEGRATION",
-        "EV-REPORT"
+        "EV-REPORT",
+        "EV-S1C-REPORT"
+      ]
+    },
+    {
+      "id": "EXT-OPENAI",
+      "name": "OpenAI Responses",
+      "role": "Sistema externo al que apunta el cliente HTTPS. Confirmado como destino en código; no se ejecutaron llamadas reales ni se comprobó aceptación del modelo/esquema.",
+      "confidence": "confirmed",
+      "evidence_refs": [
+        "EV-TRANSPORT",
+        "EV-GATEWAY",
+        "EV-S1C-DESIGN"
       ]
     }
   ],
@@ -266,7 +592,7 @@
       "repository": "REP-BACKEND",
       "path": "src/modules/research-ai/infrastructure/persistence/research-persistence.module.ts",
       "symbol": "ResearchPersistenceModule",
-      "observation": "Composición Nest opt-in que exporta RESEARCH_RUN_STORE."
+      "observation": "Composición S1B opt-in que exporta RESEARCH_RUN_STORE y registra entidades mediante TypeOrmModule.forFeature."
     },
     {
       "id": "EV-ROOT",
@@ -274,7 +600,7 @@
       "repository": "REP-BACKEND",
       "path": "src/app.module.ts",
       "symbol": "AppModule",
-      "observation": "La composición raíz no importa ResearchPersistenceModule; no hay activación productiva de S1B."
+      "observation": "AppModule no importa ResearchPersistenceModule ni ResearchGenerationModule; no se activa Research AI en la composición productiva."
     },
     {
       "id": "EV-CONFIG",
@@ -282,7 +608,7 @@
       "repository": "REP-BACKEND",
       "path": "src/database/typeorm-options.ts",
       "symbol": "createTypeOrmDataSourceOptions",
-      "observation": "Descubrimiento global actual de migraciones y entidades; no incluye la migración específica de S1B."
+      "observation": "El glob global de migraciones apunta a src/migrations; las dos migraciones Research AI están bajo su infraestructura y requieren aplicación explícita."
     },
     {
       "id": "EV-INTEGRATION",
@@ -290,7 +616,7 @@
       "repository": "REP-BACKEND",
       "path": "src/modules/research-ai/infrastructure/persistence/postgres-run-store.integration.spec.ts",
       "symbol": "S1B PostgreSQL real constraints and transactions",
-      "observation": "Pruebas contra PostgreSQL real, rol limitado, rollback, concurrencia, inmutabilidad y nuevo proceso."
+      "observation": "Suite base S1B de restricciones, concurrencia, rollback y lectura en otro proceso; los resultados históricos están en EV-REPORT."
     },
     {
       "id": "EV-REPORT",
@@ -298,7 +624,7 @@
       "repository": "REP-BACKEND",
       "path": "docs/research-ai/S1B-REPORT.md",
       "symbol": "Validación",
-      "observation": "Resultados observados: 78 casos aprobados, 22 de integración PostgreSQL, sin omisiones."
+      "observation": "Evidencia histórica S1B: informe de 78 pruebas, incluidas 22 PostgreSQL. No acredita la ejecución actual de la extensión S1C."
     },
     {
       "id": "EV-DOMAIN",
@@ -306,28 +632,160 @@
       "repository": "REP-BACKEND",
       "path": "src/modules/research-ai/domain/generation-run.ts",
       "symbol": "GenerationRun",
-      "observation": "Estados y errores técnicos tipados, configuración cerrada y referencias de intento."
+      "observation": "Mantiene lectura de configuración 0.1 y añade 0.2 con autorización/perfil/límites, ejecución 0.2 y estado SUCCEEDED."
+    },
+    {
+      "id": "EV-WORKFLOW",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/generation-workflow.ts",
+      "symbol": "GenerationWorkflow",
+      "observation": "Coordina registro, reserva, preparación, invocación única, clasificación y finalización; valida propuesta con conocimiento y snapshot persistidos y exige horizonte/formato solicitado."
+    },
+    {
+      "id": "EV-MODEL-PORT",
+      "type": "contract",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/model-gateway.port.ts",
+      "symbol": "ModelGateway",
+      "observation": "Contrato de preparación, invocación y decodificación independiente de tipos HTTP y SDK."
+    },
+    {
+      "id": "EV-EXECUTION-PORT",
+      "type": "contract",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/generation-execution-store.port.ts",
+      "symbol": "GenerationExecutionStore",
+      "observation": "Autorización, reserva por intento, finalización y lectura; ModelResult contiene RawModelDraft y resultado técnico."
+    },
+    {
+      "id": "EV-POLICY",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/execution-policy.ts",
+      "symbol": "reserveCostMicros",
+      "observation": "Perfil y autorización versionados; cota conservadora de contexto completo, costes enteros redondeados hacia arriba y comprobaciones de vigencia/overflow."
+    },
+    {
+      "id": "EV-GATEWAY",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/openai/openai-responses-gateway.ts",
+      "symbol": "OpenAIResponsesGateway",
+      "observation": "Adaptador ModelGateway con preparación pura, instrucciones separadas de datos, solicitud canónica y hash; interruptor deshabilitado y credencial ausente por defecto; copia sólo evidencia observable permitida."
+    },
+    {
+      "id": "EV-TRANSPORT",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/openai/https-responses-transport.ts",
+      "symbol": "HttpsResponsesTransport",
+      "observation": "Consumidor HTTPS codificado para POST api.openai.com:443/v1/responses, con límites de bytes, cancelación y plazo; sin bucle de reintentos ni seguimiento de redirects. No demuestra una llamada remota ejecutada."
+    },
+    {
+      "id": "EV-WIRE",
+      "type": "contract",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/openai/openai-rt-wire.ts",
+      "symbol": "OPENAI_RT_WIRE_SCHEMA",
+      "observation": "Representación openai-rt-wire/0.1 extrae prescripciones a un registro, demuestra exclusión antes de convertir oneOf a anyOf y rechaza referencias ausentes, duplicados y huérfanos."
+    },
+    {
+      "id": "EV-WIRE-TEST",
+      "type": "test",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/openai/openai-rt-wire.spec.ts",
+      "symbol": "openai-rt-wire/0.1 reversible prescription registry",
+      "observation": "47 pruebas offline verificadas en esta revisión: ida/vuelta A/B, variantes, límites y rechazo de esquemas desconocidos; no prueban aceptación remota."
+    },
+    {
+      "id": "EV-EXECUTION-STORE",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/persistence/postgres-generation-execution-store.ts",
+      "symbol": "PostgresGenerationExecutionStore",
+      "observation": "Reserva autorización y presupuesto bajo bloqueo; revalida preparación y salida usando funciones puras del adaptador, confirma resultado/consumo/estado en transacción y conserva incertidumbre. No invoca transporte."
+    },
+    {
+      "id": "EV-EXECUTION-SCHEMA",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/persistence/migrations/1792454400000-ResearchModelExecution.ts",
+      "symbol": "ResearchModelExecution1792454400000",
+      "observation": "Migración aditiva con execution_authorizations, model_invocations y model_results; referencias al intento y guardas SQL de SUCCEEDED. Nueve tablas totales tras ambas migraciones."
+    },
+    {
+      "id": "EV-GENERATION-MODULE",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/infrastructure/research-generation.module.ts",
+      "symbol": "ResearchGenerationModule",
+      "observation": "Composición opt-in de GenerationWorkflow, ambos adaptadores PostgreSQL y OpenAIResponsesGateway; no aplica migraciones ni crea autorizaciones."
+    },
+    {
+      "id": "EV-WORKFLOW-TEST",
+      "type": "test",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/application/generation-workflow.integration.spec.ts",
+      "symbol": "GenerationWorkflow",
+      "observation": "14 pruebas de workflow con PostgreSQL real y transporte inyectado; barrera de red, persistencia, reentrada e incertidumbre. Resultado final consolidado en EV-S1C-REPORT."
+    },
+    {
+      "id": "EV-PROPOSAL",
+      "type": "source",
+      "repository": "REP-BACKEND",
+      "path": "src/modules/research-ai/domain/training-program-proposal.ts",
+      "symbol": "createTrainingProgramProposal",
+      "observation": "Factory S1A comprueba estructura, referencias, rangos e identidades; no sustituye revisión profesional ni publica SystemProposal."
+    },
+    {
+      "id": "EV-S1C-DESIGN",
+      "type": "doc",
+      "repository": "REP-BACKEND",
+      "path": "docs/research-ai/S1C-DESIGN.md",
+      "symbol": "Compatibilidad de JSON Schema sin modificar S1A",
+      "observation": "Diseño aprobado autoriza implementación y verificación offline; autorización efectiva externa cero. Compatibilidad remota, modelo/tarifa reales y primera llamada quedan pendientes."
+    },
+    {
+      "id": "EV-S1C-REPORT",
+      "type": "doc",
+      "repository": "REP-BACKEND",
+      "path": "docs/research-ai/S1C-REPORT.md",
+      "symbol": "E. Verificaciones reales",
+      "observation": "Cierre comunicado por la verificación principal: 12 suites, 253 pruebas aprobadas sin omisiones, incluidas 55 PostgreSQL reales; build, TypeScript estricto, lint focalizado y diff check con salida 0. No hubo llamadas OpenAI."
     }
   ],
   "views": [
     {
-      "id": "VIEW-S1B",
+      "id": "VIEW-S1C",
       "kind": "application-components",
-      "purpose": "Mostrar responsabilidad, contratos e integración SQL observada.",
+      "purpose": "Responsabilidades y contratos internos con contexto de persistencia y proveedor externo deshabilitado.",
       "element_ids": [
         "CMP-ARTIFACTS",
         "CMP-PERSISTENCE",
+        "CMP-WORKFLOW",
+        "CMP-GATEWAY",
         "IF-ARTIFACTS",
         "IF-RUNSTORE",
         "IF-POSTGRES",
+        "IF-GENERATION",
+        "IF-EXECUTIONSTORE",
+        "IF-MODEL",
+        "IF-RESPONSES",
         "EXT-POSTGRES",
-        "ART-MIGRATION"
+        "EXT-OPENAI",
+        "ART-MIGRATION",
+        "ART-EXECUTION-MIGRATION",
+        "ART-WIRE"
       ]
     }
   ],
   "open_questions": [
-    "Activación operativa, autorización y política de conservación antes de datos reales.",
-    "Proveedor, reconciliación e idempotencia externa para S1C."
+    "Servicio consumidor, autorización de acceso y políticas de retención antes de datos reales.",
+    "Modelo exacto, perfil/tarifa revisados, credencial en memoria y nueva autorización antes de una primera llamada real.",
+    "Aceptación remota del esquema y comportamiento/coste observado, no demostrables offline.",
+    "Procedimiento operativo de reconciliación de resultados inciertos y reservas conservadas.",
+    "Activación explícita de módulos, entidades y ambas migraciones fuera de AppModule actual."
   ],
   "status": "READY_FOR_DIAGRAM"
 }

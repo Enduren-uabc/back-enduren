@@ -28,7 +28,7 @@ import { GenerationRunRecord, RunEventRecord } from './research-records';
 import type { RunRecord } from './research-records';
 import { storageBoundary } from './storage-errors';
 
-function toRun(row: RunRecord): GenerationRun {
+export function toRun(row: RunRecord): GenerationRun {
   const configuration = runConfigurationContract.parse(
     readDocument({
       hash: row.configurationHash,
@@ -36,7 +36,10 @@ function toRun(row: RunRecord): GenerationRun {
     }),
   );
   return freeze({
-    schemaVersion: 'generation-run/0.1' as const,
+    schemaVersion:
+      configuration.schemaVersion === 'generation-run-config/0.2'
+        ? ('generation-run/0.2' as const)
+        : ('generation-run/0.1' as const),
     runId: row.runId,
     idempotency: { scope: row.scope, key: row.idempotencyKey },
     requestHash: row.requestHash,

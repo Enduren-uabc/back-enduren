@@ -1,12 +1,21 @@
-# Validación del modelo
+# Validación del modelo S1C
 
-El alcance, los componentes y sus interfaces están sustentados por código local. Las tablas se modelan como datos; PostgreSQL como elemento externo; la migración como artefacto. Las relaciones distinguen contrato conceptual y realización técnica. Ninguna llamada LLM ni activación productiva aparece como confirmada.
+El modelo describe código observado y contratos internos; no afirma despliegue ni aceptación real de OpenAI. Se conservaron las evidencias e identificadores S1B como base histórica y se añadieron coordinación, gateway, presupuesto y resultados S1C. La inspección inicial permanece sin cambios.
 
-La auditoría comprueba existencia de rutas de evidencia, unicidad de identificadores, resolución de referencias y concordancia entre relaciones e interfaces. El validador oficial pasó en modo básico por ausencia de jsonschema. Una comprobación adicional con Ajv pasó todas las restricciones utilizadas por el esquema, desactivando sólo la búsqueda de su metaesquema draft-2020-12; no se añadieron paquetes. La auditoría de referencias y enlaces también pasó (salida 0). Las conclusiones sobre ejecución se apoyan en la suite PostgreSQL y sus resultados, no sólo en inspección estática.
+- Componentes: cuatro responsabilidades cohesionadas con fronteras y contratos demostrados.
+- Interfaces: proveedor/consumidor y dirección consistentes; OpenAI tiene evidencia sólo del consumidor local.
+- Persistencia: nueve tablas tratadas como esquema de datos; las dos migraciones son artifacts y PostgreSQL es un elemento externo.
+- Transporte: esquema/códec como artifact; sin razonamiento privado, rutas frontend ni activación productiva inventados.
+- Dependencias: aplicación/dominio de producción no importan infraestructura; se documenta el uso de preparación y decodificación puras por persistencia.
+- Evidencia: referencias estables por archivo/símbolo, resultados históricos identificados y ausencia de secretos.
 
-- BLOCKER: ninguno dentro del alcance implementado.
-- MAJOR: ninguno para representar el componente aislado.
-- MINOR: las cuestiones de despliegue y proveedor siguen pendientes, fuera del modelo implementado.
-- INFO: no se produjo un diagrama visual UML; se entrega un modelo trazable listo para elaborarlo, además del ER solicitado.
+Verificación del modelo: el validador oficial de la skill terminó con salida 0 en modo básico porque jsonschema no está instalado. La validación adicional con Ajv 8.20 y su implementación Draft 2020-12, en modo estricto, comprobó el esquema completo con salida 0 sin instalar paquetes. La auditoría de referencias, símbolos, enlaces e interfaces recíprocas terminó con salida 0. Se corrigió una referencia de símbolo a ResearchGenerationModule; la estructura y el código estaban correctos.
 
-Corrección principal de interpretación: un módulo Nest definido no implica que AppModule lo active. Estado: READY_FOR_DIAGRAM para S1B aislado, sin afirmar preparación productiva.
+Verificación inicial confirmada: 12 suites y 253 pruebas aprobadas, ninguna omitida, salida 0 (31,97 s). La repetición previa a publicación con Node 24 confirmó el mismo total en 33,08 s y salida 0. El conjunto incluye 78 casos S1A/S1B, 47 wire, 95 gateway/política/transporte, 14 workflow y 19 execution store. Hay 55 casos PostgreSQL reales: 22 S1B, 14 workflow y 19 execution store. Build Nest, TypeScript estricto de todo Research AI, lint focalizado y diff check terminaron con salida 0. El [informe S1C](../docs/research-ai/S1C-REPORT.md) conserva los comandos y límites.
+
+La auditoría wire independiente reprodujo 47 pruebas aprobadas y rechazó 13 entradas malformadas adicionales, sin cambios de comportamiento. Sus métricas son 10 contenedores, 126 propiedades, 68 valores enum y 1542 caracteres. Se corrigió sólo inferencia de tipos en los casos negativos de pruebas. La comparación de integridad confirmó contratos/fixtures S1A, migración histórica, dependencias, workflow de CI, AppModule y configuración de base intactos. No hubo llamadas OpenAI ni lectura de credenciales reales.
+
+- BLOCKER: ninguno semántico en el modelo acotado.
+- MAJOR: ninguno; la integración remota está identificada expresamente como consumidor observado.
+- MINOR: activación, acceso y reconciliación siguen como cuestiones abiertas operativas.
+- INFO: READY_FOR_DIAGRAM describe la trazabilidad del modelo, no preparación productiva ni aprobación de todas las pruebas de implementación.
